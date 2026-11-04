@@ -23,6 +23,28 @@
 - **CNPG 파드 재시작**: 기본 `smartShutdownTimeout`(180s)이면 193초(Harbor 커넥션 풀이 안 끊겨 대기), 15초로 두면 28초. 실제 서비스 끊김은 둘 다 ~11초. **DB 가 없는 동안 pull 도 401** — DB 장애 = 레지스트리 장애.
 - **백업**: `pg_dump -Fc` 무중단 → 새 CNPG 클러스터에 복구, 행 수 일치. 백업 대상은 **DB + registry 저장소** 두 곳.
 
+## 심화 이관 시험 (3차, 213 이미지 + 12 차트)
+
+| 시험 | 결과 |
+|---|---|
+| 전체 이관 | **74초** (docker 204 복사·7 건너뜀, 382MB 이미지 17초, 병렬 4) / helm 6 push |
+| 재실행 | 전부 SKIP — 완전 멱등 (schema1 은 "대상 존재" 로 SKIP) |
+| 중단 후 재개 | 50태그 삭제 → 9초 뒤 kill(34/50) → 재실행 16 복사 → **50/50** |
+| Nexus 읽기전용(컷오버) | `writePolicy: DENY` → docker push 차단(`blob upload invalid`)·pull 200, helm index/tgz 200·업로드 500. 델타 이관 전부 SKIP |
+| 전수 대조 | docker MATCH 212 / DIFFERENT 1(schema1), helm MATCH 12, Harbor 에만 있는 것 없음 |
+| 엣지 | 중첩 경로·조각 없는 이름(기본 프로젝트)·없는 프로젝트(자동 생성)·OCI 차트 in docker 저장소·`+build` 버전(`_` 태그)·`.prov`·subchart umbrella 설치 — 전부 통과 |
+
+## Spegel (노드 P2P 캐시) 실측 — 2노드
+
+| 시험 | 결과 |
+|---|---|
+| 피어 서빙 | w1 pull 시 Harbor 요청 **0건**, digest 일치 |
+| Harbor 완전 정지 | 클러스터에 있는 이미지는 pull 됨(인증 무관), 없는 이미지는 실패 |
+| `latest` 재사용 | 덮어써도 피어의 **옛 digest** → `registryFilters [":latest$"]` 로 해결 |
+| 무인증 pull | 비공개 이미지도 피어가 **자격증명 없이** 서빙(FAQ 경고 그대로) → 테넌트 격리 요구 시 부적합 |
+| 피어 다운 폴백 | 13.6~13.9초(피어 경유 14.7초와 동일) — 지연 없음 |
+| 382MB 전송 | Harbor 직접 20.6초 vs 피어 14.7초 |
+
 ## 겪은 이슈 (전부 해결)
 
 | 이슈 | 원인 | 해결 |
@@ -33,6 +55,13 @@
 | jobservice 초기 2회 재시작 | redis 준비 전 기동 | 정상, 조치 불필요 |
 | 로봇으로 프로젝트 저장소 목록 API 403 | 로봇 권한 범위 | 개별 아티팩트 목록은 200; 전체 목록은 admin 으로 |
 | 공식 goharbor 2.15 이미지 arm64 없음 | amd64 단일 아키 | arm64 랩은 2.14.0(octohelm) |
+| 새 프로젝트로 push 실패 `trying to reuse blob … at destination` | admin 이 프로젝트는 만들었지만 로봇에 권한 없음 | 시스템 로봇 `namespace: "*"` (PUT /robots/{id} 는 GET JSON 에서 id·시각 필드 제거 후 permissions 교체) |
+| schema1 이미지 digest 불일치·재실행마다 재push | 서명 재직렬화로 digest 가 매번 바뀜. containerd 2.x 는 pull 자체 거부 | `--format oci` 변환 후 1회만, 이후 "대상 존재" 로 SKIP. 운영에선 변환 or 폐기 |
+| `.prov` 동반 차트가 재실행마다 재push | OCI manifest 의 layers[0] 이 prov 라서 내용 비교 어긋남 | 차트 레이어를 mediaType(`…chart.content.v1.tar+gzip`)으로 선택 |
+| macOS 에서 결과 필터 미출력 | BSD grep 에 `-P` 없음 | `grep -E $'\t…'` |
+| Spegel 설치 후 docker.io pull 실패(폐쇄망 미러 단절) | `mirroredRegistries` 에 없는 레지스트리 hosts.toml 을 `_backup` 으로 이동 | 노드의 모든 미러 레지스트리를 목록에 명시 |
+| Spegel: `latest` 덮어써도 옛 이미지 | 피어가 태그를 처음 digest 로 해석 | `registryFilters: [":latest$"]` 또는 digest 고정 배포 |
+| 워커 조인 실패(VIP 불통) | 랩 cp1 에 kube-vip 정적 파드 없음 | cp1 eth1 에 VIP 수동 부여 후 `kubeadm join --config` (랩 한정) |
 
 ## 사용자 체감 변경 (ChartMuseum → OCI)
 
@@ -47,6 +76,8 @@
 5. Nexus 의 두 저장소는 읽기 전용으로 남겨 롤백 경로로, 안정 후 삭제. 다른 저장소는 손대지 않음
 
 이 문서 하나에 절차·실측 기록·설정·스크립트가 모두 들어 있다. 스크립트의 주소·포트·경로는 랩 값(172.16.141.x, NodePort 30004, scratchpad 경로)이고 비밀값은 포함돼 있지 않다.
+
+---
 
 ---
 
@@ -164,6 +195,46 @@ docker 부분은 1차와 동일. helm 부분만 변경: 존재 확인은 `GET /a
 ### 7. 랩 상태
 harbor-cnpg: harbor-pg + harbor214 7파드(NodePort 30004) 가동. ns harbor(2.13) 는 replicas 0 유지. 노드 가용 메모리 855MB. 비밀값은 scratchpad `hc.admin`, `hc.robot214`.
 
+### 3차: 이관 심화 시험 — 엣지케이스·규모·중단재개·컷오버·전수대조 (2026-11-04 09:21~09:32)
+원본 nexus6 에 fixture 를 추가(`seed-edge.sh`)한 뒤 **`migrate-v3.sh`** 로 이관. v3 추가 기능: 프로젝트 자동 생성(admin), docker 병렬 복사(PAR=4), schema1 자동 변환·표시, helm 은 Nexus tgz sha256 ↔ Harbor 차트 레이어 digest 비교(같은 버전 다른 내용 감지), `+`→`_` 태그 규칙, `.prov` 동반 push, 결과 TSV·소요 시간. 검증은 **`verify-v3.sh`**(읽기 전용 전수 대조).
+
+### 1. fixture (전부 Nexus 가 수용)
+| 구분 | 항목 |
+|---|---|
+| docker | schema1(v2s1) `dlops/legacy:s1` · 중첩 경로 `dlops/team-a/svc:1.0` · 프로젝트 조각 없는 `rootapp:1.0` · Harbor 에 없는 프로젝트 `newteam/app:1.0` · 대용량 `dlops/big:3.12`(python:3.12 debian arm64, **382MB 7레이어**) · 규모 `dlops/scale01~20:v1~10`(200태그, push 17초) · docker-hosted 에 OCI 차트 `helm push oci://nexus/dlops/ocicharts`(수용됨) |
+| helm | `edgever` 1.0.0-rc.1 / **1.0.0+build.5** / 2.0.0-SNAPSHOT · `umbrella`(dependencies 가 Nexus helm repo 를 가리킴, subchart h27b 포함) · `withprov`(.prov 동반) · `dupver`(helm-hosted2 writePolicy ALLOW, 같은 버전 내용 바꿔 재업로드 → Nexus 는 마지막 sha 만 보유) |
+원본 총량: docker-hosted **213 태그**, helm-hosted 11 + helm-hosted2 1.
+
+### 2. 이관 결과
+| 실행 | docker(213) | helm(12) | 소요 |
+|---|---|---|---|
+| run1 | OK 204 · SKIP 7 · **FAIL 1**(newteam/app: 로봇에 newteam 권한 없음) · **DIGEST_MISMATCH 1**(legacy:s1) | OK 6 · SKIP 6 | **74초**(docker 67초, big 17.3초) |
+| run2(로봇 `*` 권한 후) | OK 1(newteam) · CONVERTED_SCHEMA1 1 · SKIP 211 | OK 1(**withprov 재push** — prov 레이어가 layers[0] 이라 비교 오류) · SKIP 11 | 16초 |
+| run3(보정 후) | SKIP 212 · SKIP(schema1, 대상 존재) 1 | SKIP 12 | 23초 — **완전 멱등** |
+| 중단 후 재개 | Harbor 에서 scale01~05(50태그) 삭제 → 시작 9초 뒤 kill(34/50 복사됨) → 재실행 OK 16 · SKIP 197 → **50/50** | SKIP 12 | 24초 |
+| 컷오버 델타 | SKIP 213 | SKIP 12 | 18초 |
+전수 대조(`verify-v3.sh`): docker **MATCH 212 / DIFFERENT_DIGEST 1(legacy:s1)**, helm **MATCH 12**, Harbor 에만 있는 것 없음.
+
+### 3. 엣지케이스별 결론
+- **schema1**: Nexus 도 Harbor 도 저장은 받아 주지만 digest 가 매번 바뀌고(서명 재직렬화), **containerd 2.x 는 pull 자체를 거부**(`schema 1 image manifests are no longer supported`). 즉 노드에서 쓸 수 없는 이미지 → 이관 전에 `--format oci` 로 변환해 다시 태그하거나 폐기. v3 는 변환 표시 후 재실행 시 건너뜀.
+- **중첩 경로 / 조각 없는 이름**: `dlops/team-a/svc` 는 그대로, `rootapp` 은 기본 프로젝트 `dlops/rootapp` 로 — 둘 다 digest 일치. 경로 규칙을 공지해야 함.
+- **없는 프로젝트**: admin 으로 자동 생성은 되지만 **로봇에 그 프로젝트 권한이 없으면 push 실패**(`trying to reuse blob … at destination`). 시스템 로봇을 `namespace: "*"` 로 만들거나(PUT /robots/{id} 는 GET 한 JSON 에서 id·시각 필드를 뺀 뒤 permissions 만 바꿔 보내야 200) 프로젝트 생성 시 권한을 함께 부여.
+- **대용량 382MB**: 17.3초(≈22MB/s, 랩 VM 네트워크). 운영은 PAR 조정으로 선형 확장.
+- **OCI 차트가 docker 저장소에 있던 경우**: skopeo 가 그대로 복사, Harbor 가 CHART 로 인식.
+- **helm `+build.5`**: OCI 태그 `1.0.0_build.5` 로 저장되고 `helm pull --version 1.0.0+build.5` 가 알아서 찾음(안내 문구 출력).
+- **.prov**: `helm push` 가 같은 폴더의 `.tgz.prov` 를 함께 올림, `helm pull --prov` 로 회수. 단 manifest 의 레이어 순서가 prov 먼저일 수 있어 내용 비교는 mediaType `…chart.content.v1.tar+gzip` 레이어로.
+- **의존성 차트**: Nexus repo 를 가리키던 `umbrella` 를 OCI 로 올리고 `helm install oci://…/umbrella` → subchart 포함 파드 2개 Running. (subchart 는 패키지 안에 들어 있으므로 Chart.yaml 의 repository 주소는 설치 시 쓰이지 않음. `helm dependency update` 를 다시 돌릴 개발자는 repository 를 `oci://<harbor>/charts` 로 바꿔야 함.)
+- **같은 버전 다른 내용**: Nexus 가 마지막 내용만 보유 → Harbor 로 그것이 올라가고, 이후 내용이 또 바뀌면 v3 가 "기존 내용 → 교체" 로 덮어씀(Harbor 태그 불변 규칙이 없을 때).
+
+### 4. 컷오버(Nexus 읽기 전용) 실측
+`PUT /service/rest/v1/repositories/docker/hosted/<repo>` 로 `storage.writePolicy: DENY`(204). 결과: **docker push 차단**(`blob upload invalid`), **docker pull 200**(manifest·blob), **helm index.yaml 200·tgz 200**, helm 업로드 **500**(차단은 되지만 코드가 500). 정책 변경 직후 수 초간 index.yaml 이 400 을 낸 적 있음 → 변경 후 잠시 대기. 이 상태에서 델타 이관 → 전부 SKIP(변경 없음 확인).
+
+### 5. 남은 주의
+- Harbor 에서 **삭제는 전파되지 않음**(단방향). Nexus 에서 지운 태그는 verify 의 "Harbor 에만 있는 것" 으로 잡힌다.
+- 태그 없는(digest 만의) manifest 는 Nexus components 목록에 없으므로 이관 대상이 아님.
+- 로봇은 프로젝트 저장소 목록 API 403 → verify 의 "Harbor 에만 있는 것" 은 admin 계정으로 돌리는 편이 정확.
+
+
 ---
 
 # 부록 B. 설정 파일
@@ -206,6 +277,7 @@ spec:
   resources:
     requests: {cpu: 100m, memory: 256Mi}
     limits:   {memory: 512Mi}
+
 ```
 
 ## B-2. Harbor 2.14/2.15 values (`values-harbor214-cnpg.yaml`)
@@ -275,7 +347,10 @@ redis:
     image: {repository: ghcr.io/octohelm/harbor/redis-photon, tag: v2.14.0}
 exporter:
   image: {repository: ghcr.io/octohelm/harbor/harbor-exporter, tag: v2.14.0}
+
 ```
+
+
 
 ---
 
@@ -316,25 +391,30 @@ if [ -n "$secret" ]; then
   log "로봇 생성: $name (비밀값은 scratchpad/hc.robot214)"
 else log "로봇 생성 응답: $(echo "$resp" | cut -c1-200)"; fi
 log "프로젝트: $(curl -s -u "$HA" "$H/api/v2.0/projects" | python3 -c 'import sys,json;print([p["name"] for p in json.load(sys.stdin)])')"
+
 ```
 
-## C-2. 이관 (`migrate-nexus-to-harbor-oci.sh`)
+## C-2. 이관 v3 (`migrate-v3.sh`)
 
 ```bash
 #!/bin/bash
-# Nexus(docker-hosted, helm-hosted) → Harbor 2.8+ (ChartMuseum 없음: 차트는 OCI 아티팩트)
-# 필요 도구: curl, python3, skopeo, helm ≥3.8 (OCI). 재실행 안전(이미 있으면 건너뜀).
+# Nexus → Harbor(2.8+, OCI 차트) 이관 v3
+#  - 프로젝트 자동 생성(admin 계정), docker 병렬 복사(PAR), digest 대조, schema1 자동 변환(옵션)
+#  - helm: Nexus tgz sha256 ↔ Harbor 차트 layer digest 비교(같은 버전 다른 내용 감지), '+' → '_' 태그 규칙, .prov 동반
+#  - 재실행 안전, 결과 TSV + 소요 시간
 set -uo pipefail
 NX=${NX:-http://127.0.0.1:8096}; NX_DOCKER=${NX_DOCKER:-127.0.0.1:35600}
-NX_DOCKER_REPO=${NX_DOCKER_REPO:-docker-hosted}; NX_HELM_REPO=${NX_HELM_REPO:-helm-hosted}
+NX_DOCKER_REPO=${NX_DOCKER_REPO:-docker-hosted}; NX_HELM_REPOS=${NX_HELM_REPOS:-helm-hosted}   # 공백 구분 여러 개 가능
 NXA=${NXA:?Nexus user:pass}
 HB=${HB:-http://172.16.141.11:30004}; HB_REG=${HB_REG:-172.16.141.11:30004}
 HB_CHART_PROJECT=${HB_CHART_PROJECT:-charts}; DEFAULT_PROJECT=${DEFAULT_PROJECT:-dlops}
-HBA=${HBA:?Harbor user:pass (로봇)}
-TLS=${TLS:---src-tls-verify=false --dest-tls-verify=false}; HELM_HTTP=${HELM_HTTP:---plain-http}   # 운영(https) 은 둘 다 빈 값
-WORK=${WORK:-/tmp/nx2hb}; mkdir -p $WORK/charts; OUT=${OUT:-$WORK/migrate.log}; : > $OUT
+HBA=${HBA:?Harbor 이관용 계정(로봇) user:pass}; HB_ADMIN=${HB_ADMIN:-}     # 프로젝트 자동 생성에만 admin 사용(없으면 생성 생략)
+PAR=${PAR:-4}; CONVERT_SCHEMA1=${CONVERT_SCHEMA1:-1}
+TLS=${TLS:---src-tls-verify=false --dest-tls-verify=false}; HELM_HTTP=${HELM_HTTP:---plain-http}
+WORK=${WORK:-/tmp/nx2hb3}; mkdir -p $WORK/charts; OUT=${OUT:-$WORK/migrate.log}; : > $OUT
 log(){ echo "$(date +%H:%M:%S) $*" | tee -a $OUT; }
 map_repo(){ case "$1" in */*) echo "$1";; *) echo "$DEFAULT_PROJECT/$1";; esac; }
+export NX NXA HB HB_REG HBA TLS WORK CONVERT_SCHEMA1 DEFAULT_PROJECT
 nx_components(){ python3 - "$NX" "$NXA" "$1" <<'EOF'
 import sys,json,urllib.request,base64
 b,a,repo=sys.argv[1:4]; h={'Authorization':'Basic '+base64.b64encode(a.encode()).decode()}; tok=None
@@ -342,49 +422,188 @@ while True:
     u=f"{b}/service/rest/v1/components?repository={repo}"+(f"&continuationToken={tok}" if tok else "")
     d=json.load(urllib.request.urlopen(urllib.request.Request(u,headers=h)))
     for c in d['items']:
-        asset=next((x for x in c['assets'] if x['path'].endswith('.tgz')), c['assets'][0] if c['assets'] else {})
-        print("\t".join([c['name'],c['version'],asset.get('checksum',{}).get('sha256',''),asset.get('downloadUrl','')]))
+        tgz=next((x for x in c['assets'] if x['path'].endswith('.tgz')),None)
+        prov=next((x for x in c['assets'] if x['path'].endswith('.prov')),None)
+        print("\t".join([c['name'],c['version'],(tgz or {}).get('checksum',{}).get('sha256',''),(tgz or {}).get('downloadUrl',''),(prov or {}).get('downloadUrl','')]))
     tok=d.get('continuationToken')
     if not tok: break
 EOF
 }
-digest_of(){ skopeo inspect --raw $1 "$2" 2>/dev/null | shasum -a 256 | cut -c1-64; }
-HB_USER=${HBA%%:*}; HB_PASS=${HBA#*:}
 
-log "===== 1. docker: $NX_DOCKER_REPO → $HB_REG"
-nx_components $NX_DOCKER_REPO > $WORK/docker.lst; log "원본 이미지 태그 수: $(wc -l < $WORK/docker.lst | tr -d ' ')"
-ok=0; skip=0; fail=0; : > $WORK/docker-result.tsv
-while IFS=$'\t' read -r name ver _ _; do
-  src="docker://$NX_DOCKER/$name:$ver"; dst="docker://$HB_REG/$(map_repo $name):$ver"
-  sd=$(digest_of "--tls-verify=false --creds $NXA" "$src"); td=$(digest_of "--tls-verify=false --creds $HBA" "$dst")
-  if [ -n "$td" ] && [ "$sd" = "$td" ]; then skip=$((skip+1)); printf '%s:%s\tSKIP\t%s\n' "$name" "$ver" "${sd:0:12}" >> $WORK/docker-result.tsv; continue; fi
-  if skopeo copy -q --all --preserve-digests $TLS --src-creds "$NXA" --dest-creds "$HBA" "$src" "$dst" 2>$WORK/err; then
-    td=$(digest_of "--tls-verify=false --creds $HBA" "$dst"); if [ "$sd" = "$td" ]; then ok=$((ok+1)); r=OK; else fail=$((fail+1)); r=DIGEST_MISMATCH; fi
-  else fail=$((fail+1)); r="FAIL $(tail -1 $WORK/err | cut -c1-100)"; fi
-  printf '%s:%s\t%s\t%s→%s\n' "$name" "$ver" "$r" "${sd:0:12}" "${td:0:12}" >> $WORK/docker-result.tsv
-done < $WORK/docker.lst
-log "docker 결과: 복사 $ok / 건너뜀 $skip / 실패 $fail"; sed 's/^/  /' $WORK/docker-result.tsv | tee -a $OUT
+# ---------- 0. 프로젝트 준비 ----------
+T_ALL=$(date +%s)
+log "===== 0. 목록 수집"
+nx_components $NX_DOCKER_REPO > $WORK/docker.lst; : > $WORK/helm.lst; for r in $NX_HELM_REPOS; do nx_components $r | sed "s/^/$r\t/" >> $WORK/helm.lst; done
+log "docker 태그 $(wc -l < $WORK/docker.lst | tr -d ' ')개 / helm 버전 $(wc -l < $WORK/helm.lst | tr -d ' ')개"
+projects=$( { cut -f1 $WORK/docker.lst | while read -r n; do map_repo "$n" | cut -d/ -f1; done; echo $HB_CHART_PROJECT; } | sort -u)
+log "필요 프로젝트: $(echo $projects | tr '\n' ' ')"
+if [ -n "$HB_ADMIN" ]; then for p in $projects; do c=$(curl -s -o /dev/null -w '%{http_code}' -u "$HB_ADMIN" -X POST "$HB/api/v2.0/projects" -H 'Content-Type: application/json' -d "{\"project_name\":\"$p\",\"public\":false}"); log "  프로젝트 $p → $c (201 생성 / 409 있음)"; done
+else log "  HB_ADMIN 없음 → 프로젝트 생성 생략(없는 프로젝트로의 push 는 실패로 기록됨)"; fi
 
-log "===== 2. helm(OCI): $NX_HELM_REPO → oci://$HB_REG/$HB_CHART_PROJECT"
-nx_components $NX_HELM_REPO > $WORK/helm.lst; log "원본 차트 버전 수: $(wc -l < $WORK/helm.lst | tr -d ' ')"
-helm registry login $HB_REG $HELM_HTTP --username "$HB_USER" --password "$HB_PASS" >/dev/null 2>&1 && log "helm registry login OK" || log "helm registry login 실패"
-ok=0; skip=0; fail=0; : > $WORK/helm-result.tsv
-while IFS=$'\t' read -r name ver sha url; do
-  # 존재 확인: Harbor API (프로젝트 charts 의 저장소 <name>, 태그 <ver>)
-  have=$(curl -s -o /dev/null -w '%{http_code}' -u "$HBA" "$HB/api/v2.0/projects/$HB_CHART_PROJECT/repositories/$name/artifacts/$ver")
-  if [ "$have" = 200 ]; then skip=$((skip+1)); printf '%s-%s\tSKIP\n' "$name" "$ver" >> $WORK/helm-result.tsv; continue; fi
-  f=$WORK/charts/$name-$ver.tgz
-  curl -sf -u "$NXA" -o "$f" "$url" || { fail=$((fail+1)); printf '%s-%s\tDOWNLOAD_FAIL\n' "$name" "$ver" >> $WORK/helm-result.tsv; continue; }
-  got=$(shasum -a 256 "$f" | cut -c1-64); [ -n "$sha" ] && [ "$got" != "$sha" ] && { fail=$((fail+1)); printf '%s-%s\tSHA_MISMATCH_SRC\n' "$name" "$ver" >> $WORK/helm-result.tsv; continue; }
+# ---------- 1. docker (병렬) ----------
+log "===== 1. docker → $HB_REG (병렬 $PAR)"
+cat > $WORK/one.sh <<'EOS'
+#!/bin/bash
+# 인자: name version → 한 줄 TSV 출력
+name=$1; ver=$2
+case "$name" in */*) repo=$name;; *) repo=$DEFAULT_PROJECT/$name;; esac
+src="docker://$NX_DOCKER/$name:$ver"; dst="docker://$HB_REG/$repo:$ver"
+dg(){ skopeo inspect --raw $1 "$2" 2>/dev/null | shasum -a 256 | cut -c1-64; }
+raw(){ skopeo inspect --raw --tls-verify=false --creds "$NXA" "$src" 2>/dev/null; }
+sd=$(dg "--tls-verify=false --creds $NXA" "$src"); td=$(dg "--tls-verify=false --creds $HBA" "$dst")
+t0=$(date +%s.%N)
+if [ -n "$td" ] && [ "$sd" = "$td" ]; then printf '%s:%s\tSKIP\t%s\t%s\n' "$name" "$ver" "${sd:0:12}" 0; exit 0; fi
+if [ -n "$td" ] && [ "$td" != e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 ]; then sv0=$(raw | python3 -c 'import sys,json;d=json.load(sys.stdin);print(d.get("schemaVersion"))' 2>/dev/null); [ "$sv0" = 1 ] && { printf '%s:%s\tSKIP(schema1, 대상 존재)\t%s\t%s\n' "$name" "$ver" "${sd:0:12}" 0; exit 0; }; fi
+err=$(skopeo copy -q --all --preserve-digests $TLS --src-creds "$NXA" --dest-creds "$HBA" "$src" "$dst" 2>&1); rc=$?
+if [ $rc = 0 ]; then td=$(dg "--tls-verify=false --creds $HBA" "$dst")
+  if [ "$sd" = "$td" ]; then r=OK
+  else sv=$(raw | python3 -c 'import sys,json;d=json.load(sys.stdin);print(d.get("schemaVersion"))' 2>/dev/null); [ "$sv" = 1 ] && r="CONVERTED_SCHEMA1(digest 변경, 정상)" || r=DIGEST_MISMATCH; fi
+else
+  sv=$(raw | python3 -c 'import sys,json;d=json.load(sys.stdin);print(d.get("schemaVersion"))' 2>/dev/null)
+  if [ "$sv" = 1 ] && [ "$CONVERT_SCHEMA1" = 1 ]; then
+    err2=$(skopeo copy -q --format oci $TLS --src-creds "$NXA" --dest-creds "$HBA" "$src" "$dst" 2>&1) && r="CONVERTED_SCHEMA1(digest 변경)" || r="FAIL_SCHEMA1 $(echo "$err2" | tail -1 | cut -c1-90)"
+  else r="FAIL $(echo "$err" | tail -1 | sed -E 's/.*msg="//' | cut -c1-110)"; fi
+fi
+printf '%s:%s\t%s\t%s→%s\t%.1f\n' "$name" "$ver" "$r" "${sd:0:12}" "${td:0:12}" "$(echo "$(date +%s.%N) - $t0" | bc)"
+EOS
+chmod +x $WORK/one.sh; export NX_DOCKER
+T0=$(date +%s); awk -F'\t' '{print $1, $2}' $WORK/docker.lst | xargs -P $PAR -n 2 $WORK/one.sh > $WORK/docker-result.tsv 2>$WORK/docker.err; T1=$(( $(date +%s)-T0 ))
+log "docker 결과($T1 s): $(cut -f2 $WORK/docker-result.tsv | awk '{print $1}' | sort | uniq -c | awk '{printf "%s=%s ", $2, $1}')"
+grep -vE $'\t(SKIP|OK)\t' $WORK/docker-result.tsv | sed 's/^/  /' | tee -a $OUT
+log "  (대용량·주요 항목 소요) $(grep -E '^dlops/(big|pybase|multi)' $WORK/docker-result.tsv | awk -F'\t' '{printf "%s %s %ss; ", $1, $2, $4}')"
+
+# ---------- 2. helm (OCI) ----------
+log "===== 2. helm → oci://$HB_REG/$HB_CHART_PROJECT"
+HB_USER=${HBA%%:*}; HB_PASS=${HBA#*:}; helm registry login $HB_REG $HELM_HTTP --username "$HB_USER" --password "$HB_PASS" >/dev/null 2>&1 || log "helm registry login 실패"
+: > $WORK/helm-result.tsv; T0=$(date +%s)
+while IFS=$'\t' read -r repo name ver sha url prov; do
+  tag=${ver//+/_}      # OCI 태그에 '+' 불가 → helm 규칙과 동일하게 '_'
+  have=$(curl -s -u "$HBA" -H 'Accept: application/vnd.oci.image.manifest.v1+json' "$HB/v2/$HB_CHART_PROJECT/$name/manifests/$tag" | python3 -c 'import sys,json
+try:
+    d=json.load(sys.stdin); print(next(l["digest"][7:] for l in d["layers"] if l["mediaType"]=="application/vnd.cncf.helm.chart.content.v1.tar+gzip"))
+except Exception: print("")' 2>/dev/null)
+  if [ -n "$have" ] && [ "$have" = "$sha" ]; then printf '%s\t%s-%s\tSKIP(동일 내용)\t%s\n' "$repo" "$name" "$ver" "${sha:0:12}" >> $WORK/helm-result.tsv; continue; fi
+  f=$WORK/charts/$name-$ver.tgz; curl -sf -u "$NXA" -o "$f" "$url" || { printf '%s\t%s-%s\tDOWNLOAD_FAIL\n' "$repo" "$name" "$ver" >> $WORK/helm-result.tsv; continue; }
+  got=$(shasum -a 256 "$f" | cut -c1-64); [ -n "$sha" ] && [ "$got" != "$sha" ] && { printf '%s\t%s-%s\tSHA_MISMATCH_SRC\n' "$repo" "$name" "$ver" >> $WORK/helm-result.tsv; continue; }
+  [ -n "$prov" ] && curl -sf -u "$NXA" -o "$f.prov" "$prov" || rm -f "$f.prov"
+  note=""; [ -n "$have" ] && note=" (기존 내용 ${have:0:12} → 교체)"
   if out=$(helm push "$f" "oci://$HB_REG/$HB_CHART_PROJECT" $HELM_HTTP 2>&1); then
-    dg=$(echo "$out" | grep -o 'Digest: sha256:[0-9a-f]*' | cut -d: -f3 | cut -c1-12); ok=$((ok+1)); r="OK oci-digest=$dg"
-  else fail=$((fail+1)); r="PUSH_FAIL $(echo "$out" | tail -1 | cut -c1-120)"; fi
-  printf '%s-%s\t%s\ttgz=%s\n' "$name" "$ver" "$r" "${got:0:12}" >> $WORK/helm-result.tsv
+    r="OK$note"; [ -f "$f.prov" ] && r="$r +prov"
+    [ "$tag" != "$ver" ] && r="$r tag=$tag"
+  else r="PUSH_FAIL $(echo "$out" | tail -1 | cut -c1-120)"; fi
+  printf '%s\t%s-%s\t%s\t%s\n' "$repo" "$name" "$ver" "$r" "${got:0:12}" >> $WORK/helm-result.tsv
 done < $WORK/helm.lst
-log "helm 결과: push $ok / 건너뜀 $skip / 실패 $fail"; sed 's/^/  /' $WORK/helm-result.tsv | tee -a $OUT
+log "helm 결과($(( $(date +%s)-T0 )) s): $(cut -f3 $WORK/helm-result.tsv | awk '{print $1}' | sort | uniq -c | awk '{printf "%s=%s ", $2, $1}')"
+grep -vE $'\tSKIP' $WORK/helm-result.tsv | sed 's/^/  /' | tee -a $OUT
+log "전체 소요 $(( $(date +%s)-T_ALL )) s"
+
 ```
 
-## C-3. CNPG 재시작 영향 측정 (`pg-restart-test.sh`)
+## C-3. 전수 대조 (`verify-v3.sh`)
+
+```bash
+#!/bin/bash
+# 이관 전수 대조 리포트: Nexus(docker/helm) ↔ Harbor. 변경 없음(읽기 전용). 컷오버 전·후 사인오프용.
+set -uo pipefail
+NX=${NX:-http://127.0.0.1:8096}; NX_DOCKER=${NX_DOCKER:-127.0.0.1:35600}; NX_DOCKER_REPO=${NX_DOCKER_REPO:-docker-hosted}; NX_HELM_REPOS=${NX_HELM_REPOS:-helm-hosted}
+NXA=${NXA:?}; HB=${HB:-http://172.16.141.11:30004}; HB_REG=${HB_REG:-172.16.141.11:30004}; HBA=${HBA:?}; HB_CHART_PROJECT=${HB_CHART_PROJECT:-charts}; DEFAULT_PROJECT=${DEFAULT_PROJECT:-dlops}
+PAR=${PAR:-6}; WORK=${WORK:-/tmp/nx2hb-verify}; mkdir -p $WORK
+nx_components(){ python3 - "$NX" "$NXA" "$1" <<'EOF'
+import sys,json,urllib.request,base64
+b,a,repo=sys.argv[1:4]; h={'Authorization':'Basic '+base64.b64encode(a.encode()).decode()}; tok=None
+while True:
+    d=json.load(urllib.request.urlopen(urllib.request.Request(f"{b}/service/rest/v1/components?repository={repo}"+(f"&continuationToken={tok}" if tok else ""),headers=h)))
+    for c in d['items']:
+        tgz=next((x for x in c['assets'] if x['path'].endswith('.tgz')),None)
+        print("\t".join([c['name'],c['version'],(tgz or {}).get('checksum',{}).get('sha256','')]))
+    tok=d.get('continuationToken')
+    if not tok: break
+EOF
+}
+export NX_DOCKER HB_REG NXA HBA DEFAULT_PROJECT
+cat > $WORK/cmp.sh <<'EOS'
+#!/bin/bash
+name=$1; ver=$2; case "$name" in */*) repo=$name;; *) repo=$DEFAULT_PROJECT/$name;; esac
+s=$(skopeo inspect --raw --tls-verify=false --creds "$NXA" docker://$NX_DOCKER/$name:$ver 2>/dev/null | shasum -a 256 | cut -c1-64)
+t=$(skopeo inspect --raw --tls-verify=false --creds "$HBA" docker://$HB_REG/$repo:$ver 2>/dev/null | shasum -a 256 | cut -c1-64)
+if [ -z "$t" ] || [ "$t" = e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 ]; then r=MISSING_IN_HARBOR; elif [ "$s" = "$t" ]; then r=MATCH; else r=DIFFERENT_DIGEST; fi
+printf '%s:%s\t%s\t%s\t%s\n' "$name" "$ver" "$r" "${s:0:12}" "${t:0:12}"
+EOS
+chmod +x $WORK/cmp.sh
+echo "== docker"; nx_components $NX_DOCKER_REPO > $WORK/d.lst; awk -F'\t' '{print $1, $2}' $WORK/d.lst | xargs -P $PAR -n 2 $WORK/cmp.sh > $WORK/d.tsv
+cut -f2 $WORK/d.tsv | sort | uniq -c | awk '{printf "  %s=%s\n", $2, $1}'; grep -v MATCH $WORK/d.tsv | sed 's/^/  /'
+echo "== helm"; : > $WORK/h.tsv
+for r in $NX_HELM_REPOS; do nx_components $r | while IFS=$'\t' read -r name ver sha; do tag=${ver//+/_}
+  have=$(curl -s -u "$HBA" -H 'Accept: application/vnd.oci.image.manifest.v1+json' "$HB/v2/$HB_CHART_PROJECT/$name/manifests/$tag" | python3 -c 'import sys,json
+try:
+    d=json.load(sys.stdin); print(next(l["digest"][7:] for l in d["layers"] if l["mediaType"]=="application/vnd.cncf.helm.chart.content.v1.tar+gzip"))
+except Exception: print("")' 2>/dev/null)
+  if [ -z "$have" ]; then res=MISSING_IN_HARBOR; elif [ "$have" = "$sha" ]; then res=MATCH; else res=DIFFERENT_CONTENT; fi
+  printf '%s\t%s-%s\t%s\t%s\t%s\n' "$r" "$name" "$ver" "$res" "${sha:0:12}" "${have:0:12}" >> $WORK/h.tsv; done; done
+cut -f3 $WORK/h.tsv | sort | uniq -c | awk '{printf "  %s=%s\n", $2, $1}'; grep -v MATCH $WORK/h.tsv | sed 's/^/  /'
+echo "== Harbor 에만 있는 것(이관 범위 밖 / 삭제분)"; python3 - "$HB" "$HBA" "$WORK" <<'EOF'
+import sys,json,urllib.request,base64
+hb,a,w=sys.argv[1:4]; h={'Authorization':'Basic '+base64.b64encode(a.encode()).decode()}
+def get(u):
+    try: return json.load(urllib.request.urlopen(urllib.request.Request(u,headers=h)))
+    except Exception as e: return []
+src=set(l.split('\t')[0] for l in open(f'{w}/d.tsv'))
+extra=[]
+for p in ('dlops','newteam'):
+    for r in get(f"{hb}/api/v2.0/projects/{p}/repositories?page_size=100"):
+        name=r['name']
+        for art in get(f"{hb}/api/v2.0/projects/{p}/repositories/{name.split('/',1)[1].replace('/','%252F')}/artifacts?page_size=100"):
+            for t in art.get('tags') or []:
+                key=f"{name}:{t['name']}" if '/' in name.split('/',1)[1] or p!='dlops' else f"{name}:{t['name']}"
+                if f"{name}:{t['name']}" not in src and f"{name.split('/',1)[1]}:{t['name']}" not in src: extra.append(f"{name}:{t['name']}")
+print('  '+(', '.join(sorted(extra)) if extra else '없음'))
+EOF
+
+```
+
+## C-4. 엣지케이스 fixture (`seed-edge.sh`)
+
+```bash
+#!/bin/bash
+# 이관 엣지케이스 fixture 를 원본 nexus6 에 심는다 (docker-hosted 127.0.0.1:35600, helm-hosted / helm-hosted2 8096)
+set -uo pipefail
+cd ~/nexus-lab; B=http://127.0.0.1:8096; A="admin:$(cat data/nexus6/admin.password)"; D=127.0.0.1:35600
+OUT=logs/harbor-cnpg/seed-edge.txt; : > $OUT; log(){ echo "$(date +%H:%M:%S) $*" | tee -a $OUT; }
+cp_img(){ local dst=$1; shift; if out=$(skopeo copy -q --src-tls-verify=false --dest-tls-verify=false --dest-creds "$A" "$@" "docker://$D/$dst" 2>&1); then log "  OK   $dst"; else log "  FAIL $dst: $(echo "$out" | tail -1 | cut -c1-150)"; fi; }
+
+log "===== docker 엣지"
+log "[D1] schema1(v2s1) 이미지 — Nexus 가 받는가"; cp_img dlops/legacy:s1 --format v2s1 dir:scratch/zalp
+log "[D2] 중첩 경로 / 프로젝트 조각 없는 이름 / Harbor 에 없는 프로젝트"; cp_img dlops/team-a/svc:1.0 --format oci dir:scratch/zalp; cp_img rootapp:1.0 --format oci dir:scratch/zalp; cp_img newteam/app:1.0 --format oci dir:scratch/zalp
+log "[D3] 대용량(python:3.12 debian, arm64)"; s=$(date +%s); cp_img dlops/big:3.12 --override-os linux --override-arch arm64 docker://docker.io/library/python:3.12; log "  소요 $(( $(date +%s)-s ))s, 크기: $(skopeo inspect --tls-verify=false --creds "$A" docker://$D/dlops/big:3.12 2>/dev/null | python3 -c 'import sys,json;d=json.load(sys.stdin);print(round(sum(l.get("Size",0) for l in d.get("LayersData",[]))/1048576),"MB,",len(d["Layers"]),"layers")')"
+log "[D4] 규모: 저장소 20개 × 태그 10개 = 200 태그(작은 이미지)"; s=$(date +%s); n=0; for r in $(seq -w 1 20); do for t in $(seq 1 10); do skopeo copy -q --dest-tls-verify=false --dest-creds "$A" --format oci dir:scratch/zalp docker://$D/dlops/scale$r:v$t >/dev/null 2>&1 && n=$((n+1)); done; done; log "  push 성공 $n/200, 소요 $(( $(date +%s)-s ))s"
+log "[D5] docker-hosted 에 OCI 차트(helm push oci://nexus) — 받아주는가"; export HELM_REGISTRY_CONFIG=/tmp/helm-nx.json; helm registry login $D --plain-http --username admin --password "$(cat data/nexus6/admin.password)" >/dev/null 2>&1; helm package logs/harbor27/charts/h27a -d /tmp >/dev/null; r=$(helm push /tmp/h27a-0.1.0.tgz oci://$D/dlops/ocicharts --plain-http 2>&1 | tail -1 | cut -c1-120); log "  $r"
+
+log "===== helm 엣지"
+T=$(mktemp -d)
+mk(){ # mk <이름> <버전> → $T/<이름>-<버전>.tgz
+  rm -rf $T/src; cp -r logs/harbor27/charts/h27a $T/src; sed -i '' -E "s/^name:.*/name: $1/; s/^version:.*/version: $2/" $T/src/Chart.yaml; helm package $T/src -d $T >/dev/null 2>&1; ls $T/$1-$2.tgz; }
+up(){ # up <repo> <file>  → Nexus helm hosted 에 업로드
+  curl -s -o /dev/null -w '%{http_code}' -u "$A" --upload-file "$2" "$B/repository/$1/$(basename $2)"; }
+log "[H1] 프리릴리스/빌드메타 버전"; for v in 1.0.0-rc.1 1.0.0+build.5 2.0.0-SNAPSHOT; do f=$(mk edgever $v); log "  edgever-$v → Nexus $(up helm-hosted $f) (파일명 $(basename $f))"; done
+log "[H2] 의존성(subchart) 차트 — Chart.yaml dependencies 가 Nexus helm repo 를 가리킴"; rm -rf $T/umb; cp -r logs/harbor27/charts/h27a $T/umb; sed -i '' -E 's/^name:.*/name: umbrella/; s/^version:.*/version: 0.1.0/' $T/umb/Chart.yaml; printf 'dependencies:\n  - name: h27b\n    version: 0.1.0\n    repository: http://127.0.0.1:8096/repository/helm-hosted/\n' >> $T/umb/Chart.yaml; export HELM_REPOSITORY_CONFIG=/tmp/helm-nx-repos.yaml HELM_REPOSITORY_CACHE=/tmp/helm-nx-cache; helm repo add nxhelm http://127.0.0.1:8096/repository/helm-hosted/ --username admin --password "$(cat data/nexus6/admin.password)" >/dev/null 2>&1; (cd $T/umb && helm dependency update >/dev/null 2>&1 && ls charts/); helm package $T/umb -d $T >/dev/null 2>&1; log "  umbrella-0.1.0 (charts/h27b 포함 $(tar tzf $T/umbrella-0.1.0.tgz | grep -c 'charts/h27b')개 항목) → Nexus $(up helm-hosted $T/umbrella-0.1.0.tgz)"
+log "[H3] .prov 동반 차트"; f=$(mk withprov 0.1.0); printf -- '-----BEGIN PGP SIGNED MESSAGE-----\nname: withprov\nversion: 0.1.0\nfiles:\n  withprov-0.1.0.tgz: sha256:%s\n-----BEGIN PGP SIGNATURE-----\nlab-fake\n-----END PGP SIGNATURE-----\n' "$(shasum -a 256 $f | cut -c1-64)" > $f.prov; log "  withprov-0.1.0.tgz → $(up helm-hosted $f) / .prov → $(up helm-hosted $f.prov)"
+log "[H4] 같은 버전 다른 내용 재업로드 (helm-hosted2, writePolicy ALLOW)"; curl -s -o /dev/null -w '  helm-hosted2 생성 %{http_code}\n' -u "$A" -X POST $B/service/rest/v1/repositories/helm/hosted -H 'Content-Type: application/json' -d '{"name":"helm-hosted2","online":true,"storage":{"blobStoreName":"default","strictContentTypeValidation":true,"writePolicy":"ALLOW"}}' | tee -a $OUT
+f=$(mk dupver 0.1.0); s1=$(shasum -a 256 $f | cut -c1-12); c1=$(up helm-hosted2 $f); rm -rf $T/src; cp -r logs/harbor27/charts/h27a $T/src; sed -i '' -E 's/^name:.*/name: dupver/; s/^version:.*/version: 0.1.0/; s/^description:.*/description: CHANGED CONTENT/' $T/src/Chart.yaml; helm package $T/src -d $T >/dev/null 2>&1; s2=$(shasum -a 256 $f | cut -c1-12); c2=$(up helm-hosted2 $f); log "  1차 $s1 → $c1 / 2차(내용 변경) $s2 → $c2 / Nexus 가 보고하는 sha: $(curl -s -u "$A" "$B/service/rest/v1/components?repository=helm-hosted2" | python3 -c 'import sys,json;print([a["checksum"]["sha256"][:12] for c in json.load(sys.stdin)["items"] for a in c["assets"] if a["path"].endswith(".tgz")])')"
+rm -rf $T
+log "===== 원본 현황"; for r in docker-hosted helm-hosted helm-hosted2; do log "  $r: $(python3 - "$A" "$B" "$r" <<'EOF'
+import sys,json,urllib.request,base64
+a,b,repo=sys.argv[1:4]; h={'Authorization':'Basic '+base64.b64encode(a.encode()).decode()}; tok=None; n=0
+while True:
+    d=json.load(urllib.request.urlopen(urllib.request.Request(f"{b}/service/rest/v1/components?repository={repo}"+(f"&continuationToken={tok}" if tok else ""),headers=h)))
+    n+=len(d['items']); tok=d.get('continuationToken')
+    if not tok: break
+print(n,'컴포넌트')
+EOF
+)"; done
+
+```
+
+## C-5. CNPG 재시작 영향 측정 (`pg-restart-test.sh`)
 
 ```bash
 #!/bin/bash
@@ -418,11 +637,173 @@ for k,good in (("pull","200"),("api","200"),("push","ok")):
     bad=[r["t"] for r in rows if r[k]!=good]
     print(f"  {k:5s} 실패 {len(bad):3d}/{len(rows)}" + (f"  ({bad[0]} ~ {bad[-1]})" if bad else ""))
 EOF
+
 ```
+
+
 
 ---
 
-# 부록 D. 관련 시험 요약
+# 부록 D. Spegel
+
+## Spegel 0.8.1 실측 (2026-11-04 09:17~09:31) — 2노드(cp1·w1), 레지스트리 = Harbor 2.14 (비공개 프로젝트 dlops)
+노드 준비: Vagrant `w1`(3GB) 생성 → Ansible 조인이 **VIP(172.16.141.100) 불통**으로 실패(kube-vip 정적 파드가 cp1 에 없음) → cp1 eth1 에 VIP 를 수동 부여(`ip addr add 172.16.141.100/24 dev eth1`) 후 `kubeadm join --config`(apiServerEndpoint=VIP, node-ip=172.16.141.14) 로 20초 만에 Ready. (랩 복구용 조치, 되돌리려면 `ip addr del`.)
+사전 조건 충족 확인: containerd 2.2.1, `config_path=/etc/containerd/certs.d`, `discard_unpacked_layers=false`. 이미지 `ghcr.io/spegel-org/spegel:v0.8.1`(arm64 있음) 내부 레지스트리 반입, 차트 `oci://ghcr.io/spegel-org/helm-charts/spegel` 0.8.1.
+
+### 1. 설치에서 겪은 문제 — 기존 미러 설정 소실
+`mirroredRegistries: [Harbor, 내부레지스트리]` + `prependExisting: true` 로 설치하자 **목록에 없는 docker.io/ghcr.io/quay.io/registry.k8s.io 의 hosts.toml 이 `_backup/` 으로 옮겨져 사라짐** → w1 에서 `docker.io/library/busybox` pull 이 registry-1.docker.io 로 나가 실패(폐쇄망 미러 단절). `prependExisting` 은 "목록에 있는 레지스트리의 기존 설정을 보존" 이지 "목록 밖을 건드리지 않음" 이 아니다.
+해결: 노드에 있는 **모든** 미러 레지스트리를 `mirroredRegistries` 에 명시(docker.io, ghcr.io, quay.io, registry.k8s.io, public.ecr.aws, 내부 레지스트리, Harbor). upgrade 후 각 hosts.toml 이 `[Spegel 30020] → [내부 레지스트리]` 순서로 복원되고 docker.io pull 정상.
+
+### 2. 시험 결과 (`spegel-test.sh`, `spegel-test2.sh`)
+| 시험 | 결과 |
+|---|---|
+| T1 피어 서빙 | cp1 이 Harbor 에서 받은 pybase(60MB)를 w1 이 pull → **Harbor 로 간 요청 0건**, Spegel 메트릭 w1 `cache=hit`, digest 일치 |
+| T2 Harbor 완전 정지(core·nginx 0) | cp1 보유 이미지는 w1 이 **정상 pull**(인증 유무 무관), 클러스터에 없는 이미지는 실패. 복구 21초 |
+| T3 **latest 재사용** | Harbor 의 `lt:latest` 를 A→B 로 덮어쓴 뒤 w1 pull → **옛 A 를 받음**(cp1 피어가 태그를 A 로 해석). cp1 재pull 도 A. `registryFilters: [":latest$"]` 적용 후 w1 → **B** |
+| T4 무인증 pull | 비공개 프로젝트 이미지를 w1 이 **자격증명 없이** 받음(cp1 보유 시). 클러스터에 없으면 Harbor 가 거부. Spegel FAQ 가 경고하는 그대로 — 멀티테넌트에서 이미지 격리 불가 |
+| T5 Spegel 파드 재시작 | 재시작 뒤 w1 pull Harbor 요청 0건(광고 복원) |
+| T6 피어 다운 폴백 | cp1 Spegel 재시작 중 / cp1:30020 차단 중 w1 pull → **Harbor 로 폴백, 13.6~13.9초**(피어 경유 14.7초와 차이 없음, resolve 타임아웃 20ms) |
+| T7 대용량 382MB | Harbor 직접 20.6초 vs 피어 14.7초 |
+| T8 자원 | 디스크 `/var/lib/spegel` 8KB(저장소 없음), 메모리 limit 128Mi |
+
+### 3. 판단
+- 효과: 같은 클러스터에 한 번 들어온 이미지는 레지스트리(Harbor) 장애와 무관하게 pull 되고, Harbor/Nexus 요청이 줄어든다. 설치는 DaemonSet 하나, 저장소 없음.
+- 반드시 할 것: ① `mirroredRegistries` 에 노드의 모든 미러 레지스트리 명시(안 하면 폐쇄망 미러 단절) ② `latest` 등 가변 태그는 `registryFilters` 로 제외하거나 digest 고정 배포 ③ 비공개 이미지 격리가 요구되면 부적합(무인증 피어 서빙).
+- 첫 pull·클러스터 밖 소비자는 혜택 없음(그 자리는 레지스트리/미러의 몫).
+
+## D-values. Spegel values (`values-spegel.yaml`)
+
+```yaml
+# Spegel 0.8.1 — 랩 2노드(cp1, w1). 이미지는 containerd 미러(ghcr.io → 내부 레지스트리)로 받는다.
+image:
+  repository: ghcr.io/spegel-org/spegel
+  tag: v0.8.1
+spegel:
+  # Harbor(이관 대상)와 내부 미러 레지스트리만 Spegel 을 거치게 한다
+  # 주의: 여기 없는 레지스트리의 hosts.toml 은 Spegel 이 _backup 으로 옮겨 버린다(prependExisting 와 무관).
+  #       폐쇄망 미러(docker.io 등 → 내부 레지스트리)가 끊기므로 노드에 있는 모든 미러 레지스트리를 전부 적는다.
+  mirroredRegistries:
+    - http://172.16.141.11:30004
+    - https://172.16.141.10:5000
+    - https://docker.io
+    - https://ghcr.io
+    - https://quay.io
+    - https://registry.k8s.io
+    - https://public.ecr.aws
+  # 기존 hosts.toml(내부 미러 설정)을 지우지 않고 Spegel 을 앞에 붙인다 — 기본값 false 면 덮어씀
+  prependExisting: true
+  resolveTags: true          # 1차: 기본값 그대로 두고 latest 재사용 문제를 재현한다
+  mirrorResolveTimeout: "20ms"
+  mirrorResolveRetries: 3
+resources:
+  requests: {cpu: 50m, memory: 64Mi}
+  limits: {memory: 128Mi}
+
+```
+
+## D-test1. 피어·장애·latest·무인증·재시작 (`spegel-test.sh`)
+
+```bash
+#!/bin/bash
+# Spegel 0.8.1 실측: 2노드(cp1, w1), 레지스트리 = Harbor 2.14 (172.16.141.11:30004, 프로젝트 dlops 비공개)
+# T1 피어 서빙  T2 Harbor 장애 중 pull  T3 latest 재사용(스테일)  T4 무인증 pull  T5 Spegel 재시작
+set -uo pipefail
+S=/private/tmp/claude-502/-Users-isangmin-Desktop-k8s-core/15083b2b-daf4-4c3e-9697-806fdbc7b2e3/scratchpad
+export KUBECONFIG=$S/kubeconfig; . $S/hc.robot214; HA="admin:$(cat $S/hc.admin)"; RA="$ROBOT_NAME:$ROBOT_SECRET"
+HB=172.16.141.11:30004; OUT=~/nexus-lab/logs/spegel/test.txt; : > $OUT
+cd ~/Desktop/k8s-core
+log(){ echo "$(date +%H:%M:%S) $*" | tee -a $OUT; }
+vs(){ timeout 180 vagrant ssh $1 -c "$2" 2>/dev/null | grep -v 'Warning: Permanently' | tr -d '\r'; }
+pull(){ # pull <node> <image> [creds]  → "rc=.. Ns"  (creds 생략 = 무인증)
+  local c=""; [ -n "${3:-}" ] && c="--creds '$3'"
+  vs $1 "s=\$(date +%s.%N); sudo crictl pull $c $2 >/tmp/pull.out 2>&1; rc=\$?; e=\$(date +%s.%N); printf 'rc=%s %.1fs %s\n' \$rc \$(echo \"\$e - \$s\" | bc) \"\$(tail -1 /tmp/pull.out | cut -c1-110)\""; }
+rmi(){ vs $1 "sudo crictl rmi $2 >/dev/null 2>&1; echo removed"; }
+imgid(){ vs $1 "sudo crictl inspecti $2 2>/dev/null | python3 -c 'import sys,json;d=json.load(sys.stdin);print(d[\"status\"][\"repoDigests\"][0].split(\"@\")[1][7:19])' 2>/dev/null || echo none"; }
+spegel_metrics(){ # 노드별 spegel 파드의 mirror 요청 카운터
+  for n in cp1 w1; do pod=$(kubectl -n spegel get pods -o wide --no-headers | awk -v n=$n '$7==n{print $1}'); ip=$(kubectl -n spegel get pod $pod -o jsonpath='{.status.podIP}')
+    echo "  [$n] $(vs cp1 "curl -s http://$ip:9090/metrics" | grep -E '^spegel_mirror_requests_total' | sed -E 's/spegel_mirror_requests_total//' | tr '\n' ' ' | cut -c1-300)"; done; }
+harbor_hits(){ # Harbor nginx 로그에서 w1(172.16.141.14) 의 blob/manifest 요청 수 (since 초)
+  kubectl -n harbor-cnpg logs deploy/harbor214-nginx --since=${1}s 2>/dev/null | grep -E '172\.16\.141\.14' | grep -cE 'GET /v2/.*(blobs|manifests)'; }
+
+IMG=$HB/dlops/pybase:3.12   # 60MB, 레이어 4개
+log "===== 준비: 양쪽 노드에서 시험 이미지 제거"; rmi cp1 $IMG >/dev/null; rmi w1 $IMG >/dev/null; rmi cp1 $HB/dlops/app2:2.0 >/dev/null; rmi w1 $HB/dlops/app2:2.0 >/dev/null
+log "Spegel 파드: $(kubectl -n spegel get pods -o wide --no-headers | awk '{print $1"@"$7":"$3}' | tr '\n' ' ')"
+
+log "===== T1. 피어 서빙: cp1 이 Harbor 에서 받은 뒤 w1 이 받으면 cp1 에서 오는가"
+log "cp1 pull(Harbor 에서): $(pull cp1 $IMG "$RA")"
+sleep 3; T0=$(date +%s)
+log "w1 pull(인증 포함): $(pull w1 $IMG "$RA")"
+sleep 2; log "  w1 → Harbor 로 간 blob/manifest 요청: $(harbor_hits $(( $(date +%s)-T0+2 )))건 (0 이면 전부 피어에서)"
+log "  Spegel 메트릭:"; spegel_metrics | tee -a $OUT
+log "  digest 일치: cp1=$(imgid cp1 $IMG) w1=$(imgid w1 $IMG)"
+
+log "===== T2. Harbor 전체 정지 중: cp1 에 있는 이미지는 w1 이 받고, 없는 이미지는 실패하는가"
+log "cp1 에 app2 미리: $(pull cp1 $HB/dlops/app2:2.0 "$RA")"; rmi w1 $HB/dlops/app2:2.0 >/dev/null; rmi w1 $IMG >/dev/null
+kubectl -n harbor-cnpg scale deploy harbor214-nginx harbor214-core --replicas=0 >/dev/null; sleep 8
+log "Harbor 상태: $(curl -s -m 3 -o /dev/null -w '%{http_code}' http://$HB/api/v2.0/ping) (000=다운)"
+log "w1 pull pybase(cp1 보유, 인증): $(pull w1 $IMG "$RA")"
+log "w1 pull app2(cp1 보유, 무인증): $(pull w1 $HB/dlops/app2:2.0)"
+log "w1 pull app1:1.1(클러스터에 없음): $(pull w1 $HB/dlops/app1:1.1 "$RA")"
+kubectl -n harbor-cnpg scale deploy harbor214-nginx harbor214-core --replicas=1 >/dev/null; for i in $(seq 1 30); do sleep 3; [ "$(curl -s -m 3 -o /dev/null -w '%{http_code}' http://$HB/api/v2.0/ping)" = 200 ] && break; done; log "Harbor 복구 $((i*3))s"
+
+log "===== T4. 무인증 pull: w1 이 자격증명 없이 비공개 프로젝트 이미지를 받는가(Spegel FAQ 경고 항목)"
+rmi w1 $IMG >/dev/null; log "w1 pull pybase 무인증(cp1 보유): $(pull w1 $IMG)"
+rmi w1 $HB/dlops/web:1.0 >/dev/null; rmi cp1 $HB/dlops/web:1.0 >/dev/null; log "w1 pull web:1.0 무인증(클러스터 미보유 → Harbor 가 거부해야): $(pull w1 $HB/dlops/web:1.0)"
+
+log "===== T3. latest 재사용: 같은 태그에 다른 이미지를 올리면 피어가 옛 digest 를 주는가"
+skopeo copy -q --dest-tls-verify=false --dest-creds "$RA" --format oci dir:$HOME/nexus-lab/scratch/zalp docker://$HB/dlops/lt:latest && A=$(skopeo inspect --raw --tls-verify=false --creds "$RA" docker://$HB/dlops/lt:latest | shasum -a 256 | cut -c1-12); log "Harbor lt:latest = A($A)"
+rmi cp1 $HB/dlops/lt:latest >/dev/null; rmi w1 $HB/dlops/lt:latest >/dev/null
+log "cp1 pull latest: $(pull cp1 $HB/dlops/lt:latest "$RA") → $(imgid cp1 $HB/dlops/lt:latest)"
+skopeo copy -q --dest-tls-verify=false --dest-creds "$RA" --override-os linux --override-arch arm64 docker://docker.io/library/busybox:1.36 docker://$HB/dlops/lt:latest && B=$(skopeo inspect --raw --tls-verify=false --creds "$RA" docker://$HB/dlops/lt:latest | shasum -a 256 | cut -c1-12); log "Harbor lt:latest 를 B($B) 로 덮어씀"
+log "w1 pull latest (기대: Harbor 의 B, 스테일이면 A): $(pull w1 $HB/dlops/lt:latest "$RA") → $(imgid w1 $HB/dlops/lt:latest)"
+log "cp1 다시 pull latest: $(pull cp1 $HB/dlops/lt:latest "$RA") → $(imgid cp1 $HB/dlops/lt:latest)"
+log "-- registryFilters [':latest$'] 적용(latest 는 Spegel 이 태그 해석 안 함)"
+helm upgrade spegel ~/nexus-lab/spegel/spegel-0.8.1.tgz -n spegel -f ~/nexus-lab/spegel/values-spegel.yaml --set 'spegel.registryFilters[0]=:latest$' --wait --timeout 3m >/dev/null 2>&1; kubectl -n spegel rollout status ds/spegel --timeout=120s >/dev/null 2>&1
+rmi w1 $HB/dlops/lt:latest >/dev/null
+log "w1 pull latest (필터 후, 기대 B): $(pull w1 $HB/dlops/lt:latest "$RA") → $(imgid w1 $HB/dlops/lt:latest)"
+log "w1 pull latest 무인증(필터 후 → 태그 해석은 Harbor 가 하므로 거부돼야): $(rmi w1 $HB/dlops/lt:latest >/dev/null; pull w1 $HB/dlops/lt:latest)"
+
+log "===== T5. Spegel 파드 재시작 뒤 피어 서빙 유지"
+kubectl -n spegel delete pod -l app.kubernetes.io/name=spegel --wait=true >/dev/null 2>&1; kubectl -n spegel rollout status ds/spegel --timeout=120s >/dev/null 2>&1; sleep 5
+rmi w1 $IMG >/dev/null; T0=$(date +%s); log "w1 pull pybase(cp1 보유): $(pull w1 $IMG "$RA") / Harbor 요청 $(sleep 2; harbor_hits $(( $(date +%s)-T0+2 )))건"
+log "===== 정리"; curl -s -o /dev/null -w "lt 저장소 삭제 %{http_code}\n" -u "$HA" -X DELETE http://$HB/api/v2.0/projects/dlops/repositories/lt | tee -a $OUT
+log "끝"
+
+```
+
+## D-test2. 폴백·대용량·자원 (`spegel-test2.sh`)
+
+```bash
+#!/bin/bash
+# Spegel 추가: T6 피어 다운 시 폴백(지연), T7 대용량(382MB) 피어 vs Harbor 전송 시간, T8 자원 사용
+set -uo pipefail
+S=/private/tmp/claude-502/-Users-isangmin-Desktop-k8s-core/15083b2b-daf4-4c3e-9697-806fdbc7b2e3/scratchpad
+export KUBECONFIG=$S/kubeconfig; . $S/hc.robot214; RA="$ROBOT_NAME:$ROBOT_SECRET"; HB=172.16.141.11:30004; OUT=~/nexus-lab/logs/spegel/test2.txt; : > $OUT
+cd ~/Desktop/k8s-core; log(){ echo "$(date +%H:%M:%S) $*" | tee -a $OUT; }
+vs(){ timeout 300 vagrant ssh $1 -c "$2" 2>/dev/null | grep -v 'Warning: Permanently' | tr -d '\r'; }
+pull(){ vs $1 "s=\$(date +%s.%N); sudo crictl pull --creds '$RA' $2 >/tmp/p.out 2>&1; rc=\$?; e=\$(date +%s.%N); printf 'rc=%s %.1fs\n' \$rc \$(echo \"\$e - \$s\" | bc)"; }
+rmi(){ vs $1 "sudo crictl rmi $2 >/dev/null 2>&1; true"; }
+BIG=$HB/dlops/big:3.12
+log "===== T7. 대용량 382MB: Harbor 직접 vs 피어"
+rmi cp1 $BIG; rmi w1 $BIG
+log "cp1 ← Harbor: $(pull cp1 $BIG)"
+log "w1  ← 피어(cp1): $(pull w1 $BIG)"
+rmi w1 $BIG; kubectl -n spegel delete pod -l app.kubernetes.io/name=spegel --field-selector spec.nodeName=cp1 --wait=false >/dev/null 2>&1
+log "===== T6. 피어(cp1) Spegel 다운 중 w1 pull → Harbor 폴백 지연"
+sleep 2; log "cp1 spegel: $(kubectl -n spegel get pods -o wide --no-headers | awk '$7=="cp1"{print $3}' | tr '\n' ' ')"
+log "w1 ← (cp1 spegel 재시작 중) : $(pull w1 $BIG)"
+kubectl -n spegel rollout status ds/spegel --timeout=120s >/dev/null 2>&1; rmi w1 $BIG
+log "cp1 노드 자체 차단(w1→cp1:30020 DROP) 후 w1 pull: $(vs w1 "sudo iptables -I OUTPUT -d 172.16.141.11 -p tcp --dport 30020 -j DROP; true" >/dev/null; pull w1 $BIG)"; vs w1 "sudo iptables -D OUTPUT -d 172.16.141.11 -p tcp --dport 30020 -j DROP; true" >/dev/null
+log "===== T8. Spegel 자원"; kubectl -n spegel top pods --containers 2>/dev/null | tail -n +2 | awk '{print "  "$1, $2, $3, $4}' | tee -a $OUT; vs cp1 'du -sh /var/lib/spegel 2>/dev/null' | sed 's/^/  spegel 데이터: /' | tee -a $OUT
+log "끝"
+
+```
+
+
+
+---
+
+# 부록 E. 관련 시험 요약
 
 ## D-1. Harbor proxy-cache 상류 장애 (Harbor 2.13 → 2.7, 12분 단절)
 
