@@ -114,6 +114,24 @@
 | 피어 다운 폴백 | 13.6~13.9초(피어 경유 14.7초와 동일) — 지연 없음 |
 | 382MB 전송 | Harbor 직접 20.6초 vs 피어 14.7초 |
 
+## 5차: 폐쇄망 인프라 항목 실측 (DNS 이름·VIP:443·PKI·NTP·Spegel 정책·Trivy 오프라인·LDAP·MTU·CNPG S3 백업/PITR·태그 정책)
+
+"운영 폐쇄망 인프라 사전 결정 사항" 절의 항목 중 **규모와 무관한 동작 성질**을 랩에서 전부 돌렸다. 상세·수치·원문 로그는 부록 F, 설정·스크립트는 부록 G.
+
+| 항목 | 구성 | 결과 (요점) |
+|---|---|---|
+| DNS 이름 + 사설 CA 자동 발급 | cert-manager 1.21.3 + ClusterIssuer(lab-ca) → `harbor.lab` 인증서(SAN DNS+VIP, 90일/15일 전 갱신) | 2초에 발급, 기존 Secret 인수. `externalURL: https://harbor.lab`(포트 없음) → 이미지 참조에 포트가 안 붙음 |
+| VIP:443 | Cilium L2 Announcement + LB IPAM(172.16.141.200/32) + Gateway(LB 모드, 443, hostname) | 외부(Mac·CI VM)·노드·파드 모두 200. **리더 에이전트 삭제 → 리스 1초 이전, 0.25s 프로브 211회 실패 0** |
+| 외부 CI 호스트 | registry VM(skopeo/helm/docker, OS 신뢰 저장소에 CA) | skopeo·helm OCI·docker push/pull 전부 OK, digest·sha 왕복 일치 |
+| 파드 내부 이름 해석 | CoreDNS `hosts` + `template`(AAAA NODATA, 상속 접미사 NXDOMAIN) | **이슈**: 상류 DNS 가 응답 없으면 ndots 검색 때문에 musl/glibc 가 전체 조회 실패(아래 이슈 표) |
+| NTP | w1 시계 ±5~60분, -8h, core 2 replica | core 1개면 ±60분도 멀쩡(발급=검증). **core 2개 분산 + 한 노드 +31분 → 20회 중 3회 401** `token is not valid yet`. 시계가 인증서 notBefore 이전이면 노드 pull x509 실패 |
+| Spegel 포트 정책 | CiliumNetworkPolicy: 5000/5001 은 host·remote-node·Spegel 파드만 | 일반 파드·외부(30020) 차단, 노드 pull 유지 |
+| Trivy 오프라인 | `trivy-db:2` OCI 아티팩트를 skopeo 로 반입 → `harbor.lab/tools/trivy-db`, `dbRepository` 로 지정, `caBundleSecretName` | 스캔 20초 Success(취약점 6). DB 는 Harbor 에서 받음(GitHub 미접속). java-db 948MB 는 생략 |
+| LDAP | glauth(설정 파일 LDAP) → `auth_mode: ldap_auth` | 사용자 로그인·역할·push 권한 OK, LDAP 정지 시 LDAP 사용자만 401(admin·로봇 정상). 그룹 매핑은 glauth 의 base 스코프 검색 미지원으로 미확인(AD 에서 확인 필요) |
+| MTU | w1 수신 VXLAN 1300B 초과 DROP(ICMP 없음) | API 는 200, **push 2s → 40s**. `--set MTU=1250` → 기존 파드 MTU 즉시 반영, 2s 복귀 |
+| CNPG S3 백업/PITR | barman-cloud 플러그인 0.15.1 + MinIO + ObjectStore | 사이드카 롤링 34s(Harbor 무영향), 백업 9s, **PITR 복구 61s, targetTime 전 행만 복원** |
+| 태그 불변성·보존 | immutable rule `v*`, retention latestPushedK=2 | 덮어쓰기 거부·삭제 412. **보존 단위는 digest** — 태그 6개 달린 아티팩트 1개가 통째로 삭제됨 |
+
 ## 겪은 이슈 (전부 해결)
 
 | 이슈 | 원인 | 해결 |
@@ -122,6 +140,13 @@
 | `kubectl apply` CNPG 매니페스트 실패 `annotations: Too long` | CRD 크기 | `kubectl apply --server-side` |
 | Harbor 차트 `maxOpenConns` 기본 900 | PG `max_connections` 200 초과 | 랩에서는 50 으로 조정(랩용 값, 운영 사이징은 서두 절 참고) |
 | jobservice 초기 2회 재시작 | redis 준비 전 기동 | 정상, 조치 불필요 |
+| 5차 LB 모드 전환 뒤 VIP:443 `Connection refused` | `gatewayAPI.hostNetwork` 전환을 cilium-envoy DaemonSet 이 반영 못함(에이전트·오퍼레이터 재시작만으론 부족) | `kubectl -n kube-system rollout restart ds/cilium-envoy` |
+| 5차 파드에서 `harbor.lab`·`kubernetes.default.svc` 조회 실패(4.77s 뒤 resolve 오류), `nslookup` 은 됨 | 노드에서 상속된 search `localdomain` 후보가 CoreDNS forward → 파드가 못 닿는 상류 DNS 로 가서 SERVFAIL. musl/glibc 는 SERVFAIL 에서 검색 중단. `hosts { fallthrough }` 는 AAAA 도 상류로 보냄 | Corefile `hosts`+`template IN AAAA lab {rcode NOERROR}`+`template IN ANY localdomain {rcode NXDOMAIN}`. 운영은 사내 DNS 가 모든 질의에 빠른 NXDOMAIN 을 주는지 확인 |
+| 5차 CoreDNS `hosts lab { }` 무시됨 | `lab` 을 파일명으로 해석(`File does not exist: lab`) | 문법 `hosts [FILE [ZONES]]` — 영역만 줄 수 없음 |
+| 5차 glauth CrashLoop `[dumb-init] -c: No such file` | 이미지 ENTRYPOINT 가 dumb-init 뿐 | `command: ["/app/glauth","-c",…]` |
+| 5차 barman 플러그인 사이드카 이미지가 ghcr.io 그대로 | manifest 의 `SIDECAR_IMAGE` 는 생성된 Secret 에 있음 | Secret 값을 미러 경로로 패치 후 deploy 재시작 |
+| 5차 Harbor LDAP 그룹 등록 404/400 `failed to search ldap group` | Harbor 는 groupDN 을 base 스코프로 검색, glauth 는 base 스코프에 빈 응답 | glauth 한계. 사용자 단위 멤버십으로 대체 검증 |
+| 5차 MinIO 버킷 생성용 `mc` 이미지 태그 조회 실패 | Docker Hub 태그 API 호출 오류 | `curl --aws-sigv4` 로 S3 PutBucket 직접 호출 |
 | 로봇으로 프로젝트 저장소 목록 API 403 | 로봇 권한 범위 | 개별 아티팩트 목록은 200; 전체 목록은 admin 으로 |
 | 공식 goharbor 2.15 이미지 arm64 없음 | amd64 단일 아키 | arm64 랩은 2.14.0(octohelm) |
 | 새 프로젝트로 push 실패 `trying to reuse blob … at destination` | admin 이 프로젝트는 만들었지만 로봇에 권한 없음 | 시스템 로봇 `namespace: "*"` (PUT /robots/{id} 는 GET JSON 에서 id·시각 필드 제거 후 permissions 교체) |
@@ -1117,3 +1142,616 @@ log "끝"
 ## D-2. Harbor 2.7 ChartMuseum 경로
 
 nginx(njs) 로 Nexus helm PUT 경로를 ChartMuseum multipart POST 로 치환해 기존 엔드포인트 유지 가능. 업로드 한도 20MiB→100MiB(ConfigMap MAX_UPLOAD_SIZE), ALLOW_OVERWRITE false 면 409. 최신 Harbor 채택으로 미사용.
+
+# 부록 F. 5차 실측 기록 (랩 로그 원문)
+
+## F-0. 5차: 폐쇄망 인프라 항목 실측 (2026-11-05, DNS 이름·VIP:443·PKI·NTP·Spegel 정책·Trivy 오프라인·LDAP·MTU·CNPG S3 백업/PITR·태그 정책)
+
+랩: cp1(172.16.141.11, control-plane) / w1(172.16.141.14) arm64 2vCPU, registry VM(172.16.141.10, skopeo·helm·docker 있음 → "외부 CI 호스트" 역할), Mac(172.16.141.1, sudo 불가 → `/etc/hosts` 못 바꿔 `curl --resolve` 만).
+Harbor 2.14.0(chart 1.18.0) + CNPG 1.30.1/PG 16.15 + Cilium 1.20.1 + Spegel 0.8.1. 새로 들어온 것: cert-manager v1.21.3, barman-cloud 플러그인 v0.15.1, glauth v2.4.0, MinIO RELEASE.2025-04-22, Trivy v0.66.0(trivy-adapter-photon v2.14.0).
+
+### F-0. 반입(미러 172.16.141.10:5000)
+`skopeo copy --override-arch arm64 --dest-tls-verify=false` 로 jetstack/cert-manager-{controller,webhook,cainjector,startupapicheck}:v1.21.3, glauth/glauth:v2.4.0, octohelm/harbor/trivy-adapter-photon:v2.14.0, cloudnative-pg/plugin-barman-cloud{,-sidecar}:v0.15.1, curlimages/curl:8.11.1. 차트 cert-manager-v1.21.3.tgz, 플러그인 manifest.yaml(v0.15.1).
+Trivy DB: `skopeo copy docker://ghcr.io/aquasecurity/trivy-db:2 oci:./trivy-db:2` 로 OCI 아티팩트(layer `application/vnd.aquasec.trivy.db.layer.v1.tar+gzip` 132MB) 를 받아 Harbor 에 그대로 push 가능. java-db 는 948MB 라 이번엔 생략.
+
+### F-1. DNS 이름 + cert-manager + Cilium L2 VIP:443 (항목 1·2)
+- cert-manager 설치 → Secret lab-ca(기존 랩 CA 키) → ClusterIssuer lab-ca → Certificate harbor-tls(dnsNames harbor.lab, ipAddresses 172.16.141.200, 90일, 15일 전 갱신) → **2초에 Ready**, SAN `DNS:harbor.lab, IP:172.16.141.200`, cert-manager 가 기존 Secret harbor-tls 를 인수.
+- Cilium: `l2announcements.enabled=true`(lease 3s/1s/200ms), `externalIPs.enabled=true`, `gatewayAPI.hostNetwork.enabled=false`, k8sClientRateLimit 20/40. CiliumLoadBalancerIPPool 172.16.141.200/32(serviceSelector `io.cilium.gateway/owning-gateway: harbor-gw`), CiliumL2AnnouncementPolicy(eth1). Gateway: `addresses: [172.16.141.200]`, 리스너 443, hostname harbor.lab. → Service `cilium-gateway-harbor-gw` type LoadBalancer EXTERNAL-IP 172.16.141.200, Gateway Programmed=True.
+- **이슈 1**: 전환 직후 VIP:443 **Connection refused**(노드 자신에서도). `cilium-dbg service list` 에 LB 항목은 있으나 백엔드 없음. cilium-operator·cilium 에이전트 재시작만으로는 안 됨 → **`kubectl -n kube-system rollout restart ds/cilium-envoy`** 뒤 백엔드 `127.0.0.1:<proxy port>` 가 붙고 200. hostNetwork ↔ LB 모드 전환 시 Envoy DS 도 재시작해야 한다.
+- Mac → VIP: ARP 응답 OK(리더 노드 MAC), ping 200, 11ms. 토큰 realm `https://harbor.lab/service/token`.
+- Harbor `externalURL: https://harbor.lab`(포트 없음) 로 전환 23s. Spegel `mirroredRegistries` 에 `https://harbor.lab` → hosts.toml `harbor.lab/` 생성(server=https://harbor.lab, 피어 30020). 기존 `172.16.141.11:30004`/`:8443` hosts.toml 은 Spegel 이 제거(3차에서 본 동작 그대로).
+- 노드·registry VM `/etc/hosts` 에 `172.16.141.200 harbor.lab`. registry VM 은 OS 신뢰 저장소에 CA 가 없어 000 → `/usr/local/share/ca-certificates/` + `update-ca-certificates` 후 200.
+- **외부 CI 호스트(registry VM)**: skopeo push 0.8s·digest 왕복 일치(5ca6a002c5c3), helm `registry login`/`push oci://harbor.lab/charts`/`pull` tgz sha 일치(3cd411a5dac3), docker login/pull/push OK(docker 는 OS CA 를 그대로 씀), `openssl s_client` Verify return code 0.
+- **노드 pull**: `crictl pull harbor.lab/dlops/pybase:3.12`(robot) OK, Deployment 2 replica(cp1/w1) imageID `harbor.lab/dlops/pybase@sha256:5642cb13…`(NodePort 시절과 같은 digest). Spegel 메트릭: cp1 miss(harbor.lab) 4, w1 hit 3.
+- **VIP 페일오버(리더 w1 의 cilium-agent 파드 삭제)**: 리스 → cp1 **1초**, Mac ARP 가 cp1 MAC 으로 바뀜, **0.25s 간격 211회 프로브 실패 0**. (노드 전원 장애는 시험하지 않음 — 리스 3s + ARP 갱신만큼은 끊길 것)
+
+#### 이슈 2 (중요): 파드 안에서 `harbor.lab` 이 안 풀림 — CoreDNS·검색 접미사·상류 DNS
+- 증상: `nslookup harbor.lab` 은 되는데 curl(alpine/musl)·getent(debian/glibc) 는 **4.77초 뒤 "Could not resolve host"**. 심지어 `curl https://kubernetes.default.svc` 도 실패.
+- 원인: 파드 resolv.conf 는 `ndots:5` + search `default.svc.cluster.local svc.cluster.local cluster.local **localdomain**`(노드 DHCP 에서 상속). 후보 `harbor.lab.localdomain` 이 CoreDNS `forward . /etc/resolv.conf`(192.168.149.2) 로 가는데 **파드 → 상류 DNS 가 i/o timeout**(랩에선 Cilium devices=eth1 이라 eth0 쪽 egress 미SNAT). CoreDNS 가 SERVFAIL 을 돌려주면 musl·glibc 는 **검색을 중단하고 전체 조회를 실패** 처리한다. `hosts { … fallthrough }` 만 넣으면 AAAA 조회도 fallthrough 로 상류에 가서 같은 일이 난다.
+- 오답 1: `hosts lab { … }` → CoreDNS 는 `lab` 을 **파일명**으로 해석(`plugin/hosts: File does not exist: lab`), 문법은 `hosts [FILE [ZONES…]]`.
+- 해결(Corefile):
+  ```
+  hosts { 172.16.141.200 harbor.lab
+          fallthrough }
+  template IN AAAA lab { rcode NOERROR }          # AAAA → NODATA 즉답
+  template IN ANY localdomain { rcode NXDOMAIN }  # 상속된 검색 접미사는 즉시 NXDOMAIN
+  ```
+  → musl curl 200(0.009s), glibc getent OK, `kubernetes.default.svc` 도 200.
+- 운영 교훈: **파드가 쓰는 상류 DNS(사내 DNS)는 모든 질의에 빠르게 NXDOMAIN 을 돌려줘야** 한다. 응답이 없거나 느리면 ndots 검색 때문에 클러스터 안의 모든 외부 이름 해석이 무너진다. 노드 resolv.conf 의 search 도메인이 파드로 상속되므로 그 영역을 사내 DNS 가 권위 있게 답하는지 확인. 이름 해석은 **노드(containerd)·파드(CoreDNS)·외부 호스트 세 경로가 전부 다르다**.
+
+### F-2. NTP (항목 3)
+- 1부(`ntp-skew-test.sh`): w1(core 파드 노드) 시계 +5분·+31분·-10분·-60분 → **외부 pull·w1 pull 전부 OK**. 이유: Harbor 토큰은 core 가 발급하고 **같은 core 가 검증**(registry 로 가는 요청도 core 가 중계) → 발급·검증 시계가 같아 오차가 드러나지 않음.
+- 2부(`ntp-skew-test2.sh`):
+  - (A) w1 시계 -8h(인증서 notBefore 15:54Z 이전) → **w1 노드 pull FAIL**(TLS 유효기간 전), 외부 pull OK. cert-manager 가 막 발급한 인증서 + 시계가 늦은 노드 = x509 실패.
+  - (B) **core 2 replica(cp1/w1 분산) + w1 만 +31분 → 외부 pull 20회 중 3회 실패**, core(cp1) 로그 `token has invalid claims: token is not valid yet`. 즉 **core 를 HA 로 늘리는 순간 노드 간 시계 오차가 간헐 401 로 나타난다**(라운드로빈으로 발급·검증 파드가 갈림).
+- 복구: `timedatectl set-ntp true` 로 바로 재동기화(systemd-timesyncd).
+
+### F-3. Spegel 포트 네트워크 정책 (항목 4)
+- CiliumNetworkPolicy `spegel-peer-only`: 5000/5001 은 `fromEntities: [host, remote-node]` + Spegel 파드끼리, 9090 은 monitoring 네임스페이스만.
+- 전: 일반 파드 → spegel:5000 200, 9090 200, Mac → w1:30020 200. **후: 전부 timeout(차단)**. 노드 자신(host) → `127.0.0.1:30020/v2/` 200, `crictl pull` 정상.
+- 부작용: 파드에서 메트릭을 못 읽으므로 모니터링 네임스페이스/호스트 스크레이프를 정책에 열어 둬야 한다.
+
+### F-4. Trivy 오프라인 (항목 5)
+- 프로젝트 `tools`(public) 에 `skopeo copy oci:trivy-db:2 docker://harbor.lab/tools/trivy-db:2`(registry VM 에서 7s). Harbor 는 type UNKNOWN 아티팩트로 보관.
+- values: `trivy.enabled`, `dbRepository: ["harbor.lab/tools/trivy-db"]`, `skipJavaDBUpdate: true`, `offlineScan: true`, **`caBundleSecretName: lab-ca-bundle`**(trivy 파드가 harbor.lab 의 사설 CA 를 신뢰하도록; 키 `ca.crt`). helm upgrade 23s.
+- 스캔(dlops/pybase:3.12): 202 → **20초 뒤 Success**, Trivy v0.66.0, 취약점 6(Medium 5/Low 1). trivy 파드 `metadata.json` DownloadedAt = 스캔 시각, `SCANNER_TRIVY_DB_REPOSITORY=harbor.lab/tools/trivy-db`, registry 로그에 trivy 파드 IP 의 `tools/trivy-db` GET.
+- DB 갱신 운영: 주기적으로 trivy-db:2 를 다시 반입해 같은 태그로 push(Trivy 는 NextUpdate 기준 12h 마다 다시 받음). java-db(948MB) 는 Java 스캔이 필요하면 같은 방식.
+
+### F-5. LDAP (항목 6) — glauth 로 흉내
+- `ldap/ping` success → `auth_mode: ldap_auth`(기존 사용자 0명이라 전환 가능) → alice/bob 로그인 200(사용자 테이블 자동 생성), 틀린 비밀번호 401. **로컬 admin·로봇 계정은 LDAP 와 무관하게 계속 동작**. LDAP 정지 중: alice 401(0.016s, 즉시), admin 200, robot 200. 복구 후 alice 200.
+- 그룹 매핑: glauth 그룹 DN `ou=devs,ou=users,dc=lab`, 속성 `ou`(cn 아님), memberOf 는 `ou=devs,ou=groups,dc=lab` 로 비일관. Harbor 는 그룹 등록 시 **groupDN 을 base 스코프로 검색**하는데 glauth 는 base 스코프 검색에 빈 응답 → `failed to search ldap group`(404/400). **glauth 한계**이지 Harbor 문제는 아님(AD/OpenLDAP 은 됨). 운영 AD 에서 확인할 항목: 그룹 DN base 검색, memberOf 값 == 그룹 DN, `ldap_group_attribute_name`(AD 는 cn).
+- 사용자 단위: alice → dlops developer 201 → alice 토큰 `['pull','push']`, bob `[]`; registry VM 에서 alice push OK, bob push 거부.
+
+### F-6. MTU (항목 7)
+- w1 에 `iptables -I INPUT -i eth1 -p udp --dport 8472 -m length --length 1300:65535 -j DROP`(ICMP 없이 큰 VXLAN 패킷만 버림 = 중간 MTU 작고 PMTUD 막힌 망).
+- 결과: API ping 200(작은 요청은 멀쩡), **push 2s → 40s**(DROP 79 패킷, TCP 재전송으로 결국 성공). Cilium `--set MTU=1250` + 에이전트 재시작 → **기존 파드 MTU 가 재시작 없이 1500→1250 으로 바뀜**(netdbg·core), 에이전트 재시작 중 1회 일시 실패 후 push 2s 복귀. 원복(MTU 0=자동) 후 1500.
+- 한계: 같은 Harbor 안 복사라 blob 이 cross-repo mount 돼 실제 전송량이 작음 → 수치보다 "작은 요청만 되고 큰 전송이 늘어진다/멈춘다" 는 증상과 `MTU` 명시가 즉효라는 성질만 가져갈 것.
+
+### F-7. CNPG S3 백업 + PITR (추가 항목)
+- barman-cloud 플러그인 v0.15.1(이미지 2개 미러, `SIDECAR_IMAGE` 는 생성된 Secret 에 있어 미러로 패치), MinIO 단일 노드(local-path 5Gi), 버킷은 `mc` 이미지 없이 **`curl --aws-sigv4`** 로 생성.
+- ObjectStore `minio-store`(s3://cnpg-backups/harbor-pg, endpoint http://minio.minio.svc:9000, retention 7d) → Cluster `spec.plugins`(isWALArchiver) 패치 → 사이드카 추가 롤링 **34s**, Harbor ping 200 유지, `ContinuousArchiving=True`.
+- Backup(method plugin) **9초 completed**. 이후 라벨 2개 insert(사이에 T_MID 기록) → `pg_switch_wal()` → 새 Cluster `harbor-pg-restore`(bootstrap.recovery source harbor-pg, targetTime T_MID, externalClusters.plugin serverName harbor-pg) → **61s healthy**, harbor_label 1행(라벨1 만), 테이블 49 = 원본. PITR 동작 확인. 복구 클러스터 삭제.
+
+### F-8. 태그 불변성·보존 정책 (추가 항목)
+- immutable rule(pol-rel, `v*`): 같은 태그 다른 이미지 push → **거부**(`Failed to process request due to … immutable`), 태그 삭제 412, 규칙 밖 `latest` 는 덮어쓰기 가능.
+- retention(latestPushedK=2): dry-run → 실제 실행 → 아티팩트 3→2. **주의: 보존 단위는 태그가 아니라 아티팩트(digest)**. 같은 digest 에 태그 6개(t1~t6)면 아티팩트 1개로 세어져 **6개 태그가 한꺼번에 삭제**됐다.
+
+### F-9. 랩 상태(5차 종료)
+harbor.lab = 172.16.141.200:443(Cilium L2 VIP, 리더 w1), externalURL https://harbor.lab, cert-manager 자동 갱신, CoreDNS hosts+template, Spegel harbor.lab 미러 + 정책, Trivy 켜짐(DB=Harbor), auth_mode ldap_auth(glauth), CNPG WAL 아카이브 → MinIO, 수동 백업 1개. NodePort 30004 서비스는 남아 있으나 토큰 realm 이 harbor.lab 이라 외부에서 쓸 수 없음.
+
+
+# 부록 G. 5차 설정 파일·스크립트 (`~/nexus-lab/v5/`)
+
+## G-0. CoreDNS Corefile 추가분 (kube-system/coredns)
+
+```
+    # 폐쇄망 내부 이름(harbor.lab): 사내 DNS 가 없을 때 CoreDNS 가 직접 응답
+    hosts {
+       172.16.141.200 harbor.lab
+       fallthrough
+    }
+    # AAAA 가 fallthrough 로 상류에 가서 타임아웃되지 않도록 lab 영역의 나머지는 NODATA 로 즉답
+    template IN AAAA lab {
+       rcode NOERROR
+    }
+    # 노드 resolv.conf 에서 상속된 검색 접미사(localdomain)는 상류가 응답하지 않으므로 즉시 NXDOMAIN
+    template IN ANY localdomain {
+       rcode NXDOMAIN
+    }
+```
+
+## G-1. Cilium L2 Announcement + LB 모드 values (`cilium-l2-values.yaml`)
+
+```yaml
+# Cilium 1.20.1: Gateway 를 hostNetwork 대신 LoadBalancer 서비스 + L2 Announcement(ARP) 로 노출
+# 전제: kubeProxyReplacement=true, devices 가 지정돼 있어야 L2 announcement 가 동작
+gatewayAPI:
+  enabled: true
+  enableAlpn: true
+  enableAppProtocol: true
+  hostNetwork:
+    enabled: false          # 4차 hostNetwork(8443) → LB 모드
+l2announcements:
+  enabled: true
+  leaseDuration: 3s         # 기본 15s. 리더 노드 장애 시 VIP 이전 시간을 줄이려면 리스 주기를 줄인다(API 부하와 트레이드오프)
+  leaseRenewDeadline: 1s
+  leaseRetryPeriod: 200ms
+externalIPs:
+  enabled: true
+k8sClientRateLimit:         # L2 리스 갱신이 API 호출을 늘리므로 공식 문서 권장대로 상향
+  qps: 20
+  burst: 40
+```
+
+## G-2. VIP 풀 + L2 정책 (`lb-pool-l2.yaml`)
+
+```yaml
+# VIP 풀: Harbor 전용 1개 IP. 사내 대역 계획에서 LB 풀을 따로 받아야 한다(노드·Pod·Service 대역과 겹치지 않게)
+apiVersion: cilium.io/v2
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: harbor-vip
+spec:
+  blocks:
+    - cidr: 172.16.141.200/32
+  serviceSelector:
+    matchLabels:
+      io.cilium.gateway/owning-gateway: harbor-gw     # Cilium 이 Gateway 용 Service 에 붙이는 라벨
+---
+# L2 announcement: eth1 로 VIP ARP 응답. 노드별 리스(lease)로 리더 1대가 응답
+apiVersion: cilium.io/v2alpha1
+kind: CiliumL2AnnouncementPolicy
+metadata:
+  name: harbor-vip-l2
+spec:
+  interfaces: ["^eth1$"]
+  loadBalancerIPs: true
+  externalIPs: true
+  serviceSelector:
+    matchLabels:
+      io.cilium.gateway/owning-gateway: harbor-gw
+```
+
+## G-3. Gateway/HTTPRoute (VIP, 443, harbor.lab) (`harbor-gateway-443.yaml`)
+
+```yaml
+# Harbor Gateway v2: LoadBalancer(VIP 172.16.141.200) + 443 + 호스트명 harbor.lab + cert-manager 발급 Secret
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: harbor-gw
+  namespace: harbor-cnpg
+spec:
+  gatewayClassName: cilium
+  addresses:
+    - type: IPAddress
+      value: 172.16.141.200
+  listeners:
+    - name: https
+      protocol: HTTPS
+      port: 443
+      hostname: harbor.lab
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: harbor-tls
+      allowedRoutes:
+        namespaces: {from: Same}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: harbor
+  namespace: harbor-cnpg
+spec:
+  parentRefs: [{name: harbor-gw}]
+  hostnames: [harbor.lab]
+  rules:
+    - backendRefs: [{name: harbor, port: 80}]
+```
+
+## G-4. ClusterIssuer(사설 CA) (`clusterissuer-lab-ca.yaml`)
+
+```yaml
+# 폐쇄망 사설 CA 를 cert-manager 의 ClusterIssuer 로 등록 — Secret lab-ca(cert-manager ns) 에 ca.crt/ca.key(tls.crt/tls.key)
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: lab-ca
+spec:
+  ca:
+    secretName: lab-ca
+```
+
+## G-5. Harbor 인증서(cert-manager) (`harbor-certificate.yaml`)
+
+```yaml
+# Harbor Gateway 용 서버 인증서: DNS 이름 + VIP. cert-manager 가 Secret harbor-tls 를 생성·자동 갱신(renewBefore)
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: harbor-tls
+  namespace: harbor-cnpg
+spec:
+  secretName: harbor-tls
+  issuerRef: {name: lab-ca, kind: ClusterIssuer}
+  commonName: harbor.lab
+  dnsNames: [harbor.lab]
+  ipAddresses: [172.16.141.200]
+  duration: 2160h      # 90일
+  renewBefore: 360h    # 만료 15일 전 자동 갱신
+  privateKey: {algorithm: RSA, size: 2048}
+```
+
+## G-6. Harbor externalURL 덮어쓰기 (`harbor-externalurl-vip.yaml`)
+
+```yaml
+# Harbor values 덮어쓰기(5차): 사용자 접점 = https://harbor.lab (Cilium LB VIP 172.16.141.200:443, cert-manager 인증서)
+# 포트가 없으므로 이미지 참조는 harbor.lab/project/img:tag — 참조에 포트가 따라붙지 않는다
+externalURL: https://harbor.lab
+```
+
+## G-7. harbor.lab 참조 Deployment(검증용) (`pod-harborlab.yaml`)
+
+```yaml
+# 이미지 참조에 포트 없음(harbor.lab/...): kubelet → containerd → hosts.toml(harbor.lab) → Spegel 피어 또는 Harbor VIP
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: pybase-lab, namespace: default}
+spec:
+  replicas: 2
+  selector: {matchLabels: {app: pybase-lab}}
+  template:
+    metadata: {labels: {app: pybase-lab}}
+    spec:
+      imagePullSecrets: [{name: harbor-robot}]
+      topologySpreadConstraints:
+        - {maxSkew: 1, topologyKey: kubernetes.io/hostname, whenUnsatisfiable: DoNotSchedule, labelSelector: {matchLabels: {app: pybase-lab}}}
+      tolerations: [{key: node-role.kubernetes.io/control-plane, operator: Exists}]
+      containers:
+        - name: app
+          image: harbor.lab/dlops/pybase:3.12
+          command: ["python3","-c","import time; print('up'); time.sleep(10**6)"]
+```
+
+## G-8. Spegel 피어 포트 CiliumNetworkPolicy (`spegel-cnp.yaml`)
+
+```yaml
+# Spegel 피어 포트(registry 5000 / router 5001)는 클러스터 노드(host, remote-node)와 Spegel 파드끼리만. 그 외(일반 파드, 외부)는 차단.
+# 근거: Spegel 피어는 비공개 이미지를 무인증으로 서빙한다(3차 실측). metrics 9090 은 모니터링 네임스페이스만 열어 준다.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: spegel-peer-only
+  namespace: spegel
+spec:
+  endpointSelector:
+    matchLabels: {app.kubernetes.io/name: spegel}
+  ingress:
+    - fromEntities: [host, remote-node]
+      toPorts: [{ports: [{port: "5000", protocol: TCP}, {port: "5001", protocol: TCP}]}]
+    - fromEndpoints: [{matchLabels: {app.kubernetes.io/name: spegel}}]
+      toPorts: [{ports: [{port: "5000", protocol: TCP}, {port: "5001", protocol: TCP}]}]
+    - fromEndpoints: [{matchLabels: {io.kubernetes.pod.namespace: monitoring}}]
+      toPorts: [{ports: [{port: "9090", protocol: TCP}]}]
+```
+
+## G-9. Trivy 오프라인 values (`values-harbor-trivy-offline.yaml`)
+
+```yaml
+# Trivy 폐쇄망 구성(Harbor chart 1.18): DB 를 GitHub 이 아니라 Harbor 안의 OCI 아티팩트에서 받는다
+caBundleSecretName: lab-ca-bundle          # 사설 CA — trivy(및 core/jobservice/registry)가 harbor.lab 을 신뢰하도록 (키 이름 ca.crt)
+trivy:
+  enabled: true
+  image: {repository: ghcr.io/octohelm/harbor/trivy-adapter-photon, tag: v2.14.0}   # 랩 arm64. 운영은 goharbor/trivy-adapter-photon:v2.15.4
+  skipUpdate: false                        # DB 갱신은 하되
+  dbRepository: ["harbor.lab/tools/trivy-db"]      # 그 출처를 내부 Harbor 로. ghcr.io/aquasecurity/trivy-db:2 를 skopeo 로 반입해 둔 것
+  skipJavaDBUpdate: true                   # java-db(948MB) 는 이번 랩에서 반입 생략 → Java 아카이브(jar) 스캔은 불가. 운영은 같은 방법으로 반입
+  offlineScan: true                        # 의존성 식별용 외부 API 호출 금지
+  insecure: false
+  resources: {requests: {cpu: 100m, memory: 256Mi}, limits: {memory: 1Gi}}
+```
+
+## G-10. barman ObjectStore(MinIO) (`cnpg-objectstore.yaml`)
+
+```yaml
+# barman-cloud 플러그인용 ObjectStore: 목적지 MinIO(S3 호환, 폐쇄망 내부). 자격증명은 Secret minio-cnpg(ACCESS_KEY_ID/ACCESS_SECRET_KEY)
+apiVersion: barmancloud.cnpg.io/v1
+kind: ObjectStore
+metadata:
+  name: minio-store
+  namespace: harbor-cnpg
+spec:
+  retentionPolicy: "7d"
+  configuration:
+    destinationPath: s3://cnpg-backups/harbor-pg
+    endpointURL: http://minio.minio.svc:9000
+    s3Credentials:
+      accessKeyId: {name: minio-cnpg, key: ACCESS_KEY_ID}
+      secretAccessKey: {name: minio-cnpg, key: ACCESS_SECRET_KEY}
+    wal:
+      compression: gzip
+      maxParallel: 2
+    data:
+      compression: gzip
+      jobs: 2
+```
+
+## G-11. Cluster 플러그인 패치 (`harbor-pg-plugin-patch.yaml`)
+
+```yaml
+# CNPG Cluster 에 barman-cloud 플러그인 연결: WAL 아카이브(isWALArchiver) + base backup 목적지 = ObjectStore minio-store
+spec:
+  plugins:
+    - name: barman-cloud.cloudnative-pg.io
+      isWALArchiver: true
+      parameters:
+        barmanObjectName: minio-store
+```
+
+## G-12. 온디맨드 Backup (`harbor-pg-backup.yaml`)
+
+```yaml
+apiVersion: postgresql.cnpg.io/v1
+kind: Backup
+metadata: {name: harbor-pg-manual-1, namespace: harbor-cnpg}
+spec:
+  method: plugin
+  cluster: {name: harbor-pg}
+  pluginConfiguration: {name: barman-cloud.cloudnative-pg.io}
+```
+
+## G-13. PITR 복구 Cluster (`harbor-pg-restore.yaml`)
+
+```yaml
+# PITR 복구 시험: 같은 ObjectStore 에서 새 클러스터로 특정 시각(T_MID)까지 복구. 운영 복구 절차의 원형(원본은 건드리지 않음)
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata: {name: harbor-pg-restore, namespace: harbor-cnpg}
+spec:
+  instances: 1
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.15-minimal-bookworm
+  storage: {size: 2Gi, storageClass: local-path}
+  bootstrap:
+    recovery:
+      source: harbor-pg
+      recoveryTarget: {targetTime: "2026-11-04 23:13:21.154918+00"}
+  externalClusters:
+    - name: harbor-pg
+      plugin:
+        name: barman-cloud.cloudnative-pg.io
+        parameters: {barmanObjectName: minio-store, serverName: harbor-pg}
+```
+
+## G-14. MinIO(비밀값 제거본) (`minio.example.yaml`)
+
+```yaml
+# 폐쇄망 내부 S3 호환 오브젝트 스토리지 대역(MinIO 단일 노드) — CNPG 백업(WAL+base) 목적지. 운영은 사내 오브젝트 스토리지/분산 MinIO
+apiVersion: v1
+kind: Namespace
+metadata: {name: minio}
+---
+apiVersion: v1
+kind: Secret
+metadata: {name: minio-root, namespace: minio}
+stringData: {MINIO_ROOT_USER: minioadmin, MINIO_ROOT_PASSWORD: "<password>"}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata: {name: minio-data, namespace: minio}
+spec: {accessModes: [ReadWriteOnce], storageClassName: local-path, resources: {requests: {storage: 5Gi}}}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: minio, namespace: minio}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: minio}}
+  strategy: {type: Recreate}
+  template:
+    metadata: {labels: {app: minio}}
+    spec:
+      containers:
+        - name: minio
+          image: 172.16.141.10:5000/minio/minio:RELEASE.2025-04-22T22-12-26Z
+          args: ["server", "/data", "--console-address", ":9001"]
+          envFrom: [{secretRef: {name: minio-root}}]
+          ports: [{containerPort: 9000}, {containerPort: 9001}]
+          volumeMounts: [{name: data, mountPath: /data}]
+      volumes: [{name: data, persistentVolumeClaim: {claimName: minio-data}}]
+---
+apiVersion: v1
+kind: Service
+metadata: {name: minio, namespace: minio}
+spec: {selector: {app: minio}, ports: [{name: s3, port: 9000}, {name: console, port: 9001}]}
+```
+
+## G-15. 버킷 생성(curl SigV4) (`minio-mkbucket.sh`)
+
+```bash
+#!/bin/bash
+# 버킷 생성: mc 이미지 없이 curl 의 SigV4 서명으로 S3 API 직접 호출 (port-forward 경유). 운영은 스토리지 팀이 버킷·전용 계정을 미리 준비
+set -u; KUBECONFIG=${KUBECONFIG:?}; PASS=${MINIO_PASS:?}; BUCKET=${1:-cnpg-backups}
+kubectl -n minio port-forward svc/minio 19000:9000 >/dev/null 2>&1 & PF=$!; sleep 3
+curl -s -o /dev/null -w "PUT $BUCKET → http=%{http_code}\n" -X PUT --aws-sigv4 "aws:amz:us-east-1:s3" --user "minioadmin:$PASS" http://127.0.0.1:19000/$BUCKET
+kill $PF
+```
+
+## G-16. glauth LDAP(비밀값 제거본) (`glauth.example.yaml`)
+
+```yaml
+# 사내 LDAP/AD 대역 — glauth(경량 LDAP, 설정 파일 기반). DN 형식: cn=<user>,ou=<primary group>,dc=lab / 그룹 ou=<group>,dc=lab
+apiVersion: v1
+kind: Namespace
+metadata: {name: ldap}
+---
+apiVersion: v1
+kind: Secret
+metadata: {name: glauth-config, namespace: ldap}
+stringData:
+  config.cfg: |
+    [ldap]
+      enabled = true
+      listen = "0.0.0.0:3893"
+    [ldaps]
+      enabled = false
+    [backend]
+      datastore = "config"
+      baseDN = "dc=lab"
+      nameFormat = "cn"
+      groupFormat = "ou"
+    [[users]]
+      name = "ldapbind"
+      uidnumber = 5001
+      primarygroup = 5501
+      passsha256 = "<sha256(password)>"
+      [[users.capabilities]]
+        action = "search"
+        object = "*"
+    [[users]]
+      name = "alice"
+      mail = "alice@lab"
+      uidnumber = 5002
+      primarygroup = 5502
+      passsha256 = "<sha256(password)>"
+    [[users]]
+      name = "bob"
+      mail = "bob@lab"
+      uidnumber = 5003
+      primarygroup = 5503
+      passsha256 = "<sha256(password)>"
+    [[groups]]
+      name = "svc"
+      gidnumber = 5501
+    [[groups]]
+      name = "devs"
+      gidnumber = 5502
+    [[groups]]
+      name = "ops"
+      gidnumber = 5503
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: {name: glauth, namespace: ldap}
+spec:
+  replicas: 1
+  selector: {matchLabels: {app: glauth}}
+  template:
+    metadata: {labels: {app: glauth}}
+    spec:
+      containers:
+        - name: glauth
+          image: 172.16.141.10:5000/glauth/glauth:v2.4.0
+          command: ["/app/glauth", "-c", "/cfg/config.cfg"]   # 이미지 ENTRYPOINT 가 dumb-init 뿐이라 바이너리 경로를 명시
+          ports: [{containerPort: 3893}]
+          volumeMounts: [{name: cfg, mountPath: /cfg}]
+      volumes: [{name: cfg, secret: {secretName: glauth-config}}]
+---
+apiVersion: v1
+kind: Service
+metadata: {name: glauth, namespace: ldap}
+spec:
+  selector: {app: glauth}
+  ports: [{port: 389, targetPort: 3893}]
+```
+
+## G-17. LDAP 연동 시험 (`ldap-test.sh`)
+
+```bash
+#!/bin/bash
+# Harbor ↔ LDAP(glauth) 연동 실측. 비밀값은 $S/v5/ldap.* 와 hc.admin / hc.robot214 에서 읽는다(문서·리포에 남기지 않음)
+set -u; S=${S:?scratchpad}; HB=${HB:-https://harbor.lab}; VIP=${VIP:-172.16.141.200}
+c(){ curl -s --cacert $S/gw/tls/ca.crt --resolve harbor.lab:443:$VIP "$@"; }
+HA="admin:$(cat $S/hc.admin)"; BP=$(cat $S/v5/ldap.ldapbind); . $S/hc.robot214
+LDAP_COMMON="\"ldap_url\":\"ldap://glauth.ldap.svc:389\",\"ldap_search_dn\":\"cn=ldapbind,ou=svc,dc=lab\",\"ldap_search_password\":\"$BP\",\"ldap_base_dn\":\"dc=lab\",\"ldap_filter\":\"(objectClass=posixAccount)\",\"ldap_uid\":\"cn\",\"ldap_scope\":2,\"ldap_verify_cert\":false"
+echo "--- 1. LDAP ping(저장 전 검증)"; c -u "$HA" -X POST $HB/api/v2.0/ldap/ping -H 'Content-Type: application/json' -d "{$LDAP_COMMON,\"ldap_connection_timeout\":5}" -w ' http=%{http_code}\n'
+echo "--- 2. auth_mode → ldap_auth (+그룹 설정)"; c -u "$HA" -X PUT $HB/api/v2.0/configurations -H 'Content-Type: application/json' -d "{\"auth_mode\":\"ldap_auth\",$LDAP_COMMON,\"ldap_timeout\":5,\"ldap_group_base_dn\":\"dc=lab\",\"ldap_group_search_filter\":\"(objectClass=posixGroup)\",\"ldap_group_attribute_name\":\"cn\",\"ldap_group_search_scope\":2,\"ldap_group_membership_attribute\":\"memberOf\"}" -w 'http=%{http_code}\n'
+c -u "$HA" $HB/api/v2.0/configurations | python3 -c 'import sys,json;d=json.load(sys.stdin);print("   auth_mode =",d["auth_mode"]["value"],"| ldap_uid =",d["ldap_uid"]["value"])'
+echo "--- 3. LDAP 사용자 로그인(basic → /users/current)"; for u in alice bob; do printf '   %s: ' $u; c -u "$u:$(cat $S/v5/ldap.$u)" $HB/api/v2.0/users/current -w ' http=%{http_code}' | python3 -c 'import sys,json;t=sys.stdin.read();b,code=t.rsplit(" http=",1)
+try: d=json.loads(b); print(d["username"],"user_id",d["user_id"],"sysadmin",d["sysadmin_flag"],"http",code)
+except Exception: print(b[:120],"http",code)'; done
+printf '   alice 틀린 비밀번호: '; c -u "alice:wrong" -o /dev/null -w 'http=%{http_code}\n' $HB/api/v2.0/users/current
+echo "--- 4. 로그인 후 Harbor 사용자 테이블에 생긴 항목"; c -u "$HA" "$HB/api/v2.0/users?page_size=20" | python3 -c 'import sys,json;print("  ",[(u["username"],u.get("email","")) for u in json.load(sys.stdin)])'
+echo "--- 5. LDAP 그룹 검색/프로젝트 멤버로 그룹 추가"; c -u "$HA" "$HB/api/v2.0/ldap/groups/search?groupname=devs" -w ' http=%{http_code}\n' | cut -c1-200
+c -u "$HA" -X POST $HB/api/v2.0/projects/dlops/members -H 'Content-Type: application/json' -d '{"role_id":2,"member_group":{"group_name":"devs","group_type":1,"ldap_group_dn":"ou=devs,dc=lab"}}' -o /dev/null -w '   devs 그룹 → dlops developer: http=%{http_code} (201 생성/409 있음)\n'
+echo "--- 6. 그룹 권한으로 push/pull (alice∈devs, bob∉devs)"; for u in alice bob; do printf '   %s pull 토큰: ' $u; c -u "$u:$(cat $S/v5/ldap.$u)" "$HB/service/token?service=harbor-registry&scope=repository:dlops/app2:pull" | python3 -c 'import sys,json,base64;t=json.load(sys.stdin)["token"];p=t.split(".")[1];p+="="*(-len(p)%4);print("access =",json.loads(base64.urlsafe_b64decode(p))["access"])'; done
+echo "--- 7. 로컬 admin·로봇은 계속 되는가"; c -u "$HA" -o /dev/null -w '   admin http=%{http_code}\n' $HB/api/v2.0/users/current; c -u "$ROBOT_NAME:$ROBOT_SECRET" "$HB/service/token?service=harbor-registry&scope=repository:dlops/app2:pull" | python3 -c 'import sys,json;print("   robot token:", "ok" if json.load(sys.stdin).get("token") else "FAIL")'
+echo "--- 8. LDAP 서버 정지 중: LDAP 사용자 / admin / 로봇"; kubectl -n ldap scale deploy/glauth --replicas=0 >/dev/null; sleep 6
+printf '   alice: '; c -u "alice:$(cat $S/v5/ldap.alice)" -o /dev/null -w 'http=%{http_code} (%{time_total}s)\n' $HB/api/v2.0/users/current; printf '   admin: '; c -u "$HA" -o /dev/null -w 'http=%{http_code}\n' $HB/api/v2.0/users/current; printf '   robot: '; c -u "$ROBOT_NAME:$ROBOT_SECRET" -o /dev/null -w 'http=%{http_code}\n' "$HB/service/token?service=harbor-registry&scope=repository:dlops/app2:pull"
+kubectl -n ldap scale deploy/glauth --replicas=1 >/dev/null; kubectl -n ldap rollout status deploy/glauth --timeout=60s >/dev/null 2>&1; printf '   LDAP 복구 후 alice: '; c -u "alice:$(cat $S/v5/ldap.alice)" -o /dev/null -w 'http=%{http_code}\n' $HB/api/v2.0/users/current
+```
+
+## G-18. 불변성·보존 시험 (`harbor-policy-test.sh`)
+
+```bash
+#!/bin/bash
+# 태그 불변성(immutable rule) + 보존 정책(retention) 실측. 원본은 건드리지 않고 dlops/pol-* 저장소만 쓴다
+set -u; S=${S:?}; c(){ curl -s --cacert $S/gw/tls/ca.crt --resolve harbor.lab:443:172.16.141.200 "$@"; }; HA="admin:$(cat $S/hc.admin)"; HB=https://harbor.lab; . $S/hc.robot214
+PID=$(c -u "$HA" $HB/api/v2.0/projects/dlops | python3 -c 'import sys,json;print(json.load(sys.stdin)["project_id"])')
+push(){ cd ~/Desktop/k8s-core && timeout 90 vagrant ssh registry -c "skopeo copy -q oci:/tmp/ci-src:app docker://harbor.lab/dlops/$1 --dest-creds '$ROBOT_NAME:$ROBOT_SECRET' 2>&1 | tail -1 | sed -E 's/.*msg=\"//' | cut -c1-110" 2>/dev/null | grep -v Warning; }
+echo "--- 1. 불변 규칙: dlops/pol-rel 의 v* 태그 불변"; push pol-rel:v1.0 ; echo "  push pol-rel:v1.0 → $(c -u "$HA" -o /dev/null -w '%{http_code}' $HB/api/v2.0/projects/dlops/repositories/pol-rel/artifacts/v1.0)"
+c -u "$HA" -X POST $HB/api/v2.0/projects/$PID/immutabletagrules -H 'Content-Type: application/json' -d '{"disabled":false,"scope_selectors":{"repository":[{"kind":"doublestar","decoration":"repoMatches","pattern":"pol-rel"}]},"tag_selectors":[{"kind":"doublestar","decoration":"matches","pattern":"v*"}]}' -o /dev/null -w '  규칙 생성 http=%{http_code}\n'
+echo "  같은 태그에 다른 이미지 push(busybox→v1.0): $(cd ~/Desktop/k8s-core && timeout 120 vagrant ssh registry -c "skopeo copy -q --override-os linux --override-arch arm64 docker://172.16.141.10:5000/library/busybox:1.36 docker://harbor.lab/dlops/pol-rel:v1.0 --src-tls-verify=false --dest-creds '$ROBOT_NAME:$ROBOT_SECRET' 2>&1 | tail -1 | sed -E 's/.*msg=\"//' | cut -c1-140" 2>/dev/null | grep -v Warning)"
+echo "  불변 태그 삭제 시도: http=$(c -u "$HA" -X DELETE -o /dev/null -w '%{http_code}' $HB/api/v2.0/projects/dlops/repositories/pol-rel/artifacts/v1.0/tags/v1.0)"
+echo "  규칙 밖 태그(latest) 덮어쓰기: $(cd ~/Desktop/k8s-core && timeout 120 vagrant ssh registry -c "skopeo copy -q oci:/tmp/ci-src:app docker://harbor.lab/dlops/pol-rel:latest --dest-creds '$ROBOT_NAME:$ROBOT_SECRET' >/dev/null 2>&1 && skopeo copy -q --override-os linux --override-arch arm64 docker://172.16.141.10:5000/library/busybox:1.36 docker://harbor.lab/dlops/pol-rel:latest --src-tls-verify=false --dest-creds '$ROBOT_NAME:$ROBOT_SECRET' 2>&1 | tail -1; echo OK" 2>/dev/null | grep -v Warning | tail -1)"
+echo "--- 2. 보존 정책: dlops/pol-ret 에 태그 6개 → 최신 3개만 유지"; for i in 1 2 3 4 5 6; do push pol-ret:t$i >/dev/null; sleep 1; done; echo "  태그 수(전): $(c -u "$HA" "$HB/api/v2.0/projects/dlops/repositories/pol-ret/artifacts?page_size=50" | python3 -c 'import sys,json;print(sum(len(a.get("tags") or []) for a in json.load(sys.stdin)))')"
+# 같은 digest 로 6개 태그면 아티팩트 1개 → 태그 기준 보존이 되려면 digest 가 달라야 함. 따로 확인용으로 digest 다른 2개 추가
+cd ~/Desktop/k8s-core && timeout 120 vagrant ssh registry -c "skopeo copy -q --override-os linux --override-arch arm64 docker://172.16.141.10:5000/library/busybox:1.36 docker://harbor.lab/dlops/pol-ret:bb --src-tls-verify=false --dest-creds '$ROBOT_NAME:$ROBOT_SECRET'; skopeo copy -q --override-os linux --override-arch arm64 docker://172.16.141.10:5000/library/nginx:$(curl -sk https://172.16.141.10:5000/v2/library/nginx/tags/list | python3 -c 'import sys,json;print(json.load(sys.stdin)["tags"][0])') docker://harbor.lab/dlops/pol-ret:ng --src-tls-verify=false --dest-creds '$ROBOT_NAME:$ROBOT_SECRET'" >/dev/null 2>&1
+echo "  아티팩트(digest) 수: $(c -u "$HA" "$HB/api/v2.0/projects/dlops/repositories/pol-ret/artifacts?page_size=50" | python3 -c 'import sys,json;a=json.load(sys.stdin);print(len(a),[ [t["name"] for t in x.get("tags") or []] for x in a])')"
+RID=$(c -u "$HA" -X POST $HB/api/v2.0/retentions -H 'Content-Type: application/json' -d "{\"algorithm\":\"or\",\"rules\":[{\"disabled\":false,\"action\":\"retain\",\"template\":\"latestPushedK\",\"params\":{\"latestPushedK\":2},\"scope_selectors\":{\"repository\":[{\"kind\":\"doublestar\",\"decoration\":\"repoMatches\",\"pattern\":\"pol-ret\"}]},\"tag_selectors\":[{\"kind\":\"doublestar\",\"decoration\":\"matches\",\"pattern\":\"**\",\"extras\":\"{\\\"untagged\\\":false}\"}]}],\"trigger\":{\"kind\":\"Schedule\",\"settings\":{\"cron\":\"\"}},\"scope\":{\"level\":\"project\",\"ref\":$PID}}" -D - -o /dev/null | grep -i '^location' | sed -E 's#.*/##' | tr -d '\r'); echo "  보존 정책 id=$RID (최근 push 2개 아티팩트 유지)"
+c -u "$HA" -X POST $HB/api/v2.0/retentions/$RID/executions -H 'Content-Type: application/json' -d '{"dry_run":true}' -o /dev/null -w '  dry-run 실행 http=%{http_code}\n'; sleep 8
+c -u "$HA" "$HB/api/v2.0/retentions/$RID/executions" | python3 -c 'import sys,json;e=json.load(sys.stdin)[0];print("  dry-run:",e["status"],"dry_run",e["dry_run"])'
+c -u "$HA" -X POST $HB/api/v2.0/retentions/$RID/executions -H 'Content-Type: application/json' -d '{"dry_run":false}' -o /dev/null -w '  실제 실행 http=%{http_code}\n'; sleep 10
+echo "  실행 후 아티팩트: $(c -u "$HA" "$HB/api/v2.0/projects/dlops/repositories/pol-ret/artifacts?page_size=50" | python3 -c 'import sys,json;a=json.load(sys.stdin);print(len(a),[ [t["name"] for t in x.get("tags") or []] for x in a])')"
+echo "--- 3. 정리(규칙·정책 삭제, 시험 저장소 삭제)"; for r in $(c -u "$HA" $HB/api/v2.0/projects/$PID/immutabletagrules | python3 -c 'import sys,json;print(" ".join(str(x["id"]) for x in json.load(sys.stdin)))'); do c -u "$HA" -X DELETE -o /dev/null $HB/api/v2.0/projects/$PID/immutabletagrules/$r; done; c -u "$HA" -X DELETE -o /dev/null -w '  retention 삭제 http=%{http_code}\n' $HB/api/v2.0/retentions/$RID; c -u "$HA" -X PUT $HB/api/v2.0/projects/$PID -H 'Content-Type: application/json' -d '{"metadata":{"retention_id":""}}' -o /dev/null; for repo in pol-rel pol-ret; do c -u "$HA" -X DELETE -o /dev/null -w "  repo $repo 삭제 http=%{http_code}\n" $HB/api/v2.0/projects/dlops/repositories/$repo; done
+```
+
+## G-19. NTP 1부 (`ntp-skew-test.sh`)
+
+```bash
+#!/bin/bash
+# NTP 시계 오차 실측: w1 의 시계를 의도적으로 틀어 놓고 (a) 외부 클라이언트 pull(토큰: core 발급 → registry 검증) (b) w1 노드 pull(TLS+토큰) 을 본다
+set -u; S=${S:?}; . $S/hc.robot214; cd ~/Desktop/k8s-core
+vs(){ timeout 150 vagrant ssh $1 -c "$2" 2>/dev/null | grep -v 'Warning: Permanently' | tr -d '\r'; }
+echo "core 파드 노드: $(kubectl -n harbor-cnpg get pods -l component=core -o jsonpath='{.items[0].spec.nodeName}') / registry 파드 노드: $(kubectl -n harbor-cnpg get pods -l component=registry -o jsonpath='{.items[0].spec.nodeName}') / jobservice: $(kubectl -n harbor-cnpg get pods -l component=jobservice -o jsonpath='{.items[0].spec.nodeName}')"
+ext(){ vs registry "skopeo inspect --raw docker://harbor.lab/dlops/app2:2.0 --creds '$ROBOT_NAME:$ROBOT_SECRET' >/dev/null 2>/tmp/e && echo OK || tail -1 /tmp/e | sed -E 's/.*msg=\"//' | cut -c1-150"; }
+node(){ vs w1 "sudo crictl rmi harbor.lab/dlops/scale01:v1 >/dev/null 2>&1; sudo crictl pull --creds '$ROBOT_NAME:$ROBOT_SECRET' harbor.lab/dlops/scale01:v1 >/tmp/p 2>&1 && echo OK || tail -1 /tmp/p | sed -E 's/.*(Error|error)[: ]*//' | cut -c1-170"; }
+tok(){ vs w1 "curl -s -m 5 -u '$ROBOT_NAME:$ROBOT_SECRET' 'https://harbor.lab/service/token?service=harbor-registry&scope=repository:dlops/app2:pull' | python3 -c 'import sys,json,base64,time;t=json.load(sys.stdin)[\"token\"];p=t.split(\".\")[1];p+=\"=\"*(-len(p)%4);d=json.loads(base64.urlsafe_b64decode(p));print(\"iat-now=%+ds nbf-now=%+ds exp-now=%+ds\" % (d[\"iat\"]-time.time(), d[\"nbf\"]-time.time(), d[\"exp\"]-time.time()))' 2>&1 | tail -1"; }
+skew(){ vs w1 "sudo timedatectl set-ntp false; sudo date -s @\$(( \$(date +%s) + ($1) )) >/dev/null; echo \"w1 시각 \$(date -u +%T) (Mac 대비 $1 s)\""; }
+echo "--- 기준(오차 0)"; echo "  외부 pull: $(ext) | w1 pull: $(node) | w1 토큰: $(tok)"
+skew 300;  echo "  외부 pull: $(ext) | w1 pull: $(node) | w1 토큰: $(tok)"
+skew 1560; echo "  (+31분) 외부 pull: $(ext) | w1 pull: $(node) | w1 토큰: $(tok)"
+skew -2460; echo "  (-10분) 외부 pull: $(ext) | w1 pull: $(node) | w1 토큰: $(tok)"
+skew -3000; echo "  (-60분) 외부 pull: $(ext) | w1 pull: $(node) | w1 토큰: $(tok)"
+echo "--- 복구"; vs w1 "sudo date -s @$(date +%s) >/dev/null; sudo timedatectl set-ntp true; sleep 4; timedatectl show -p NTPSynchronized -p NTP; echo \"w1 \$(date -u +%T) / Mac $(date -u +%T)\""
+echo "  복구 후 외부 pull: $(ext) | w1 pull: $(node)"
+```
+
+## G-20. NTP 2부(notBefore, core 2 replica) (`ntp-skew-test2.sh`)
+
+```bash
+#!/bin/bash
+# NTP 2부: (A) 클라이언트 시계가 인증서 notBefore 이전이면? (B) core 2 replica(노드 분산) 상태에서 한 노드만 +31분이면 토큰 발급/검증 파드가 갈려 실패하는가
+set -u; S=${S:?}; . $S/hc.robot214; cd ~/Desktop/k8s-core
+vs(){ timeout 150 vagrant ssh $1 -c "$2" 2>/dev/null | grep -v 'Warning: Permanently' | tr -d '\r'; }
+skew(){ vs w1 "sudo timedatectl set-ntp false; sudo date -s @\$(( $(date +%s) + ($1) )) >/dev/null; echo \"w1 시각 \$(date -u '+%F %T') (Mac 대비 $1 s)\""; }
+restore(){ vs w1 "sudo date -s @$(date +%s) >/dev/null; sudo timedatectl set-ntp true; sleep 3; echo \"복구: w1 \$(date -u +%T) / Mac $(date -u +%T) NTPSynchronized=\$(timedatectl show -p NTPSynchronized --value)\""; }
+echo "인증서 notBefore: $(kubectl -n harbor-cnpg get secret harbor-tls -o jsonpath='{.data.tls\.crt}' | base64 -d | openssl x509 -noout -startdate)"
+echo "--- (A) w1 시계를 -8h (notBefore 이전) → w1 노드 pull / 외부 pull"; skew -28800
+vs w1 "sudo crictl rmi harbor.lab/dlops/scale01:v1 >/dev/null 2>&1; sudo crictl pull --creds '$ROBOT_NAME:$ROBOT_SECRET' harbor.lab/dlops/scale01:v1 >/tmp/p 2>&1 && echo '  w1 pull OK' || echo \"  w1 pull FAIL: \$(grep -oE 'x509[^\"]*|tls[^\"]*' /tmp/p | head -1 | cut -c1-120)\""
+echo "  외부(registry VM) pull: $(vs registry "skopeo inspect --raw docker://harbor.lab/dlops/app2:2.0 --creds '$ROBOT_NAME:$ROBOT_SECRET' >/dev/null 2>/tmp/e && echo OK || tail -1 /tmp/e | cut -c1-120")"
+restore
+echo "--- (B) core 2 replica 로 늘려 cp1/w1 에 분산 → w1 만 +31분 → 외부에서 20회 pull"
+kubectl -n harbor-cnpg scale deploy/harbor214-core --replicas=2 >/dev/null; kubectl -n harbor-cnpg rollout status deploy/harbor214-core --timeout=180s >/dev/null 2>&1; kubectl -n harbor-cnpg get pods -l component=core -o wide --no-headers | awk '{print "  core:",$1,$3,$7}'
+skew 1860
+vs registry "ok=0; fail=0; for i in \$(seq 1 20); do if skopeo inspect --raw docker://harbor.lab/dlops/app2:2.0 --creds '$ROBOT_NAME:$ROBOT_SECRET' >/dev/null 2>/tmp/e; then ok=\$((ok+1)); else fail=\$((fail+1)); msg=\$(tail -1 /tmp/e | sed -E 's/.*msg=\"//' | cut -c1-140); fi; done; echo \"  20회: OK=\$ok FAIL=\$fail\"; [ -n \"\${msg:-}\" ] && echo \"  실패 메시지: \$msg\""
+kubectl -n harbor-cnpg logs deploy/harbor214-core --since=2m --all-pods=true 2>/dev/null | grep -iE 'token|not valid|expired|nbf' | grep -iE 'error|warn|fail' | head -3 | cut -c1-200
+restore; kubectl -n harbor-cnpg scale deploy/harbor214-core --replicas=1 >/dev/null; echo "  core replicas → 1 복귀"
+```
+
+## G-21. MTU 블랙홀 시험 (`mtu-test.sh`)
+
+```bash
+#!/bin/bash
+# MTU 블랙홀 실측: w1 로 들어오는 VXLAN(udp 8472) 패킷 중 1300B 초과를 ICMP 없이 DROP → "중간 구간 MTU 가 작고 PMTUD 가 막힌" 사내망을 흉내낸다
+# 경로: registry VM → VIP(리더 노드 Envoy) → core 파드(w1, 터널 경유) → registry 파드. 작은 요청(API)은 되고 큰 blob 전송만 멈추는지 본다
+set -u; S=${S:?}; . $S/hc.robot214; cd ~/Desktop/k8s-core
+vs(){ timeout 200 vagrant ssh $1 -c "$2" 2>/dev/null | grep -v 'Warning: Permanently' | tr -d '\r'; }
+RULE='INPUT -i eth1 -p udp --dport 8472 -m length --length 1300:65535 -j DROP'
+echo "core 노드: $(kubectl -n harbor-cnpg get pods -l component=core -o jsonpath='{.items[0].spec.nodeName}') / registry 노드: $(kubectl -n harbor-cnpg get pods -l component=registry -o jsonpath='{.items[0].spec.nodeName}') / VIP 리더: $(kubectl -n kube-system get lease cilium-l2announce-harbor-cnpg-cilium-gateway-harbor-gw -o jsonpath='{.spec.holderIdentity}')"
+echo "파드 MTU(현재): $(kubectl exec netdbg -- cat /sys/class/net/eth0/mtu) / cilium_vxlan: $(vs w1 'cat /sys/class/net/cilium_vxlan/mtu')"
+push(){ vs registry "s=\$(date +%s); timeout $1 skopeo copy -q docker://harbor.lab/dlops/pybase:3.12 docker://harbor.lab/dlops/mtu-test:$2 --src-creds '$ROBOT_NAME:$ROBOT_SECRET' --dest-creds '$ROBOT_NAME:$ROBOT_SECRET' 2>/tmp/e; rc=\$?; echo \"rc=\$rc \$(( \$(date +%s)-s ))s \$(tail -1 /tmp/e | cut -c1-100)\""; }
+api(){ vs registry "curl -s -m 5 -o /dev/null -w '%{http_code}' https://harbor.lab/api/v2.0/ping"; }
+echo "--- 기준(차단 없음): 60MB 이미지 push(원본은 Harbor 자신 → 복사)"; echo "  push: $(push 120 base)  api ping: $(api)"
+echo "--- w1 에 1300B 초과 VXLAN 수신 DROP 적용"; vs w1 "sudo iptables -I $RULE; sudo iptables -L INPUT -v -n | grep 8472 | awk '{print \"  rule pkts=\"\$1}'"
+echo "  api ping(작은 요청): $(api)"; echo "  push(큰 전송, 90s 제한): $(push 90 blackhole)"; vs w1 "sudo iptables -L INPUT -v -n | grep 8472 | awk '{print \"  DROP 된 패킷: \"\$1}'"
+echo "--- 대응: Cilium MTU 를 1250 으로 명시(helm --set MTU=1250) → 파드 MTU 재계산"; helm upgrade cilium ~/nexus-lab/gateway/cilium-1.20.1.tgz -n kube-system --reuse-values --set MTU=1250 >/dev/null 2>&1; kubectl -n kube-system rollout restart ds/cilium >/dev/null; kubectl -n kube-system rollout status ds/cilium --timeout=240s 2>&1 | tail -1
+echo "  기존 파드 MTU(재시작 없이): netdbg=$(kubectl exec netdbg -- cat /sys/class/net/eth0/mtu) core=$(kubectl -n harbor-cnpg exec deploy/harbor214-core -- cat /sys/class/net/eth0/mtu 2>/dev/null) / cilium_vxlan(w1)=$(vs w1 'cat /sys/class/net/cilium_vxlan/mtu') / 파드 내부 라우트: $(kubectl exec netdbg -- ip route 2>/dev/null | head -1)"
+echo "  push(차단 유지, MTU 1250): $(push 90 mtu1250)"
+echo "  core 파드 재생성 후 MTU: "; kubectl -n harbor-cnpg rollout restart deploy/harbor214-core >/dev/null; kubectl -n harbor-cnpg rollout status deploy/harbor214-core --timeout=180s >/dev/null 2>&1; echo "   core=$(kubectl -n harbor-cnpg exec deploy/harbor214-core -- cat /sys/class/net/eth0/mtu 2>/dev/null) $(kubectl -n harbor-cnpg exec deploy/harbor214-core -- ip route 2>/dev/null | head -1)"
+echo "  push(차단 유지, core 재생성): $(push 120 mtu1250b)"
+echo "--- 원복: DROP 제거, MTU 자동으로"; vs w1 "sudo iptables -D $RULE; echo '  rule 제거'"; helm upgrade cilium ~/nexus-lab/gateway/cilium-1.20.1.tgz -n kube-system --reuse-values --set MTU=0 >/dev/null 2>&1; kubectl -n kube-system rollout restart ds/cilium >/dev/null; kubectl -n kube-system rollout status ds/cilium --timeout=240s 2>&1 | tail -1; kubectl -n harbor-cnpg rollout restart deploy/harbor214-core >/dev/null; kubectl -n harbor-cnpg rollout status deploy/harbor214-core --timeout=180s >/dev/null 2>&1; echo "  core MTU=$(kubectl -n harbor-cnpg exec deploy/harbor214-core -- cat /sys/class/net/eth0/mtu 2>/dev/null)"; echo "  push(원복 후): $(push 120 restored)"
+S=$S; HA="admin:$(cat $S/hc.admin)"; curl -s --cacert $S/gw/tls/ca.crt --resolve harbor.lab:443:172.16.141.200 -u "$HA" -X DELETE -o /dev/null -w '  mtu-test 저장소 삭제 http=%{http_code}\n' https://harbor.lab/api/v2.0/projects/dlops/repositories/mtu-test
+```
+
