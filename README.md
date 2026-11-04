@@ -34,6 +34,28 @@
 | 전수 대조 | docker MATCH 212 / DIFFERENT 1(schema1), helm MATCH 12, Harbor 에만 있는 것 없음 |
 | 엣지 | 중첩 경로·조각 없는 이름(기본 프로젝트)·없는 프로젝트(자동 생성)·OCI 차트 in docker 저장소·`+build` 버전(`_` 태그)·`.prov`·subchart umbrella 설치 — 전부 통과 |
 
+## 노출 방식: Cilium Gateway API(TLS 종단) vs NodePort — 실측
+
+| 항목 | Gateway (hostNetwork, https :8443) | NodePort (http :30004) |
+|---|---|---|
+| 구성 | Gateway API v1.6.3 CRD + Cilium `gatewayAPI.enabled/hostNetwork` + Gateway/HTTPRoute + TLS Secret | 차트 `expose.type: nodePort` |
+| 주소 | 모든 노드 IP:8443 (`addresses=[172.16.141.11 172.16.141.14]`) | 노드 IP:30004 |
+| 프로토콜 | **HTTP/2**, 사설 CA 필수 | HTTP/1.1 평문 |
+| push 382MB | 21.8s | 17.3s |
+| docker/helm/노드 pull/파드 | 전부 OK | 전부 OK |
+| **제약** | externalURL 을 Gateway 로 바꾸면 **NodePort 경로의 push 가 깨짐**(token realm 이 `https://…:30004` 로 나감) → 진입점은 하나로 | — |
+
+함정: Cilium 에 gatewayAPI 를 켠 뒤 **오퍼레이터를 재시작**해야 한다(템플릿이 안 바뀌어 옛 설정으로 돌며 Envoy CRD 를 등록하지 않음 → 에이전트가 `Still waiting for Cilium Operator to register CRDs` 로 멈춤). 사설 CA 는 **노드 OS 신뢰 저장소에 설치**한다 — Spegel 이 hosts.toml 을 다시 쓰면서 `ca=` 줄을 지우기 때문.
+
+## 재기동 복구 (Mac 재시작 후) — 자가 복구 여부
+
+| 구성 | 결과 |
+|---|---|
+| CNPG `harbor-pg`, Harbor 2.14 전 파드, Spegel | **개입 없이 정상 복귀** |
+| VM 3대 | VMware `.lck` 잠금 잔재로 전원 실패 → 삭제 후 기동 |
+| 워커 w1 | VIP 수동 설정이 사라져 재부여 필요(랩 한정) |
+| 로봇 secret / admin 비번 | 스크래치 소실 → API 재발급 / k8s Secret 에서 복구 |
+
 ## Spegel (노드 P2P 캐시) 실측 — 2노드
 
 | 시험 | 결과 |
@@ -62,6 +84,11 @@
 | Spegel 설치 후 docker.io pull 실패(폐쇄망 미러 단절) | `mirroredRegistries` 에 없는 레지스트리 hosts.toml 을 `_backup` 으로 이동 | 노드의 모든 미러 레지스트리를 목록에 명시 |
 | Spegel: `latest` 덮어써도 옛 이미지 | 피어가 태그를 처음 digest 로 해석 | `registryFilters: [":latest$"]` 또는 digest 고정 배포 |
 | 워커 조인 실패(VIP 불통) | 랩 cp1 에 kube-vip 정적 파드 없음 | cp1 eth1 에 VIP 수동 부여 후 `kubeadm join --config` (랩 한정) |
+| Cilium gatewayAPI 켠 뒤 에이전트 0/2, GatewayClass Unknown | 오퍼레이터 파드가 옛 설정으로 계속 실행 → Envoy CRD 미등록 | `rollout restart deploy/cilium-operator` |
+| externalURL 을 Gateway 로 바꾸자 NodePort push 실패 | token realm 이 요청 호스트 + externalURL 스킴 → `https://…:30004` | 진입점 하나로 통일(또는 같은 스킴·호스트) |
+| Spegel 추가 후 사설 CA 레지스트리 폴백 TLS 실패 | Spegel 이 hosts.toml 재작성 시 `ca=` 삭제 | CA 를 노드 OS 신뢰 저장소에 설치 + containerd 재시작 |
+| VM 전원 실패 `Cannot open the disk … Directory not empty` | 비정상 종료 잔재 `*.vmdk.lck` | 잠금 디렉터리 삭제 |
+| `vagrant up` 이 `machine is locked` 로 중단 | 병행 `vagrant ssh` 가 머신 락 점유 | 동시 vagrant 명령 금지, 노드별 단독 기동 |
 
 ## 사용자 체감 변경 (ChartMuseum → OCI)
 
@@ -234,6 +261,49 @@ harbor-cnpg: harbor-pg + harbor214 7파드(NodePort 30004) 가동. ns harbor(2.1
 - 태그 없는(digest 만의) manifest 는 Nexus components 목록에 없으므로 이관 대상이 아님.
 - 로봇은 프로젝트 저장소 목록 API 403 → verify 의 "Harbor 에만 있는 것" 은 admin 계정으로 돌리는 편이 정확.
 
+### 4차: 랩 재기동 복구 + Cilium Gateway API 로 Harbor 노출 (2026-11-04 22:37~23:20)
+
+## A. 재기동 복구 (Mac 재시작 뒤)
+증상: `kubectl` 연결 거부, `vagrant status` 3대 모두 not running, podman 컨테이너 0개, 세션 스크래치(kubeconfig·Harbor 로봇 secret·admin 비번 파일) 소실.
+| 이슈 | 원인 | 조치 |
+|---|---|---|
+| registry VM 전원 켜기 실패 `Cannot open the disk … Directory not empty` | 비정상 종료로 남은 `disk-cl1.vmdk.lck` 잠금 디렉터리(3대 모두) | VMware 프로세스 없음을 확인한 뒤 `.lck` 디렉터리 삭제 → 정상 기동 |
+| `vagrant up` 이 cp1 에서 `machine is locked` 로 중단, w1 미기동 | 복구 대기 스크립트가 동시에 `vagrant ssh/status` 를 돌려 머신 락 경합 | w1 을 단독으로 `vagrant up w1` |
+| w1 조인 상태 유지 여부 | cp1 의 VIP(172.16.141.100) 수동 설정은 재부팅 시 사라짐 | 부팅 후 `ip addr add 172.16.141.100/24 dev eth1` 재부여 → w1 kubelet 이 VIP 로 다시 붙어 **Ready** |
+| Harbor 로봇 secret 분실 | 스크래치 디렉터리 초기화 | `PATCH /api/v2.0/robots/{id}` 로 secret 재발급(이름 유지) |
+| Harbor admin 비번 | 동일 | k8s Secret `harbor-admin` 에서 복구 |
+| lab-ldap 컨테이너 기동 실패 | 바인드 마운트 원본(스크래치 경로)이 사라짐 | 미사용(zot-ldap 사용 중)이라 방치 |
+| podman 머신·컨테이너 | 재시작 정책 없음 | 머신 start 후 nexus1/2/3/6, zot-ldap 수동 start |
+**재부팅 후 개입 없이 정상 복귀한 것**: CNPG `harbor-pg`(healthy), Harbor 2.14 전 파드(Running, jobservice 재시작 8회 누적), Spegel. 즉 Harbor+CNPG 는 노드 재부팅에 자가 복구.
+
+## B. Cilium Gateway API (hostNetwork, TLS 종단) 구성
+환경: Cilium 1.20.1, `kubeProxyReplacement=true`(kube-proxy 없음), 노드 2대. Gateway API **v1.6.3** CRD(standard 7종) `kubectl apply --server-side`. Cilium `helm upgrade --reuse-values` 로 `gatewayAPI.enabled=true, hostNetwork.enabled=true, enableAlpn=true, enableAppProtocol=true`.
+| 이슈 | 원인 | 조치 |
+|---|---|---|
+| upgrade 후 cilium 에이전트 0/2 Ready 로 5분 타임아웃, GatewayClass `Accepted=Unknown (Waiting for controller)` | 에이전트 로그 `Still waiting for Cilium Operator to register CRDs [ciliumenvoyconfigs, ciliumclusterwideenvoyconfigs]`. **오퍼레이터 Deployment 템플릿이 안 바뀌어 기존 파드가 옛 설정(`gateway-api-hostnetwork-enabled=false`)으로 계속 실행** → Envoy CRD 미등록 | `kubectl -n kube-system rollout restart deploy/cilium-operator` → 5초 내 에이전트 2/2, GatewayClass Accepted, Gateway Programmed |
+구성: `Gateway harbor-gw`(gatewayClassName cilium, HTTPS 8443, TLS Terminate, Secret `harbor-tls` = 랩 CA 서명·SAN harbor.lab+노드IP) + `HTTPRoute harbor` → Service `harbor`(차트 nginx, NodePort 30004 와 공유) port 80. 결과: `addresses=[172.16.141.11 172.16.141.14]`(hostNetwork 라 모든 노드 IP), 두 노드 `cilium-envoy` 가 0.0.0.0:8443 LISTEN. Harbor `externalURL=https://172.16.141.11:8443` 로 변경(25초 롤아웃).
+
+## C. Gateway 경유 실측
+| 항목 | 결과 |
+|---|---|
+| `GET /v2/` (CA 검증) | 401, **HTTP/2**, `realm="https://172.16.141.11:8443/service/token"` |
+| CA 없이 | TLS 실패(000) — 사설 CA 배포 필수 |
+| docker inspect / push 소형 | 0.2s / 0.3s |
+| **push 382MB(Nexus→Gateway)** | 21.8s (NodePort http 때 17.3s) — Envoy 경유 TLS 로 ~25% 추가 |
+| pull 382MB | 14.5s |
+| helm registry login(--ca-file) / push / pull | 전부 OK |
+| 노드 containerd pull(로봇) | OK — hosts.toml `ca=` 로 신뢰 |
+| 파드(w1) 가 Gateway 주소 이미지로 기동 | Running, imageID 일치 |
+| digest | Gateway 경유 push 본 = 원본 (5ca6a002c5c3) |
+
+## D. 발견한 제약 2가지 (중요)
+1. **externalURL 은 하나 — 진입점을 섞을 수 없다.** externalURL 을 Gateway(https:8443)로 바꾸자 **NodePort(http:30004) 경로의 docker push 가 깨짐**: Harbor 가 내려주는 token realm 이 요청 호스트 + externalURL 스킴으로 조합돼 `https://…:30004/service/token` 이 되고, 30004 는 평문이라 TLS 핸드셰이크 실패. → API Gateway 로 갈 거면 NodePort 는 끄고, 둘 다 열어야 하면 같은 스킴·호스트(예: 둘 다 TLS, 같은 도메인)로 맞춘다.
+2. **Spegel 이 hosts.toml 의 `ca=` 를 지운다.** Gateway 레지스트리를 Spegel `mirroredRegistries` 에 넣자 Spegel 이 그 hosts.toml 을 다시 써서 `[host] ca = …` 블록이 사라지고 `server` + Spegel 호스트만 남음 → 사설 CA 레지스트리로의 폴백이 TLS 오류. 목록에서 빼면 `_backup` 으로 치워지는 문제(§Spegel)가 다시 생김. **해결: 사설 CA 를 노드 OS 신뢰 저장소에 설치**(`/usr/local/share/ca-certificates/*.crt` → `update-ca-certificates` → containerd 재시작). 이후 hosts.toml 에 ca 줄이 없어도 폴백 pull 정상, 피어 서빙도 정상(cp1 pull 후 w1 무인증 pull OK).
+(실험 순서 실수: 1차 재시험이 스크립트 9단계 정리로 저장소·네임스페이스가 지워진 뒤 돌아 NotFound 로 보였음 → 새 이미지 gwonly:1 로 다시 검증해 OK.)
+
+## E. 랩 현재 상태
+Harbor externalURL = `https://172.16.141.11:8443`(Gateway). NodePort 30004 서비스는 남아 있으나 docker push 는 realm 문제로 불가(조회·API 는 가능). 노드 OS 에 랩 CA 설치됨. Spegel `mirroredRegistries` 에 Gateway 레지스트리 추가·`registryFilters [":latest$"]` 유지. 산출물 `~/nexus-lab/gateway/`(cilium-gateway-values.yaml, harbor-gateway.yaml, harbor-externalurl-gateway.yaml, gateway-test.sh), 로그 `logs/gateway/test.txt`.
+
 
 ---
 
@@ -347,6 +417,70 @@ redis:
     image: {repository: ghcr.io/octohelm/harbor/redis-photon, tag: v2.14.0}
 exporter:
   image: {repository: ghcr.io/octohelm/harbor/harbor-exporter, tag: v2.14.0}
+
+```
+
+## B-3. Cilium Gateway API 활성 values (`cilium-gateway-values.yaml`)
+
+```yaml
+# Cilium 1.20.1 에 Gateway API 컨트롤러 추가 (기존 값 유지: helm upgrade --reuse-values -f 이 파일)
+# 전제: kubeProxyReplacement=true, Gateway API v1.6.3 CRD 가 먼저 설치돼 있어야 함
+gatewayAPI:
+  enabled: true
+  # 베어메탈·폐쇄망: LoadBalancer 구현(LB IPAM/L2) 없이 노드 IP 에 직접 리스너를 연다
+  hostNetwork:
+    enabled: true
+  enableAlpn: true          # HTTP/2 협상(docker 클라이언트·helm 모두 h2 사용 가능)
+  enableAppProtocol: true
+
+```
+
+## B-4. Gateway + HTTPRoute (`harbor-gateway.yaml`)
+
+```yaml
+# Harbor 를 Cilium Gateway(hostNetwork, 노드 IP:8443, TLS 종단) 로 노출
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: harbor-gw
+  namespace: harbor-cnpg
+spec:
+  gatewayClassName: cilium
+  listeners:
+    - name: https
+      protocol: HTTPS
+      port: 8443
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - kind: Secret
+            name: harbor-tls          # tls.crt / tls.key (랩 CA 서명, SAN harbor.lab + 노드 IP)
+      allowedRoutes:
+        namespaces: { from: Same }
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: harbor
+  namespace: harbor-cnpg
+spec:
+  parentRefs:
+    - name: harbor-gw
+  rules:
+    - matches:
+        - path: { type: PathPrefix, value: / }
+      backendRefs:
+        - name: harbor                 # Harbor 차트의 nginx 서비스(expose.nodePort.name) — NodePort 30004 와 공유
+          port: 80
+
+```
+
+## B-5. Harbor externalURL(Gateway) 덮어쓰기 (`harbor-externalurl-gateway.yaml`)
+
+```yaml
+# Harbor values 덮어쓰기: 사용자 접점이 Gateway(https://harbor.lab:8443) 가 되므로 externalURL 만 바꾼다.
+# TLS 는 Gateway 에서 끝나므로 expose.tls 는 그대로 false. NodePort 30004 서비스는 유지(비교용).
+externalURL: https://172.16.141.11:8443   # 랩: DNS 없이 IP SAN 인증서. 운영은 https://harbor.<도메인>
 
 ```
 
@@ -637,6 +771,66 @@ for k,good in (("pull","200"),("api","200"),("push","ok")):
     bad=[r["t"] for r in rows if r[k]!=good]
     print(f"  {k:5s} 실패 {len(bad):3d}/{len(rows)}" + (f"  ({bad[0]} ~ {bad[-1]})" if bad else ""))
 EOF
+
+```
+
+## C-6. Gateway API 구성·시험 (`gateway-test.sh`)
+
+```bash
+#!/bin/bash
+# Cilium Gateway API(hostNetwork, TLS 종단) 로 Harbor 노출 — 구성 + docker/helm 실측, NodePort 경로와 비교
+set -uo pipefail
+S=/private/tmp/claude-502/-Users-isangmin-Desktop-k8s-core/15083b2b-daf4-4c3e-9697-806fdbc7b2e3/scratchpad
+export KUBECONFIG=$S/kubeconfig; HA="admin:$(cat $S/hc.admin)"; G=172.16.141.11:8443; NP=172.16.141.11:30004
+OUT=~/nexus-lab/logs/gateway/test.txt; mkdir -p ~/nexus-lab/logs/gateway; : > $OUT; cd ~/nexus-lab/gateway
+log(){ echo "$(date +%H:%M:%S) $*" | tee -a $OUT; }
+vs(){ (cd ~/Desktop/k8s-core && timeout 180 vagrant ssh $1 -c "$2" 2>/dev/null | grep -v 'Warning: Permanently' | tr -d '\r'); }
+
+log "===== 1. 전제: Cilium 설정"
+log "kubeProxyReplacement=$(kubectl -n kube-system get cm cilium-config -o jsonpath='{.data.kube-proxy-replacement}') / kube-proxy 파드: $(kubectl -n kube-system get ds kube-proxy --no-headers 2>/dev/null | awk '{print $2}' || echo 없음) / cilium 버전 $(kubectl -n kube-system get ds cilium -o jsonpath='{.spec.template.spec.containers[0].image}' | sed 's/.*://')"
+log "===== 2. Gateway API v1.6.3 CRD (server-side apply)"; kubectl apply --server-side -f $S/gw/crd/ 2>&1 | awk '{print "  "$1, $2}' | tee -a $OUT
+log "===== 3. Cilium 에 gatewayAPI 활성(hostNetwork) — helm upgrade --reuse-values"
+helm upgrade cilium ./cilium-1.20.1.tgz -n kube-system --reuse-values -f cilium-gateway-values.yaml 2>&1 | grep -E 'STATUS|Error|WARN' | tee -a $OUT
+kubectl -n kube-system rollout status deploy/cilium-operator --timeout=240s 2>&1 | tail -1 | tee -a $OUT; kubectl -n kube-system rollout status ds/cilium --timeout=300s 2>&1 | tail -1 | tee -a $OUT
+sleep 10; log "GatewayClass: $(kubectl get gatewayclass cilium -o jsonpath='{.status.conditions[?(@.type=="Accepted")].status}' 2>/dev/null)"
+log "===== 4. TLS Secret + Gateway + HTTPRoute"
+kubectl -n harbor-cnpg create secret tls harbor-tls --cert=$S/gw/tls/harbor.crt --key=$S/gw/tls/harbor.key --dry-run=client -o yaml | kubectl apply -f - >/dev/null
+kubectl apply -f harbor-gateway.yaml | sed 's/^/  /' | tee -a $OUT
+for i in $(seq 1 36); do sleep 5; p=$(kubectl -n harbor-cnpg get gateway harbor-gw -o jsonpath='{.status.conditions[?(@.type=="Programmed")].status}' 2>/dev/null); [ "$p" = True ] && break; done
+log "Gateway Programmed=$p ($((i*5))s) addresses=$(kubectl -n harbor-cnpg get gateway harbor-gw -o jsonpath='{.status.addresses[*].value}') listeners=$(kubectl -n harbor-cnpg get gateway harbor-gw -o jsonpath='{.status.listeners[*].conditions[?(@.type=="Programmed")].status}')"
+log "HTTPRoute Accepted=$(kubectl -n harbor-cnpg get httproute harbor -o jsonpath='{.status.parents[0].conditions[?(@.type=="Accepted")].status}') ResolvedRefs=$(kubectl -n harbor-cnpg get httproute harbor -o jsonpath='{.status.parents[0].conditions[?(@.type=="ResolvedRefs")].status}')"
+log "노드 8443 리스닝: cp1=$(vs cp1 'sudo ss -tlnp | grep -c ":8443 "') w1=$(vs w1 'sudo ss -tlnp | grep -c ":8443 "')"
+log "===== 5. Harbor externalURL → https://$G"
+helm upgrade harbor214 ../harbor-cnpg/harbor-1.18.0.tgz -n harbor-cnpg -f ../harbor-cnpg/values-harbor214-cnpg.yaml -f harbor-externalurl-gateway.yaml --timeout 5m 2>&1 | grep -E 'STATUS|Error' | tee -a $OUT
+for i in $(seq 1 60); do sleep 5; nr=$(kubectl -n harbor-cnpg get pods --no-headers | awk '{split($2,a,"/"); if (a[1]!=a[2]) n++} END{print n+0}'); [ "$nr" = 0 ] && break; done; log "Harbor 파드 준비 $((i*5))s"
+log "===== 6. Gateway 경유 기본 동작(사설 CA 검증)"
+log "GET /v2/ (CA 검증): $(curl -s --cacert $S/gw/tls/ca.crt -o /dev/null -w '%{http_code} proto=%{http_version}' https://$G/v2/) / realm: $(curl -s --cacert $S/gw/tls/ca.crt -I https://$G/v2/ | grep -i www-authenticate | grep -o 'realm="[^"]*"')"
+log "GET /v2/ (CA 없이): $(curl -s -o /dev/null -w '%{http_code}' https://$G/v2/ 2>&1; curl -s https://$G/v2/ 2>&1 | grep -o 'self-signed\|unable to get local issuer[^,]*' | head -1)"
+log "NodePort(http) 의 realm 도 externalURL 을 따라감: $(curl -s -I http://$NP/v2/ | grep -i www-authenticate | grep -o 'realm="[^"]*"')"
+log "===== 7. 로봇 재생성(스크래치 소실) + docker/helm 실측"
+R=$(curl -s -u "$HA" "http://$NP/api/v2.0/robots?q=name%3Dmigrator" | python3 -c 'import sys,json;print([r["id"] for r in json.load(sys.stdin) if r["name"].endswith("migrator")][0])')
+SEC=$(curl -s -u "$HA" -X PATCH "http://$NP/api/v2.0/robots/$R" -H 'Content-Type: application/json' -d '{}' | python3 -c 'import sys,json;print(json.load(sys.stdin).get("secret",""))'); printf "ROBOT_NAME='robot\$migrator'\nROBOT_SECRET='%s'\n" "$SEC" > $S/hc.robot214; chmod 600 $S/hc.robot214; . $S/hc.robot214; RA="$ROBOT_NAME:$ROBOT_SECRET"; log "로봇 secret 재발급: $([ -n "$SEC" ] && echo OK || echo 실패)"
+CD=$S/gw/certdir; mkdir -p $CD; cp $S/gw/tls/ca.crt $CD/ca.crt
+t(){ local s=$(python3 -c 'import time;print(time.time())'); "$@" >/tmp/gw.out 2>&1; local rc=$?; python3 -c "import time;print('rc=$rc', round(time.time()-$s,1),'s')"; }
+log "[GW]  inspect(app1:1.0): $(t skopeo inspect --raw --cert-dir $CD --creds "$RA" docker://$G/dlops/app1:1.0) $(python3 -c 'import json;print(json.load(open("/tmp/gw.out")).get("mediaType",""))' 2>/dev/null)"
+log "[GW]  push 소형(zalp → gwtest:1): $(t skopeo copy --dest-cert-dir $CD --dest-creds "$RA" --format oci dir:$HOME/nexus-lab/scratch/zalp docker://$G/dlops/gwtest:1)"
+log "[GW]  push 대용량 382MB(nexus6 big → gwbig:1): $(t skopeo copy --all --src-tls-verify=false --src-creds "admin:$(cat $HOME/nexus-lab/data/nexus6/admin.password)" --dest-cert-dir $CD --dest-creds "$RA" docker://127.0.0.1:35600/dlops/big:3.12 docker://$G/dlops/gwbig:1) $(tail -1 /tmp/gw.out | cut -c1-100)"
+log "[NP]  push 대용량 382MB(비교, http NodePort): $(t skopeo copy --all --src-tls-verify=false --src-creds "admin:$(cat $HOME/nexus-lab/data/nexus6/admin.password)" --dest-tls-verify=false --dest-creds "$RA" docker://127.0.0.1:35600/dlops/big:3.12 docker://$NP/dlops/npbig:1)"
+log "[GW]  pull 대용량 → dir: $(t skopeo copy --src-cert-dir $CD --src-creds "$RA" docker://$G/dlops/gwbig:1 dir:$S/gw/pulled-big) digest 동일=$([ "$(skopeo inspect --raw --cert-dir $CD --creds "$RA" docker://$G/dlops/gwbig:1 | shasum -a 256 | cut -c1-12)" = "$(skopeo inspect --raw --tls-verify=false --creds "$RA" docker://$NP/dlops/gwbig:1 | shasum -a 256 | cut -c1-12)" ] && echo yes || echo no)"; rm -rf $S/gw/pulled-big
+export HELM_REGISTRY_CONFIG=$S/helm-registry-gw.json
+log "[GW]  helm registry login(CA): $(helm registry login $G --ca-file $S/gw/tls/ca.crt --username "$ROBOT_NAME" --password "$ROBOT_SECRET" 2>&1 | tail -1)"
+helm package ~/nexus-lab/logs/harbor27/charts/h27a -d $S/gw >/dev/null 2>&1
+log "[GW]  helm push: $(helm push $S/gw/h27a-0.1.0.tgz oci://$G/charts --ca-file $S/gw/tls/ca.crt 2>&1 | grep -E 'Pushed|Error' | head -1)"
+log "[GW]  helm pull: $(cd $S/gw && rm -f h27a-0.1.0.tgz && helm pull oci://$G/charts/h27a --version 0.1.0 --ca-file $S/gw/tls/ca.crt 2>&1 | tail -1; ls h27a-0.1.0.tgz 2>/dev/null)"
+log "===== 8. 클러스터 노드가 Gateway 주소로 pull (containerd CA + Spegel 공존)"
+for n in cp1 w1; do vs $n "sudo mkdir -p '/etc/containerd/certs.d/$G' && printf 'server = \"https://$G\"\n\n[host.\"https://$G\"]\n  capabilities = [\"pull\", \"resolve\"]\n  ca = \"/etc/containerd/certs.d/$G/ca.crt\"\n' | sudo tee '/etc/containerd/certs.d/$G/hosts.toml' >/dev/null" >/dev/null; cat $S/gw/tls/ca.crt | vs $n "sudo tee '/etc/containerd/certs.d/$G/ca.crt' >/dev/null" >/dev/null; done; log "노드 hosts.toml+ca 배치"
+log "w1 crictl pull(Gateway, 로봇): $(vs w1 "sudo crictl pull --creds '$RA' $G/dlops/gwtest:1 2>&1 | tail -1 | cut -c1-120")"
+helm upgrade spegel ~/nexus-lab/spegel/spegel-0.8.1.tgz -n spegel -f ~/nexus-lab/spegel/values-spegel.yaml --set 'spegel.registryFilters[0]=:latest$' --set "spegel.mirroredRegistries[7]=https://$G" --wait --timeout 3m >/dev/null 2>&1; kubectl -n spegel rollout status ds/spegel --timeout=120s >/dev/null 2>&1
+log "Spegel 에 Gateway 레지스트리 추가 후 hosts.toml(w1): $(vs w1 "cat '/etc/containerd/certs.d/$G/hosts.toml' | tr '\n' ' ' | cut -c1-220")"
+log "w1 crictl pull(Spegel 경유, CA 유지?): $(vs w1 "sudo crictl rmi $G/dlops/gwtest:1 >/dev/null 2>&1; sudo crictl pull --creds '$RA' $G/dlops/gwtest:1 2>&1 | tail -1 | cut -c1-120")"
+kubectl create ns gwtest --dry-run=client -o yaml | kubectl apply -f - >/dev/null; kubectl -n gwtest create secret docker-registry hb-pull --docker-server=$G --docker-username="$ROBOT_NAME" --docker-password="$ROBOT_SECRET" --dry-run=client -o yaml | kubectl apply -f - >/dev/null
+kubectl -n gwtest run gwweb --restart=Never --image=$G/dlops/web:1.0 --overrides='{"spec":{"imagePullSecrets":[{"name":"hb-pull"}],"nodeSelector":{"kubernetes.io/hostname":"w1"}}}' >/dev/null 2>&1; sleep 25; log "파드(w1, 이미지 $G/dlops/web:1.0): $(kubectl -n gwtest get pod gwweb -o jsonpath='{.status.phase} {.status.containerStatuses[0].imageID}' | sed 's/sha256:\(.\{12\}\).*/sha256:\1/')"
+log "===== 9. 정리"; kubectl delete ns gwtest --wait=false >/dev/null 2>&1; for r in gwtest gwbig npbig; do curl -s -o /dev/null -u "$HA" -X DELETE "http://$NP/api/v2.0/projects/dlops/repositories/$r"; done; log "끝"
 
 ```
 
