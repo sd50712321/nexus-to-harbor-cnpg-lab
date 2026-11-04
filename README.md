@@ -2,7 +2,54 @@
 
 폐쇄망에서 운영 중인 Nexus Repository(3.82 CE)의 **커스텀 docker 이미지·helm 차트만** Harbor 로 옮기고, Harbor 의 DB 를 CloudNativePG(CNPG) 로 두는 구성을 랩 클러스터에서 **처음부터 끝까지 실제로 구축·이관·검증**한 기록입니다. Nexus 는 그대로 유지합니다.
 
-모든 수치는 실측값이고, 겪은 이슈와 주의점을 해당 단계에 함께 적었습니다.
+모든 수치는 이 랩에서 실측한 값이고, 겪은 이슈와 주의점을 해당 단계에 함께 적었습니다. **단, 수치는 랩 규모의 값이며 운영 규모로 전이되지 않습니다** — 바로 아래 절에서 무엇이 전이되고 무엇이 안 되는지를 먼저 구분합니다.
+
+## 먼저 읽을 것: 이 문서의 결과를 어디까지 믿을 수 있나
+
+이 랩은 **맥북 한 대 위의 VM 2대**(arm64, 각 2 vCPU / 약 3GB, 호스트 전용 가상 NIC) 입니다. 실제 대상은 수백 노드 규모의 폐쇄망이므로, 아래 두 종류를 반드시 구분해서 읽어야 합니다.
+
+### 규모와 무관하게 그대로 유효한 것 (코드 경로의 성질)
+
+- Harbor 의 token realm 이 `externalURL` 을 따라가므로 **진입점(스킴·호스트·포트)은 하나**여야 한다
+- Spegel 은 `mirroredRegistries` 에 없는 레지스트리의 hosts.toml 을 `_backup` 으로 치우고, hosts.toml 을 다시 쓸 때 `ca=` 를 지우며, 피어가 가진 `latest` 를 옛 digest 로 해석할 수 있고, 비공개 이미지를 피어가 **무인증으로 서빙**한다
+- containerd 2.x 는 schema1 을 거부한다, OCI 태그에 `+` 가 안 되어 `_` 로 바뀐다, `.prov` 는 별도 레이어로 들어간다
+- 이관 스크립트의 멱등성·재개·델타 동작, Nexus `writePolicy: DENY` 가 막는 것과 못 막는 것
+- Harbor 는 DB 가 없으면 **pull 도 401** 이다, CNPG `smartShutdownTimeout` 은 Harbor 커넥션 풀 때문에 끝까지 기다린다
+- Cilium `gatewayAPI.enabled` 를 켠 뒤에는 **cilium-operator 를 재시작**해야 GatewayClass 가 Accepted 된다
+- Harbor 차트 기본 `maxOpenConns`(900) 와 외부 PG 기본 `max_connections` 를 **서로 맞추지 않으면 연결이 고갈**된다
+
+### 이 랩에서 나온 숫자는 가져가면 안 되는 것
+
+- 소요 시간·처리량 전부: 213 이미지 74초, 382MB 17~22초, Gateway 경유 오버헤드 비율, Spegel 피어 서빙 배수, CNPG 재시작 28초, 서비스 끊김 11초
+- CNPG 는 `instances: 1` — **진짜 페일오버(switchover/failover)는 한 번도 보지 않았다**
+- Harbor core·jobservice·registry 전부 replicas 1, 스토리지 local-path — **HA 구성·공유 스토리지(S3 호환/RWX)·그 상태의 GC 는 미검증**
+- 노드 2대 — 수백 노드 동시 pull(롤아웃 폭주) 에서 Gateway(Envoy)·Harbor registry·Spegel DHT 가 어떻게 거동하는지 미검증
+- 커넥션 풀 `maxOpenConns: 50` / `maxIdleConns: 10` 은 **랩용 값**이다(아래 사이징 참고). 권장값이 아니다
+- 네트워크: 호스트 전용 가상 NIC 이므로 실제 폐쇄망의 대역폭·지연·방화벽 경유와 무관
+
+### Harbor ↔ PostgreSQL 커넥션 사이징 (운영에서 계산해야 할 것)
+
+랩의 50 은 PG `max_connections=200` 아래로 두려고 잡은 값일 뿐입니다. 운영은 소비자 합계에서 거꾸로 계산합니다.
+
+```
+필요 연결 수 ≈ core 파드 수 × core maxOpenConns
+             + jobservice 파드 수 × jobservice 풀
+             + exporter + 예약(superuser_reserved_connections, CNPG 내부 사용)
+예) core 3×100 + jobservice 3×50 + exporter 10 + 예약 20 ≈ 480
+    → PG max_connections 는 여유 포함 600~800, 연결당 수 MB 를 잡아 PG 인스턴스 메모리 산정
+```
+
+- 차트 기본 900 은 Harbor 내장 PG 가 `max_connections=1024` 로 뜨는 것을 전제한 값. 외부 PG 를 쓰면 **PG 를 Harbor 에 맞춰 올리거나, Harbor 를 PG 에 맞춰 내리거나** 둘 중 하나를 의식적으로 해야 한다
+- 연결 수가 커지면 CNPG **Pooler(PgBouncer)** 를 두는 것이 정석. 단 Harbor 가 prepared statement 를 쓰므로 transaction 모드와 충돌할 수 있어 **session 모드로 시작해 실측**한다 — 이 랩에서는 하지 않았다
+- 최종값은 운영 부하에서 `pg_stat_activity` 를 보고 정한다. 미리 확정할 수 없다
+
+### 운영(또는 운영과 같은 급의 검증 클러스터)에서 다시 재야 할 것
+
+1. Harbor HA: core·jobservice·registry 다중 replica + 공유 스토리지(S3 호환/RWX) + Redis HA — 구성 자체와 GC 동작
+2. CNPG `instances: 3` + 노드 분산: switchover/failover 시간, 그 동안 Harbor 영향, Pooler 유무
+3. 롤아웃 폭주: 노드 N대 동시 pull — Gateway(Envoy) 처리량, Harbor registry 처리량, Spegel 효과와 DHT 안정성
+4. 이관 처리량: 실제 이미지 총량·크기 분포로 `PAR` 를 올려 가며 시간 측정(스크립트는 병렬도에 따라 늘어나지만 수치는 거기서 나온다)
+5. 네트워크: 방화벽 경유 Gateway, 사설 CA 배포 경로(노드 수백 대 OS 신뢰 저장소 — 노드 이미지/Ansible 에 넣어야 한다)
 
 ## 구성
 
@@ -73,7 +120,7 @@
 |---|---|---|
 | 1차 이관 docker 전부 `trying to reuse blob`, 차트 401 | 로봇 이름 `robot$migrator` 의 `$` 가 셸 변수로 풀려 사용자명이 `robot` | 비밀값 파일을 작은따옴표로 저장 |
 | `kubectl apply` CNPG 매니페스트 실패 `annotations: Too long` | CRD 크기 | `kubectl apply --server-side` |
-| Harbor 차트 `maxOpenConns` 기본 900 | PG `max_connections` 200 초과 | 50 으로 조정 |
+| Harbor 차트 `maxOpenConns` 기본 900 | PG `max_connections` 200 초과 | 랩에서는 50 으로 조정(랩용 값, 운영 사이징은 서두 절 참고) |
 | jobservice 초기 2회 재시작 | redis 준비 전 기동 | 정상, 조치 불필요 |
 | 로봇으로 프로젝트 저장소 목록 API 403 | 로봇 권한 범위 | 개별 아티팩트 목록은 200; 전체 목록은 admin 으로 |
 | 공식 goharbor 2.15 이미지 arm64 없음 | amd64 단일 아키 | arm64 랩은 2.14.0(octohelm) |
@@ -108,6 +155,70 @@
 
 ---
 
+## 운영 폐쇄망 인프라 사전 결정 사항 (랩 미검증 — 설계 단계에서 확정해야 할 것)
+
+이 랩은 IP 직결(`172.16.141.11:8443`)·사설 CA 수동 배포·단일 노드 스토리지로 돌렸습니다. 운영 폐쇄망에서는 아래 항목이 **Harbor 설치보다 먼저** 정해져야 하고, 대부분은 나중에 바꾸기 어렵습니다.
+
+### 1. 이름과 주소 — 가장 먼저, 가장 바꾸기 어려운 것
+
+- **`externalURL` 은 영구적인 DNS 이름으로.** 이 값이 모든 이미지 참조(`harbor.<도메인>/project/img:tag`)·Helm values·CI 파이프라인·containerd hosts.toml·Spegel `mirroredRegistries` 에 박힌다. IP 를 쓰면 IP 변경 = 전부 재태깅. 토큰 realm 도 이 값을 따르므로 **이름·스킴·포트는 하나**(4차 실측 제약).
+- **포트는 443.** `:8443` 처럼 포트가 붙으면 모든 참조에 포트가 따라붙는다. Gateway 가 hostNetwork 8443 에 뜨더라도 앞단 VIP/LB 에서 443 → 8443 으로 받거나, Gateway 리스너를 443 으로 둔다.
+- **해석 주체가 둘이다.** 파드가 아니라 **노드의 containerd** 가 이미지를 당기므로 그 이름은 노드 OS resolver(`/etc/resolv.conf`, 사내 DNS)에서 풀려야 한다. CoreDNS 에만 넣으면 안 된다. CI 러너·개발 PC·다른 클러스터 노드에서도 같은 이름이 같은 VIP 로 풀려야 한다(split-horizon 이면 안팎 값이 일치하는지 확인).
+- **VIP/L4 진입점.** Gateway hostNetwork 는 Envoy 가 뜬 노드 IP 마다 열린다. 앞에 VIP 가 필요: 하드웨어 LB, 또는 Cilium 자체 기능(LB IPAM + L2 Announcement 또는 BGP 컨트롤플레인), 또는 kube-vip. 폐쇄망이면 BGP 를 네트워크팀이 열어주는지가 선택을 가른다. Envoy 를 올릴 노드를 `gatewayAPI.hostNetwork.nodes.matchLabels` 로 고정하고 LB 헬스체크 대상으로 삼는다.
+- **대역 계획.** 노드 대역·Pod CIDR·Service CIDR·LB IP 풀·VIP 가 사내 대역(CI 서버, 다른 클러스터, 스토리지, NAS)과 겹치지 않아야 한다. Harbor 는 클러스터 밖에서 들어오는 트래픽이 많아 겹치면 바로 드러난다.
+- **MTU.** Cilium 터널(VXLAN/Geneve) 이면 50바이트 오버헤드. 사내 구간 MTU(1500 또는 점보)와 PMTUD 차단 방화벽 조합에서 **큰 blob push 가 중간에 멈추는** 전형적 증상이 난다. 네이티브 라우팅이 가능한지, 아니면 Cilium `MTU` 를 명시할지 결정.
+
+### 2. PKI·시간
+
+- 사설 CA 로 Harbor 인증서 발급. SAN 에 DNS 이름(필요 시 VIP IP 도). 체인(중간 CA) 포함 여부 확인.
+- **신뢰 배포 경로 4곳**: (a) 노드 OS 신뢰 저장소 — Spegel 이 hosts.toml 의 `ca=` 를 지우므로 필수(4차 실측), 노드 이미지/Ansible 로 배포 (b) CI 러너·빌드 호스트 (c) 개발 PC (d) 다른 클러스터 노드. 어느 하나라도 빠지면 그쪽만 `x509` 로 실패한다.
+- 인증서 갱신: Gateway TLS Secret 을 cert-manager(CA Issuer)로 자동 갱신하거나 만료 알람을 둔다. Cilium Envoy 는 Secret 교체를 자동 반영.
+- **NTP.** 폐쇄망 내부 NTP 가 없으면 TLS 유효기간과 Harbor 토큰(JWT, 짧은 만료)에서 시계 오차로 **401 이 간헐적으로** 난다. 노드·Harbor·CI 호스트가 같은 NTP 를 보도록.
+- 사내 프록시가 있는 환경이면 노드·Harbor 파드의 `HTTP_PROXY/NO_PROXY` 를 점검(Harbor 내부 호출이 프록시로 새면 실패).
+
+### 3. 방화벽 규칙 (최소 목록)
+
+| 방향 | 포트 | 용도 |
+|---|---|---|
+| 클라이언트(노드·CI·PC) → VIP | 443 | Harbor 전체(UI/API/registry/OCI 차트) |
+| LB → Envoy 노드 | 8443(또는 443) | Gateway hostNetwork 리스너 |
+| 노드 ↔ 노드 | Spegel router 5001(파드 네트워크), registry NodePort 30020(노드 로컬) | P2P 이미지 서빙 |
+| 노드 → Nexus | 기존 Nexus 포트 | 공개 이미지 프록시는 Nexus 가 계속 담당 |
+| 클러스터 내부 | PG 5432, Redis 6379 | Harbor ↔ CNPG ↔ Redis (Cilium NetworkPolicy 로 네임스페이스 한정) |
+| Harbor → 외부 | 없음 | **Trivy DB 갱신이 인터넷을 요구** — 오프라인 DB 반입 절차를 두거나 스캐너를 끈다 |
+
+Spegel 은 피어가 비공개 이미지를 **무인증으로** 준다(실측). 5001/30020 은 클러스터 노드끼리만 열리도록 Cilium 정책 또는 방화벽으로 한정한다.
+
+### 4. 스토리지
+
+- **registry 저장소**: HA 를 하려면 공유 스토리지. S3 호환(사내 오브젝트 스토리지/MinIO/Ceph RGW) 이 정석이고, NFS(Isilon) 로 가면 GC·대량 삭제·락 동작을 반드시 실측(Nexus H2 랩에서 NFS soft 마운트가 파일을 깨뜨린 것과 같은 계열의 위험). 용량 = 이관 총량 + 성장률 + GC 주기 동안의 미회수분.
+- **CNPG PVC**: 블록 스토리지 CSI(fsync 지연이 짧은 것). local-path 는 랩용. CSI 드라이버 이미지도 반입 대상.
+- **CNPG 백업**: WAL 아카이브 + base backup 의 목적지(S3 호환) 가 폐쇄망 안에 있어야 한다. 없으면 볼륨 스냅샷이나 `pg_dump` 크론으로 대체하되 PITR 은 포기하는 것임을 명시.
+- Harbor 내장 Redis 는 단일 파드. HA 면 외부 Redis(Sentinel) 를 누가 운영하는지 결정.
+
+### 5. 이미지 반입과 부트스트랩 순서 (닭과 달걀)
+
+- Harbor·CNPG 오퍼레이터·PostgreSQL·Cilium·Spegel·Trivy 이미지는 **Harbor 에서 받을 수 없다**(아직 없으므로). 랩처럼 **Nexus(docker proxy/hosted)가 부트스트랩 레지스트리** 역할을 하고 containerd 미러가 `ghcr.io/quay.io/docker.io → Nexus` 로 잡혀 있어야 한다. 순서: Nexus 에 반입 → 노드가 Nexus 에서 Harbor 이미지 pull → Harbor 기동 → 커스텀 이미지 이관.
+- 반입 목록은 **digest 로 고정**(태그 아님)해 문서에 남긴다. 반입 도구(`skopeo sync`, hauler, zarf 등)와 반입 절차(매체·승인)를 정한다.
+- 버전 고정: Harbor 2.15.4 / chart 1.19.4, CNPG 1.30.1 / PG 16.15, Cilium 1.20.1, Spegel 0.8.1, Gateway API CRD v1.6.3 — 업그레이드도 같은 반입 경로를 탄다.
+
+### 6. 계정·정책
+
+- 인증: 사내 LDAP/AD 또는 OIDC. Harbor 로컬 계정은 관리자·로봇만.
+- 노드 pull 자격: `imagePullSecrets` vs containerd 노드 레벨 인증(hosts.toml) 중 하나로 통일. 노드 레벨이면 Ansible 로 배포하고 로봇 토큰 회전 절차 필요.
+- 프로젝트 구조·할당량·보존 정책·**태그 불변성**(릴리스 태그 immutable; `latest` 는 가변으로 두되 Spegel `registryFilters` 로 피어 해석 제외 — 3차 실측).
+- 여러 클러스터가 한 Harbor 를 공유할지, 클러스터별 Harbor 간 replication 을 둘지.
+
+### 7. 관측·DR
+
+- 메트릭: Harbor exporter, CNPG(`pg_stat_activity` 로 커넥션 풀 포화 감시 — 위 사이징의 실측 근거), Gateway/Envoy. 알람: 인증서 만료, 디스크, GC 실패, DB 복제 지연.
+- DR 런북: **DB 백업과 registry 저장소 백업을 한 쌍**으로 복구(실측: 둘 다 있어야 한다). 컷오버 뒤에도 Nexus 의 docker/helm 저장소는 읽기전용으로 N주 보존해 롤백 경로를 남긴다.
+
+### 랩에서 추가로 검증 가능한 항목
+
+IP 대신 DNS 이름 + cert-manager CA Issuer 인증서, Cilium L2 Announcement/kube-vip VIP 로 443 진입, 포트 443 리스너, NTP 오차 → 401 재현, Spegel 포트 Cilium NetworkPolicy 한정, Trivy 오프라인 DB, OpenLDAP 연동, MTU 를 줄인 상태에서 대용량 push. 이것들은 규모와 무관한 **동작 성질**이라 랩 결과가 그대로 유효하다. HA·페일오버·처리량은 위 "다시 재야 할 것" 대로 운영급 클러스터에서.
+
+
 # 부록 A. 실측 기록 (랩 로그 원문)
 
 ## 커스텀 docker·helm: Nexus → Harbor 2.7(ChartMuseum) on CloudNativePG — 전체 이관 실측 (2026-11-03)
@@ -138,7 +249,7 @@
 ### 3. Harbor 2.7 설치 (외부 DB = CNPG)
 `values-harbor-cnpg.yaml` 핵심:
 - `database.type: external`, `external.host: harbor-pg-rw.harbor-cnpg.svc`, `username: harbor`, `coreDatabase: registry`, **`existingSecret: harbor-pg-app`** (차트가 그 Secret 의 키 `password` 를 그대로 읽음 → 비밀번호 복사 불필요, CNPG 가 회전해도 Secret 하나만), **`sslmode: require`** (CNPG 기본 TLS)
-- **`maxOpenConns: 50`, `maxIdleConns: 10`** — 차트 기본 900 은 PG max_connections 를 넘어서 부하 시 연결 고갈
+- **`maxOpenConns: 50`, `maxIdleConns: 10`** — 차트 기본 900 은 PG max_connections 를 넘어서 부하 시 연결 고갈. 50 은 랩용 값이며 운영은 파드 수 × 풀 합계로 다시 계산(서두 "커넥션 사이징")
 - trivy/notary/metrics off, chartmuseum on, NodePort 30004
 결과: 설치 후 40초에 전부 Running. PG 에 **테이블 49개, schema_migrations 100**, Harbor 연결 3개 모두 `ssl=t`. 첫 기동 때 jobservice 가 redis 준비 전이라 2회 재시작 후 안정(기동 순서 경합, 정상).
 
@@ -337,7 +448,7 @@ spec:
 
   postgresql:
     parameters:
-      max_connections: "200"        # Harbor core/jobservice/exporter 커넥션 풀 합계 여유
+      max_connections: "200"        # 랩용. 운영은 core/jobservice/exporter 풀 합계 + 예약으로 역산(README 서두 사이징)
       shared_buffers: "128MB"
 
   storage:
@@ -393,7 +504,7 @@ database:
     existingSecret: harbor-pg-app     # CNPG 생성 Secret, 키 'password'
     sslmode: require
   maxIdleConns: 10
-  maxOpenConns: 50                    # 차트 기본 900 → PG max_connections(200) 안으로
+  maxOpenConns: 50                    # 랩용. 차트 기본 900 은 내장 PG(1024) 전제 → 외부 PG 한도에 맞춰 반드시 재계산
 
 trivy:   {enabled: false}
 metrics: {enabled: false}
