@@ -49,13 +49,15 @@
 |---|---|---|---|
 | 접근 중, 유예 없음 | Near limits, 유예 미시작 | — (warning) | This instance of Nexus Repository Community Edition is trending toward its usage limit. Once limits are reached, new components cannot be added. |
 | **초과 + 유예 중** | Over limits, 0 ≤ d ≤ 45 | **`{d} Days Remaining`** (error) | This instance of Nexus Repository Community Edition has exceeded its usage limit. **Limits will be enforced starting {November 1, 2026}, when new components can no longer be added.** |
-| 유예 중인데 한도 아래로 내려감 | Under/Near, 0 ≤ d ≤ 45 | **배너 없음** (`BELOW_LIMITS_IN_GRACE` 는 렌더 분기가 없다) | — |
+| 유예 중인데 한도 아래로 내려감 | Under/Near, 0 ≤ d ≤ 45 | **상단 배너 없음**. Usage Center 에만 노란 알림: *Usage limits take effect on {November 14, 2026}. When the usage exceeds the Nexus Repository Community Edition maximum, new components can no longer be added to this instance.* (닫기 가능) | — |
 | **초과 + 유예 종료** | Over limits, d < 0 | **Usage Limits In Effect** (error) | This instance of Nexus Repository Community Edition has exceeded its usage limit. New components can no longer be added. |
 | 유예 종료, 한도 아래 | Under/Near, d < 0 | — (warning, 닫으면 쿠키로 6개월 숨김) | If this instance of Nexus Repository Community Edition exceeds usage limits, you will not be able to add new components. |
 | 일반 사용자, 초과 + 유예 종료 | Over, d < 0, 비관리자 | — (error) | This instance of Nexus Repository Community Edition has exceeded its usage limit. New components can no longer be added. Talk to your repository administrator. |
 | 일반 사용자, 접근 중 | Near, 비관리자 | — (warning) | … is trending toward its usage limit. Once limits are reached, new components cannot be added. Talk to your repository administrator. |
 
 배너 끝에는 공통으로 `Review your usage or purchase a license to remove limits.` 링크가 붙는다. 같은 화면 아래 Usage Center 헤더는 상태별로 `Usage Limits Will Be Enforced Starting {date}` / `Usage limits take effect on {date}. …` / `Usage limits came into effect on {date}. As usage levels are currently higher than the … maximum, new components can no longer be added to this instance.` 를 보여 주고, 카드에 `Last time over the usage limit` 날짜가 있다.
+
+운영에서 `Usage limits take effect on {date}. When the usage exceeds …` 가 보이면 **첫 초과 뒤 한도 아래로 내려온 유예 중** 상태다(첫 초과일 ≈ 그 날짜 −30일). 그 날짜 전까지 pull·push 에 아무 영향이 없고, 그 뒤에도 "그날 20만 초과" 인 날에만 새 push·프록시 신규 캐시가 막힌다(1절 타임라인).
 
 운영에서 "30일 표시 없이 넘었다는 문구만 떴다" 면 둘 중 하나다. (1) 이미 유예가 끝난 상태(`Usage Limits In Effect` + "New components can no longer be added") 이거나, (2) 보고 있던 계정이 비관리자라 일수·날짜가 없는 문구를 본 것. 유예 중이면 관리자 화면에 반드시 `{d} Days Remaining` 과 `Limits will be enforced starting {date}` 가 뜬다. 유예 중 한도 아래로 내려가면 배너가 사라지지만 유예 종료일은 그대로 간다(3절 `gracePeriodEnds`).
 
