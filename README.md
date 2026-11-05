@@ -244,6 +244,39 @@ Spegel 은 피어가 비공개 이미지를 **무인증으로** 준다(실측). 
 IP 대신 DNS 이름 + cert-manager CA Issuer 인증서, Cilium L2 Announcement/kube-vip VIP 로 443 진입, 포트 443 리스너, NTP 오차 → 401 재현, Spegel 포트 Cilium NetworkPolicy 한정, Trivy 오프라인 DB, OpenLDAP 연동, MTU 를 줄인 상태에서 대용량 push. 이것들은 규모와 무관한 **동작 성질**이라 랩 결과가 그대로 유효하다. HA·페일오버·처리량은 위 "다시 재야 할 것" 대로 운영급 클러스터에서.
 
 
+## 6차: 남는 Nexus 쪽 — request.log 로 "조회 카운트" 를 IP/대역·저장소·컴포넌트에 귀속 (2026-11-05 실측)
+
+Nexus 는 남기로 했으므로 CE 카운터(요청/일)가 **누가·어느 대역에서·무엇을 pull/push 해서** 오르는지 로그로 귀속하는 절차를 랩 nexus6 (3.82.0-08) 로 실측했다. 읽기 전용이며 설정 변경·카운터 조작은 없다. 스크립트는 [tools/nexus-reqlog-report.sh](tools/nexus-reqlog-report.sh) (부록 H 에 원문), 상세 로그는 부록 H-2.
+
+**로그 포맷 (jetty-requestlog.xml 기본값)** — `IP - user [시각] "METHOD PATH HTTP" STATUS 요청Content-Length 보낸바이트 소요ms "UA" [thread]`. 7번째 열이 경로, 10번째가 업로드 바이트(PATCH 32B 로 확인), 11번째가 다운로드 바이트. docker 커넥터 포트로 들어온 요청도 `/repository/<repo>/v2/...` 로 찍혀 저장소 귀속이 된다. 회전은 `request-YYYY-MM-DD.log.gz`, 90일 보관(`maxHistory 90`), 트래픽 없는 날은 파일이 안 생긴다.
+
+**카운터가 세는 것 — 로그와 1:1 로 맞음** (`/service/rest/metrics/data` → `nexus.analytics.content_request_count.hour[시]`):
+
+| 버킷 | 카운터 | 로그 중 `/repository/*` (상태 무관) | 로그 전체 | 제외된 것 |
+|---|---|---|---|---|
+| 11-04 00시 | 6164 | **6164** | 8024 | Jetty `/badMessage` 400 1799, REST 61. **401 1802 은 포함** |
+| 11-04 14시 | 18 | **18** | 21 | badMessage 3 |
+| month 11-2026 | 10426 | **10426** | | |
+
+- 성질: 카운터 = **경로가 `/repository/` 로 시작하는 요청 전부, 상태코드 무관**. REST API·UI·정적 파일·Jetty 가 거부한 요청은 안 센다. docker pull 1회 = `/v2/`(401)+`/v2/token`+manifest+blob×N 이 전부 1건씩이다 (랩 00시 버킷에서 핸드셰이크 3748건 = 60%). 익명 pull 허용 저장소는 `/v2/` 401→token 왕복이 없어 이미지당 2건이 준다.
+- 카운터는 DB 에 남아 재시작을 넘긴다 (00시 트래픽은 13:41 재시작 전 것인데 유지). `egress`·blobstore 지표는 재시작 이후 값만이었다. 10월 일부 시간대(10-22, 10-30)가 카운터에 빠져 있는 이유는 확인 못 했다 — 랩에서 컨테이너 강제 중단이 잦았던 시기라 flush 전 유실 가능성만 적어 둔다.
+- `hour[i]` 는 i 시 버킷(hour-of-day) 이고 `day`/`last_24h` 는 24 버킷 합. 그래서 "최근 24시간" 이 정각 경계로 움직인다.
+
+**IP 열의 신뢰 조건 — X-Forwarded-For 실측**: `X-Forwarded-For: 203.0.113.9, 10.0.0.1` 을 붙여 보내니 로그에 `203.0.113.9` 가 찍혔다 (3.82 `jetty.xml` 에 `ForwardedRequestCustomizer` 기본 포함, `X-Real-IP` 는 무시). 프록시 뒤면 실제 클라이언트가 보이지만, Nexus 에 직접 닿는 경로가 열려 있으면 클라이언트가 IP 를 위조할 수 있다. 대역 귀속을 근거로 쓰려면 프록시가 XFF 를 set 하고 직접 접근은 막혀 있어야 한다.
+
+**실측 출력 (nexus6, 22,938줄·10 파일, 2.6초)**: 고유 IP 21 / /24 대역 4 / pull 13253 push 9661 / 보낸 902 MB 받은 475 MB. 상위 IP `10.89.200.127` 8505건(493 MB out, 444 MB in: 이관 skopeo), `10.89.200.105` 7943건(raw-load 부하 테스트). 전송량 상위 컴포넌트 `docker-hosted dlops/big` 71건 801.6 MB. push 이벤트는 `manifest dlops/scale20:v10` 처럼 IP·user·시각으로 나열. 분 피크 2133건(00:30). 필터(`-i 대역접두 -r 저장소 -a UA정규식 -s/-u 시각`) 와 alpine busybox awk·ubuntu mawk 에서의 동일 동작을 확인했다.
+
+```bash
+# 사용 (서버에서 — 로그 디렉터리 자동 탐색: /nexus-data/log, /opt/sonatype/sonatype-work/nexus3/log)
+tools/nexus-reqlog-report.sh -n 20                                  # 전체 섹션
+tools/nexus-reqlog-report.sh -s '2026-11-04 00:00' -u '2026-11-04 23:59' -S ip,subnet,ipxrepo,component
+tools/nexus-reqlog-report.sh -i 10.20. -S component,push            # 특정 대역이 무엇을 가져가고 올렸나
+tools/nexus-reqlog-report.sh -S counter -c http://nexus:8081 -A 'user:pass'   # 로그 vs 카운터 대조
+# 스크립트 없이: /repository/* 만 시간대별 (카운터 hour[] 와 대조)
+for f in $L/request-*.log.gz $L/request.log; do gzip -dcf "$f"; done | awk '$7 ~ /^\/repository\// {c[substr($4,2,14)]++} END{for(h in c) print h, c[h]}' | sort
+```
+주의: macOS `zcat` 은 `.Z` 를 붙여 실패하므로 `gzip -dcf`. BWK awk 엔 `mktime` 이 없어 시각은 14자리 문자열 비교. 로그 시각은 Nexus 프로세스 TZ 그대로다.
+
 # 부록 A. 실측 기록 (랩 로그 원문)
 
 ## 커스텀 docker·helm: Nexus → Harbor 2.7(ChartMuseum) on CloudNativePG — 전체 이관 실측 (2026-11-03)
@@ -1754,4 +1787,195 @@ echo "  push(차단 유지, core 재생성): $(push 120 mtu1250b)"
 echo "--- 원복: DROP 제거, MTU 자동으로"; vs w1 "sudo iptables -D $RULE; echo '  rule 제거'"; helm upgrade cilium ~/nexus-lab/gateway/cilium-1.20.1.tgz -n kube-system --reuse-values --set MTU=0 >/dev/null 2>&1; kubectl -n kube-system rollout restart ds/cilium >/dev/null; kubectl -n kube-system rollout status ds/cilium --timeout=240s 2>&1 | tail -1; kubectl -n harbor-cnpg rollout restart deploy/harbor214-core >/dev/null; kubectl -n harbor-cnpg rollout status deploy/harbor214-core --timeout=180s >/dev/null 2>&1; echo "  core MTU=$(kubectl -n harbor-cnpg exec deploy/harbor214-core -- cat /sys/class/net/eth0/mtu 2>/dev/null)"; echo "  push(원복 후): $(push 120 restored)"
 S=$S; HA="admin:$(cat $S/hc.admin)"; curl -s --cacert $S/gw/tls/ca.crt --resolve harbor.lab:443:172.16.141.200 -u "$HA" -X DELETE -o /dev/null -w '  mtu-test 저장소 삭제 http=%{http_code}\n' https://harbor.lab/api/v2.0/projects/dlops/repositories/mtu-test
 ```
+
+# 부록 H. 6차 — Nexus request.log 분석
+
+## H-1. 분석 스크립트 (`tools/nexus-reqlog-report.sh`)
+
+```bash
+#!/bin/bash
+# Nexus 3 request.log(+회전 request-*.log.gz) 분석 — 어느 IP/대역이 어떤 저장소·컴포넌트를 pull/push 했는지, 건수·바이트 기준 집계
+#  로그 포맷(3.82 기본, etc/jetty/jetty-requestlog.xml):
+#    IP - user [dd/MMM/yyyy:HH:mm:ss Z] "METHOD PATH HTTP/x" STATUS REQ_CONTENT_LENGTH BYTES_SENT ELAPSED_MS "User-Agent" [thread]
+#  의존: bash, gzip, awk(gawk/mawk/BWK 모두 OK — mktime 등 gawk 전용 함수 미사용), sort
+#  사용: nexus-reqlog-report.sh [-d LOGDIR | 파일...] [-s SINCE] [-u UNTIL] [-n TOP] [-i IPPREFIX] [-r REPO] [-a UA정규식] [-S 섹션,...]
+#    -s/-u  'YYYY-MM-DD[ HH:MM[:SS]]'  — 로그에 찍힌 시간대 기준(변환 안 함)
+#    -i     '10.20.'  처럼 접두 일치(대역),  -r 저장소 이름 정확 일치,  -a User-Agent 정규식
+#    -S     summary,ip,subnet,repo,ipxrepo,component,push,time,ua,status,counter  (기본: 전부)
+#    -c URL -A user:pass  → counter 섹션에서 usage-metrics API 값과 로그 집계를 나란히 출력
+#  출력은 탭 구분. 바이트는 MB(1e6).  ※ 읽기 전용 — 로그 파일을 수정하지 않는다.
+set -uo pipefail; export LC_ALL=C
+LOGDIR=""; SINCE=""; UNTIL=""; TOP=15; IPP=""; REPO=""; UAR=""; SEC="summary,ip,subnet,repo,ipxrepo,component,push,time,ua,status,counter"; NXURL=""; NXCRED=""
+while getopts "d:s:u:n:i:r:a:S:c:A:h" o; do case $o in d) LOGDIR=$OPTARG;; s) SINCE=$OPTARG;; u) UNTIL=$OPTARG;; n) TOP=$OPTARG;; i) IPP=$OPTARG;; r) REPO=$OPTARG;; a) UAR=$OPTARG;; S) SEC=$OPTARG;; c) NXURL=$OPTARG;; A) NXCRED=$OPTARG;; h|*) sed -n '2,13p' "$0"; exit 0;; esac; done; shift $((OPTIND-1))
+norm(){ echo "$1" | awk '{gsub(/[^0-9]/,""); printf "%-14s", $0}' | tr ' ' '0'; }   # 'YYYY-MM-DD HH:MM' → 14자리
+[ -n "$SINCE" ] && SINCE=$(norm "$SINCE"); [ -n "$UNTIL" ] && UNTIL=$(norm "$UNTIL" | sed 's/00000000$/23595999/;s/0000$/5999/')
+if [ $# -gt 0 ]; then FILES=("$@"); else
+  [ -z "$LOGDIR" ] && for d in /nexus-data/log /opt/sonatype/sonatype-work/nexus3/log ./log .; do [ -f $d/request.log ] && { LOGDIR=$d; break; }; done
+  [ -z "$LOGDIR" ] && { echo "로그 디렉터리를 못 찾음: -d LOGDIR 지정" >&2; exit 1; }
+  FILES=(); for f in "$LOGDIR"/request-*.log.gz "$LOGDIR"/request.log; do [ -f "$f" ] && FILES+=("$f"); done; fi
+W=$(mktemp -d "${TMPDIR:-/tmp}/nxlog.XXXXXX"); trap 'rm -rf "$W"' EXIT; N=$W/n.tsv; T=$'\t'
+has(){ case ",$SEC," in *",$1,"*) return 0;; esac; return 1; }
+hdr(){ printf '\n== %s\n' "$1"; }
+# ---------- 1패스: 정규화 TSV ----------
+# 열: 1ts(14자리) 2ip 3subnet24 4user 5method 6path 7status 8reqBytes 9sentBytes 10ms 11ua 12repo 13component 14asset 15kind
+for f in "${FILES[@]}"; do gzip -dcf "$f"; done | awk -v since="$SINCE" -v until="$UNTIL" -v ipp="$IPP" -v repo_f="$REPO" -v uar="$UAR" '
+BEGIN{ OFS="\t"; split("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec",M," "); for(i=1;i<=12;i++) mon[M[i]]=sprintf("%02d",i) }
+$6 !~ /^"[A-Z]+$/ { next }                                  # 형식 밖 줄 skip
+{ t=substr($4,2); ts=substr(t,8,4) mon[substr(t,4,3)] substr(t,1,2) substr(t,13,2) substr(t,16,2) substr(t,19,2)
+  if(since!="" && ts<since) next; if(until!="" && ts>until) next
+  ip=$1; if(ipp!="" && index(ip,ipp)!=1) next
+  user=$3; m=substr($6,2); path=$7; st=$9; rq=($10=="-")?0:$10; sb=($11=="-")?0:$11; ms=$12
+  ua=$0; sub(/^[^"]*"[^"]*"[^"]*"/,"",ua); sub(/"[^"]*$/,"",ua); if(uar!="" && ua !~ uar) next
+  if(index(ip,":")) { n=split(ip,o,":"); sn=o[1]":"o[2]":"o[3]":"o[4]"::/64" } else { split(ip,o,"."); sn=o[1]"."o[2]"."o[3]".0/24" }
+  q=path; sub(/\?.*/,"",q)
+  repo="-"; comp="-"; asset=q
+  if(q ~ /^\/repository\/[^\/]+/){ r=q; sub(/^\/repository\//,"",r); repo=r; sub(/\/.*/,"",repo); rest=substr(q,length("/repository/"repo)+1)
+    if(rest ~ /^\/v2\//){                                     # docker 형식
+      d=rest; sub(/^\/v2\//,"",d)
+      if(d ~ /\/manifests\//){ comp=d; sub(/\/manifests\/.*/,"",comp); ref=d; sub(/.*\/manifests\//,"",ref); asset="manifest "comp":"ref }
+      else if(d ~ /\/blobs\//){ comp=d; sub(/\/blobs\/.*/,"",comp); asset=(d ~ /\/blobs\/uploads/)?"blob-upload "comp:"blob "comp }
+      else if(d ~ /\/tags\/list$/){ comp=d; sub(/\/tags\/list$/,"",comp); asset="tags "comp }
+      else { comp="(docker-api)"; asset="docker-api /"d }
+    } else { asset=rest; comp=rest; sub(/\/[^\/]*$/,"",comp); if(comp=="") comp="/" }   # 그 외 형식: 컴포넌트=디렉터리
+  } else if(q ~ /^\/v2\//){ repo="(v2-root)"; comp="(docker-api)" }
+  else if(q ~ /^\/service\/rest\//){ repo="(rest-api)"; comp=q; sub(/\/[0-9a-f-]{20,}.*/,"",comp) }
+  else if(q ~ /^\/service\//){ repo="(ui)" } else if(q ~ /^\/static\//){ repo="(static)" } else repo="(other)"
+  if(repo_f!="" && repo!=repo_f) next
+  kind=(m=="GET"||m=="HEAD")?"pull":(m=="PUT"||m=="POST"||m=="PATCH")?"push":"other"
+  print ts,ip,sn,user,m,q,st,rq,sb,ms,ua,repo,comp,asset,kind }' > $N
+[ -s $N ] || { echo "조건에 맞는 줄 없음"; exit 0; }
+printf '입력: %s개 파일, 필터: since=%s until=%s ip=%s repo=%s ua=%s\n' "${#FILES[@]}" "${SINCE:--}" "${UNTIL:--}" "${IPP:--}" "${REPO:--}" "${UAR:--}"
+# ---------- 공통 집계 함수: 키 열 번호(들) → 건수/pull/push/MB out/MB in/4xx5xx/고유IP/고유user ----------
+agg(){ # $1=키열(쉼표 가능) $2=TOP $3=헤더
+  awk -F'\t' -v keys="$1" -v top="$2" -v h="$3" 'BEGIN{OFS="\t"; nk=split(keys,K,",")}
+  { k=$K[1]; for(i=2;i<=nk;i++) k=k"\t"$K[i]; c[k]++; if($15=="pull")pl[k]++; else if($15=="push")ps[k]++; out[k]+=$9; in_[k]+=$8; if($7>=400)er[k]++
+    if(!(k SUBSEP $2 in ipseen)){ipseen[k SUBSEP $2]=1; nip[k]++}; if(!(k SUBSEP $4 in useen)){useen[k SUBSEP $4]=1; nu[k]++; ul[k]=(ul[k]==""?$4:(nu[k]<=3?ul[k]","$4:ul[k]))} }
+  END{ print h"\t건수\tpull\tpush\tMB_out\tMB_in\t4xx5xx\tIP수\tuser수\tusers"
+       for(k in c) printf "%s\t%d\t%d\t%d\t%.1f\t%.1f\t%d\t%d\t%d\t%s\n", k, c[k], pl[k], ps[k], out[k]/1e6, in_[k]/1e6, er[k], nip[k], nu[k], ul[k] }' $N \
+  | { IFS= read -r l; echo "$l"; sort -t"$T" -k$(( $(echo "$1" | tr ',' '\n' | wc -l) + 1 )),$(( $(echo "$1" | tr ',' '\n' | wc -l) + 1 ))nr | head -n "$2"; }; }
+if has summary; then hdr "요약"; awk -F'\t' '{n++; if(f==""||$1<f)f=$1; if($1>l)l=$1; ip[$2]=1; sn[$3]=1; u[$4]=1; o+=$9; i+=$8; k[$15]++; r[$12]=1}
+  END{ni=0;for(x in ip)ni++; ns=0;for(x in sn)ns++; nu=0;for(x in u)nu++; nr=0;for(x in r)nr++
+       printf "줄수 %d | 기간 %s ~ %s | 고유IP %d | /24대역 %d | user %d | 저장소(분류 포함) %d\n", n,f,l,ni,ns,nu,nr
+       printf "pull %d / push %d / other %d | 보낸 바이트 %.1f MB | 받은 바이트(업로드) %.1f MB\n", k["pull"],k["push"],k["other"],o/1e6,i/1e6}' $N; fi
+has ip      && { hdr "IP 별 (상위 $TOP, 건수순)"; agg 2 $TOP IP; }
+has subnet  && { hdr "/24 대역 별"; agg 3 $TOP 대역; }
+has repo    && { hdr "저장소 별"; agg 12 $TOP 저장소; }
+has ipxrepo && { hdr "IP × 저장소 (상위 $TOP)"; agg 2,12 $TOP "IP	저장소"; }
+if has component; then hdr "컴포넌트(이미지/디렉터리) 별 — 건수순 (상위 $TOP)"; agg 12,13 $TOP "저장소	컴포넌트"
+  hdr "컴포넌트 별 — 전송량(MB_out)순 (상위 $TOP)"; agg 12,13 100000 "저장소	컴포넌트" | { IFS= read -r l; echo "$l"; sort -t"$T" -k6,6nr | head -n $TOP; }
+  hdr "IP × 컴포넌트 (상위 $TOP) — '누가 무엇을'"; agg 2,12,13 $TOP "IP	저장소	컴포넌트"; fi
+if has push; then hdr "push 성공 이벤트 (docker: PUT manifest 201 / 그 외: PUT·POST 2xx, 최근 $TOP건)"
+  awk -F'\t' 'BEGIN{OFS="\t"; print "시각","IP","user","저장소","자산","MB_in"} ($15=="push" && $7<300 && $12 !~ /^\(/) && (($14 ~ /^manifest /) || ($14 !~ /^(blob|docker-api)/ && $5!="PATCH")) {printf "%s\t%s\t%s\t%s\t%s\t%.2f\n",$1,$2,$4,$12,$14,$8/1e6}' $N | { IFS= read -r l; echo "$l"; sort -r | head -n $TOP; }
+  hdr "push 업로드량 IP 별 (PATCH/PUT 바디 합계)"; awk -F'\t' '$15=="push"{b[$2"\t"$4]+=$8; c[$2"\t"$4]++} END{print "IP\tuser\tpush요청수\tMB_in"; for(k in b) printf "%s\t%d\t%.1f\n",k,c[k],b[k]/1e6}' $N | { IFS= read -r l; echo "$l"; sort -t"$T" -k4,4nr | head -n $TOP; }; fi
+if has time; then hdr "시간대 별 (시간 단위)"; awk -F'\t' '{h=substr($1,1,10); c[h]++; o[h]+=$9} END{for(h in c){printf "%s-%s-%s %s시\t%6d\t%8.1f MB\n",substr(h,1,4),substr(h,5,2),substr(h,7,2),substr(h,9,2),c[h],o[h]/1e6}}' mx=$(awk -F'\t' '{c[substr($1,1,10)]++} END{m=1;for(h in c)if(c[h]>m)m=c[h];print m}' $N) $N | sort | tail -n 48
+  hdr "분 단위 피크 (usage-metrics 의 peak_requests_per_minute 과 대조용)"; awk -F'\t' '{c[substr($1,1,12)]++} END{for(m in c) print c[m]"\t"substr(m,1,4)"-"substr(m,5,2)"-"substr(m,7,2)" "substr(m,9,2)":"substr(m,11,2)}' $N | sort -nr | head -5; fi
+if has ua; then hdr "User-Agent 계열 별"; awk -F'\t' '{u=$11; sub(/[ \/(].*/,"",u); if(u=="")u="(none)"; c[u]++; ip[u SUBSEP $2]=1} END{for(u in c){n=0; for(k in ip){split(k,a,SUBSEP); if(a[1]==u)n++} print c[u]"\t"n"\t"u}}' $N | sort -nr | head -n $TOP | { echo "건수	IP수	UA"; cat; }
+  hdr "User-Agent 원문 (상위 $TOP)"; cut -f11 $N | sort | uniq -c | sort -nr | head -n $TOP; fi
+if has status; then hdr "상태코드 별"; cut -f7 $N | sort | uniq -c | sort -nr; hdr "401 이 많은 IP (docker 토큰 핸드셰이크 포함 — 1 pull 당 /v2/ 401 1회가 정상)"; awk -F'\t' '$7==401{c[$2]++} END{for(i in c) print c[i]"\t"i}' $N | sort -nr | head -5; fi
+if has counter; then hdr "카운터 귀속 — 최신 로그 시각 기준 24h 창 (usage-metrics requests_per_last_24h 과 대조)"
+  awk -F'\t' '{l[NR]=$0; if($1>mx)mx=$1} END{y=mx; # 24시간 전 계산(날짜 넘김은 단순화: 같은 일 또는 전일)
+    d=substr(y,1,8); hms=substr(y,9); split("31 28 31 30 31 30 31 31 30 31 30 31",DM," "); yr=substr(d,1,4)+0; mo=substr(d,5,2)+0; da=substr(d,7,2)+0; if(yr%4==0&&(yr%100!=0||yr%400==0))DM[2]=29
+    da--; if(da<1){mo--; if(mo<1){mo=12;yr--}; da=DM[mo]}; th=sprintf("%04d%02d%02d%s",yr,mo,da,hms)
+    for(i=1;i<=NR;i++){split(l[i],f,"\t"); if(f[1]>th){n++; cat=(f[12] ~ /^\(/)?f[12]:"/repository/*"; c[cat]++; if(f[12] !~ /^\(/ && f[7]<400)ok++}}
+    printf "창: %s ~ %s\n로그 총 %d 건\n", th, mx, n; for(k in c) printf "  %-16s %d\n", k, c[k]; printf "  (repository 2xx/3xx만) %d\n", ok}' $N
+  echo "시간(hour-of-day) 별 /repository/* 건수 — 로그에 있는 마지막 25개 시간 버킷, content_request_count.hour[시] 와 대조:"
+  awk -F'\t' '$12 !~ /^\(/ {c[substr($1,1,10)]++} END{for(k in c) printf "  %s-%s-%s %s시\t%d\n",substr(k,1,4),substr(k,5,2),substr(k,7,2),substr(k,9,2),c[k]}' $N | sort | tail -n 25
+  if [ -n "$NXURL" ]; then echo "usage-metrics API:"; curl -s ${NXCRED:+-u "$NXCRED"} "$NXURL/service/rest/internal/ui/usage-metrics"; echo
+    echo "metrics/data content_request_count (hour[0..23] = 0시..23시 버킷):"; curl -s ${NXCRED:+-u "$NXCRED"} "$NXURL/service/rest/metrics/data" | grep -o '"nexus.analytics.content_request_count":{"value":{[^}]*}[^}]*}' | head -c 600; echo; fi; fi
+```
+
+## H-2. 실측 기록 원문 (`~/nexus-lab/logs/reqlog/progress.md`)
+
+# Nexus request.log 분석 — "조회 카운트가 왜 오르나" 를 IP/대역·저장소·컴포넌트 단위로 귀속 (2026-11-05 실측)
+
+대상: 랩 nexus6 (Nexus 3.82.0-08 CE, podman, 로그 `~/nexus-lab/data/nexus6/log`). 읽기 전용 — 로그·설정 변경 없음.
+스크립트: `~/nexus-lab/tools/nexus-reqlog-report.sh` (bash + gzip + awk + sort, gawk 전용 함수 미사용)
+
+### 0. 로그 파일·포맷 (실측)
+- 위치: `$data/log/request.log` (현재) + `request-YYYY-MM-DD.log.gz` (일 단위 회전, `maxHistory 90` → 90일 보관, logback.xml 81~91행).
+  회전은 "다음 날 첫 기록 시점" 에 일어나므로 트래픽이 없던 날의 gz 는 생기지 않는다 (랩 파일 목록에서 날짜가 듬성듬성한 이유).
+- 패턴 (`etc/jetty/jetty-requestlog.xml`):
+  `%{client}a - %{nexus.user.id}attr %t "%r" %s %{Content-Length}i %O %{ms}T "%{User-Agent}i" [thread]`
+  ```
+  10.89.200.2 - admin [04/Nov/2026:14:18:27 +0000] "GET /repository/docker-hosted/v2/dlops/big/manifests/3.12 HTTP/1.1" 200 - 2321 27 "skopeo/1.24.1" [qtp733224796-29]
+  $1 IP  $3 user  $4 시각  $6 메서드  $7 경로  $9 상태  $10 요청 Content-Length(업로드 바이트)  $11 보낸 바이트  $12 소요 ms  $13.. UA
+  ```
+  $10 이 업로드 바이트인 것은 `PATCH .../blobs/uploads/... 202 32 0 11` (32바이트 바디, 0바이트 응답) 로 확인.
+- docker 커넥터 포트(5000/5001)로 들어온 요청도 로그에는 `/repository/<repo>/v2/...` 로 찍힌다 → 저장소 귀속이 바로 된다.
+- 시간대는 컨테이너 TZ (랩 +0000). 분석 필터는 변환 없이 로그 시각 그대로 비교한다.
+
+### 1. 클라이언트 IP 열의 의미 — X-Forwarded-For 실측
+```
+curl -H 'X-Forwarded-For: 203.0.113.9, 10.0.0.1' -H 'X-Real-IP: 198.51.100.7' http://127.0.0.1:35600/v2/
+→ 203.0.113.9 - admin [05/Nov/2026:00:46:14 +0000] "GET /repository/docker-hosted/v2/ HTTP/1.1" 200 ...
+```
+- 3.82 기본 `jetty.xml` 에 `ForwardedRequestCustomizer` 가 들어 있어 **XFF 의 맨 앞 IP 가 그대로 기록**된다 (X-Real-IP 는 무시).
+- 뜻: 운영에서 nginx/L7 뒤에 있으면 프록시가 XFF 를 붙이는 한 실제 클라이언트 IP 가 보인다. 반대로 Nexus 에 직접 닿는 경로가 있으면
+  클라이언트가 XFF 를 넣어 IP 열을 위조할 수 있다 → IP 기준 귀속은 "Nexus 앞에 프록시만 있고 직접 접근은 막혀 있다" 가 전제.
+  신뢰가 필요하면 `jetty.httpConfig.forwardedOnly` 류 속성 또는 프록시에서 XFF 를 덮어쓰도록(append 가 아니라 set) 해야 한다.
+
+### 2. 카운터("조회 카운트") 가 세는 것 — 로그와 1:1 대조
+`/service/rest/metrics/data` 의 `nexus.analytics.content_request_count` = `{hour[24], day, last_24h, month{}}`, `hour[i]` 는 **i시 버킷(hour-of-day)**.
+UI/`usage-metrics` 의 `requests_per_last_24h` 는 이 `last_24h` 와 같은 값.
+
+| 버킷 | 카운터 | 로그 `/repository/*` 전체 | 로그 전체 | 차이 내역 |
+|---|---|---|---|---|
+| 11-04 00시 | 6164 | **6164** | 8024 | badMessage 400 1799 + REST 61 제외, **401 1802 포함** |
+| 11-04 14시 | 18 | **18** | 21 | badMessage 3 제외, 401 3 포함 |
+| month 11-2026 | 10426 | **10426** (6164+18+3851+299+94) | | |
+| month 10-2026 | 897 | 897 = 10-19 (12+16) + 10-21 869 | | 10-22(6)·10-30(7125) 은 카운터에 없음 — 원인 미확인(아래) |
+
+결론 (성질):
+- 카운터 = **경로가 `/repository/` 로 시작하는 요청 수. 상태코드 무관** (401·404·500 도 센다). REST API(`/service/rest`)·UI·정적·Jetty 가 거부한 `/badMessage` 는 안 센다.
+- 그래서 docker 는 pull 1회에 `/v2/`(401) + `/v2/token` + manifest + blob×N 이 전부 카운트된다. 랩 11-04 00시: docker-api 핸드셰이크 3748건 = 전체의 60%.
+  익명 pull 을 허용하면 `/v2/` 401→token 왕복이 사라져 이미지당 2건이 준다 (정책 결정 사항, 한도 우회 목적의 조작은 아님).
+- 카운터는 DB 에 저장되어 재시작을 넘어 유지된다 (00시 트래픽은 13:41 재시작 전 것인데 그대로 남음). 반면 `egress.day`·`blobstore_operation_metrics` 는 재시작 이후 값만 있었다.
+- 10월 일부 시간대가 카운터에 없는 이유는 확인 못 했다 (랩에서 그 무렵 컨테이너 강제 중단이 잦았음 — 메모리 버킷이 flush 전 유실됐을 가능성). 운영에선 로그 집계와 카운터를 같이 보고 어긋나면 이 가능성을 의심.
+
+### 3. 스크립트 실행 (전부 랩 nexus6, 22,938줄 / 10개 파일, 2.6초)
+```
+tools/nexus-reqlog-report.sh -d data/nexus6/log -n 8 -c http://127.0.0.1:8096 -A 'admin:***'
+```
+- 요약: 고유 IP 21, /24 대역 4, pull 13253 / push 9661, 보낸 902 MB / 받은 475 MB
+- IP 별: 10.89.200.127 8505건(493 MB out, 444 MB in = 이관 테스트 skopeo), 10.89.200.105 7943건(raw-load 부하 테스트, 4206 4xx), 10.88.0.34 5260건
+- 저장소 별: raw-load 10976 / docker-hosted 6524(891 MB out) / (rest-api) 2601 / helm-hosted 49 / maven-releases 19
+- 컴포넌트 전송량순: `docker-hosted dlops/big` 71건 801.6 MB out, `dlops/web` 43.7 MB, `dlops/pybase` 37.1 MB — "누가 무엇을 많이 가져갔나" 는 이 표
+- IP×컴포넌트: 10.89.200.105 → raw-load /pre 5658건, 10.88.0.34 → raw-load /pref 1991건·/pvd 1860건
+- push 이벤트: `manifest dlops/scale20:v10` 등 PUT manifest 201 을 IP·user·시각과 함께 나열, 업로드량 IP 별 합계
+- 분 피크: 2133건/분 (2026-11-04 00:30). 카운터의 `peak_requests_per_minute_1d` 는 15 — 재시작 이후 구간만 반영된 값
+- UA: curl 13503(20 IP) / skopeo 6503(2 IP) / 빈 UA 1870(badMessage) / Python-urllib 1040 / Helm 20
+- 상태: 401 3422 중 10.89.200.127 1871 — docker 핸드셰이크. 500 2679·400 1879 는 부하 테스트 잔재
+- 필터 검증: `-i 10.88.0. -r raw-load -s '2026-11-02 23:00' -u '2026-11-02 23:59'` → 3851줄, `-a skopeo -S push` → manifest push 목록
+- 이식성: alpine 3.20(busybox awk)·ubuntu 24.04(mawk) 컨테이너에서 동일 결과. macOS 는 `zcat` 이 `.Z` 를 붙여 실패 → 스크립트는 `gzip -dcf` 사용. BWK awk 에 `mktime` 없음 → 시각을 14자리 문자열로 비교.
+
+### 4. 스크립트 없이 쓰는 한 줄들 (서버에서 바로)
+```bash
+L=/nexus-data/log   # tarball 설치는 /opt/sonatype/sonatype-work/nexus3/log
+cat_all(){ for f in $L/request-*.log.gz $L/request.log; do [ -f "$f" ] && gzip -dcf "$f"; done; }
+### IP 별 건수
+cat_all | awk '{c[$1]++} END{for(i in c) print c[i], i}' | sort -nr | head
+# /24 대역 별 건수·보낸 MB
+cat_all | awk '{split($1,o,"."); s=o[1]"."o[2]"."o[3]".0/24"; c[s]++; b[s]+=($11=="-"?0:$11)} END{for(s in c) printf "%d\t%.1f MB\t%s\n", c[s], b[s]/1e6, s}' | sort -nr
+# 카운터가 세는 것만(= /repository/*) 시간대별 — metrics/data 의 hour[] 와 대조
+cat_all | awk '$7 ~ /^\/repository\// {h=substr($4,2,14); c[h]++} END{for(h in c) print h, c[h]}' | sort
+# IP × 저장소
+cat_all | awk '$7 ~ /^\/repository\// {r=$7; sub(/^\/repository\//,"",r); sub(/\/.*/,"",r); c[$1" "r]++} END{for(k in c) print c[k], k}' | sort -nr | head -20
+# docker 이미지 별 보낸 바이트 (blob/manifest 합산)
+cat_all | awk '$7 ~ /\/v2\/.*\/(blobs|manifests)\// {n=$7; sub(/^\/repository\//,"",n); sub(/\/v2\//," ",n); sub(/\/(blobs|manifests)\/.*/,"",n); b[n]+=($11=="-"?0:$11); c[n]++} END{for(k in b) printf "%.1f MB\t%d\t%s\n", b[k]/1e6, c[k], k}' | sort -nr | head
+# 누가 push 했나 (docker: PUT manifest 201)
+cat_all | awk '$6=="\"PUT" && $7 ~ /\/manifests\// && $9==201 {print substr($4,2), $1, $3, $7}' | tail -20
+# 특정 날짜 하루만: 회전 파일 하나가 그 날짜 (예: 11월 4일) — 단, 그날 트래픽이 없으면 파일이 없다
+gzip -dc $L/request-2026-11-04.log.gz | awk '{c[$1]++} END{for(i in c) print c[i], i}' | sort -nr | head
+# 1분 피크
+cat_all | awk '{c[substr($4,2,17)]++} END{for(m in c) print c[m], m}' | sort -nr | head -3
+# 프록시 저장소가 상류에서 받아온 것 (outbound-request.log, 같은 포맷 계열)
+gzip -dcf $L/outbound-request*.log* | awk '{print $7}' | sed 's/?.*//' | sort | uniq -c | sort -nr | head
+```
+
+### 5. 운영 적용 시 주의
+- IP 열 신뢰 조건: 1절. LB 가 XFF 를 안 붙이면 전부 LB IP 로 보인다.
+- 시간대: 로그는 Nexus 프로세스 TZ. 분석 서버가 다르면 `-s/-u` 를 로그 TZ 로 적어야 한다.
+- 양: 하루 수백만 줄이면 awk 단일 패스라도 분 단위. 날짜 gz 하나씩 돌리거나 `-s/-u` 로 자른다. 디스크 쓰기는 `$TMPDIR` 의 정규화 TSV 1개뿐.
+- 카운터와 로그가 1:1 인 것은 `/repository/*` 기준일 때다. REST API 로 수집 스크립트를 자주 돌려도 카운터는 안 오른다 — 랩에서 REST 2601건 전부 미포함.
+- CE 한도 관련 조작(카운터 리셋·시계 조작 등)은 하지 않는다. 이 분석은 "어느 클라이언트·어느 저장소가 카운트를 만드는지" 를 보고 캐시(노드 로컬 풀·Spegel)·익명 pull·폴링 주기 같은 정상 수단으로 줄이기 위한 것.
 
