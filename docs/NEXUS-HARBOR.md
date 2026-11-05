@@ -11,6 +11,7 @@ Nexus 는 남기고 커스텀 이미지·차트만 Harbor 로 옮기는 구성�
 | Nexus `helm-hosted`(index.yaml 방식) 차트를 Harbor 가 끌어올 수 있나 | **안 된다** — Harbor 어댑터는 전부 OCI 레지스트리, 차트 저장소 어댑터 없음(2.8 에서 ChartMuseum 과 함께 제거) | 어댑터 목록: ali-acr, aws-ecr, azure-acr, docker-hub, docker-registry, github-ghcr, google-gcr, harbor, huawei-SWR, jfrog-artifactory, tencent-tcr, volcengine-cr |
 | Nexus docker-hosted 에 OCI 로 올린 차트는 | **된다** (이미지와 동일 경로) | `oci://harbor.lab/nexus-proxy/dlops/ocicharts/h27a:0.1.0` pull OK, CHART 로 캐시 |
 | schema1(v1 매니페스트) 이미지는 | Nexus·Harbor 저장/프록시/복제 전부 됨. **노드 containerd 2.x 가 pull 거부** → 변환 필요 | 아래 4절 |
+| 상류(Nexus)가 죽으면 Harbor 프록시 캐시가 나가나 | **나간다** — HEAD 가 연결 오류로 끝나면 로컬 폴백. 안 나가는 건 상류가 살아서 404 를 줄 때(캐시 삭제) | 아래 3-1절(차단 중 Nexus 로그 증가 0) |
 | Harbor 프록시를 두면 Nexus 카운터가 주나 | **태그 pull 은 안 준다**(첫 pull 3배, 반복 동률). digest pull 만 0 | 아래 3절 |
 | Nexus 카운터는 정확히 무엇을 세나 | `/repository/` 로 시작하는 요청 전부, 상태코드 무관(401 포함). REST·UI·Jetty 거부 요청 제외 | 로그 집계와 버킷 단위로 1:1 일치 |
 
@@ -59,6 +60,34 @@ macOS 는 `zcat` 대신 `gzip -dcf`. 로그 시각은 Nexus 프로세스 TZ.
 - 복제: `dest_namespace_replace_count: 1` 이면 `dlops/app1` → `nexus-repl/app1` 로 첫 조각이 바뀐다. 이름 필터 없이 걸면 Nexus `_catalog` + 태그 목록 요청이 전부 카운트된다.
 - 결론: Harbor 프록시는 **바이트는 줄이지만 요청 수는 못 줄인다**. 카운터를 줄이려면 digest 고정 참조나 노드 캐시(Spegel)가 앞에 있어야 한다. 점검 중 캐시 태그 유지 용도로는 유효.
 - 반대 방향(Nexus docker-proxy → Harbor)은 Nexus truststore 에 CA 등록(재시작)이 필요해 이번엔 안 했다.
+
+### 3-1. 상류가 죽었을 때 캐시가 "진짜" 나가는가 — 재검증과 동작 원리
+
+첫 측정은 socat 종료 확인 줄이 비어 있어(macOS `pgrep -c` 미지원) 같은 날 다시 쟀다. 클라이언트는 로컬 캐시가 없는 skopeo(registry VM), 대상 디렉터리 삭제 후 복사.
+
+| 단계 | 결과 |
+|---|---|
+| socat 종료 → 남은 프로세스 0, Mac·registry VM 모두 상류 포트 연결 거부(curl rc=7) | 상류 차단 확정 |
+| 차단 중 `nexus-proxy/dlops/scale01:v1`, `app1:1.1`, `legacy:s1` pull | 3개 모두 OK, 각 manifest+config+blob 2 = 4파일 2.7MB 실제 수신 |
+| 차단 중 캐시에 없는 `scale03:v2` | `unknown: repository` 실패 (대조군) |
+| 차단 전후 Nexus request.log 줄 수 | 387 → 387, **증가 0** — Harbor 가 Nexus 에 한 번도 닿지 못했으므로 데이터는 Harbor 저장소에서 나온 것 |
+| socat 복구 후 같은 `scale03:v2` | OK, Nexus 로그 +16줄 |
+| 차단 직후 `GET /api/v2.0/registries/{id}` 의 status | 여전히 `healthy` — 주기 점검값이라 즉시 반영되지 않는다 |
+
+"태그 pull 은 매번 상류에 HEAD 를 보낸다" 와 "상류가 죽어도 캐시가 나간다" 는 모순이 아니다. Harbor 2.14 소스(`src/server/middleware/repoproxy/proxy.go`, `src/controller/proxy/controller.go`)의 분기:
+
+1. 엔드포인트 status 가 unhealthy 로 기록돼 있으면(`canProxy` false) 상류에 묻지 않고 로컬을 서빙한다.
+2. healthy 면 `UseLocalManifest` 가 상류에 HEAD. **HEAD 가 오류(연결 거부·타임아웃·5xx)로 끝나면** `ManifestMiddleware` 가 "failed to proxy manifest, fallback to local" 을 남기고 로컬을 서빙한다. 위 재검증이 이 경로(health 는 아직 healthy 였음).
+3. 429(rate limit)면 로컬이 있을 때 로컬.
+4. **HEAD 가 정상 응답으로 "없음"(404)이면 로컬 캐시를 삭제하고 404** 를 돌려준다.
+5. blob 은 로컬에 있으면(`UseLocalBlob`) 상류를 보지 않는다.
+
+운영에서 따라오는 성질:
+- 캐시가 있는데 안 나가는 경우는 "상류 다운" 이 아니라 **"상류가 살아서 그 태그가 없다고 답할 때"** 다. 상위에서 이미지를 지웠거나, 엔드포인트 URL 을 잘못 바꿔 엉뚱한 레지스트리가 404 를 주면 캐시가 지워진다. 엔드포인트 URL 변경은 캐시 전체를 걸고 하는 일이다.
+- 프록시 프로젝트의 캐시 보존 기간(기본 7일, 그동안 pull 안 된 아티팩트 삭제)이 상류 장애보다 짧으면 장애 중 캐시가 빠진다. 장애 대비 용도면 늘리거나 끈다.
+- 장애 여부는 health 표시가 아니라 실제 pull 프로브로 판단한다.
+- "상류가 죽어도 반드시 나가야 하는 이미지" 는 프록시가 아니라 **복제(replication)** 로 내려 둔다. 복제본은 상류 상태와 무관하게 하위 저장소의 일반 아티팩트다. 프록시는 편의, 복제는 보증.
+- 상류가 Harbor 인 조합(Harbor→Harbor)은 아직 안 쟀다. 위 분기는 어댑터와 무관한 core 로직이다.
 
 ## 4. schema1(v1 매니페스트) 이미지
 
