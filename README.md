@@ -277,6 +277,25 @@ for f in $L/request-*.log.gz $L/request.log; do gzip -dcf "$f"; done | awk '$7 ~
 ```
 주의: macOS `zcat` 은 `.Z` 를 붙여 실패하므로 `gzip -dcf`. BWK awk 엔 `mktime` 이 없어 시각은 14자리 문자열 비교. 로그 시각은 Nexus 프로세스 TZ 그대로다.
 
+## 7차: Harbor 가 Nexus 를 상류로 볼 수 있나 — proxy cache + 복제 실측 (2026-11-05)
+
+Harbor 어댑터 목록에 Nexus 전용은 없고 범용 `docker-registry` 어댑터로 Nexus docker-hosted(커넥터 포트)를 등록하면 **proxy cache 와 pull 복제 둘 다 된다**. 노드 `crictl pull`, 외부 호스트 skopeo, `helm pull oci://` 전부 성공했고 digest 는 Nexus 원본과 같았다. 상세는 부록 I.
+
+**Nexus 카운터 관점에서는 기대와 다르다.** 캐시에 없던 blob 2개짜리 이미지로 측정한 Nexus 요청 수(= CE 카운터 증가):
+
+| 시나리오 | Nexus 요청 수 | 내역 |
+|---|---|---|
+| 직접 pull | 5 | /v2/ 401, token, manifest, blob×2 |
+| Harbor 프록시 첫 pull(태그) | **15** | Harbor 가 요청마다 토큰을 새로 받고(401×3, token×6), blob 을 스트리밍용 1회 + 캐시용 1회 **두 번** 받는다 |
+| 프록시 두 번째 pull(태그) | **5** | 매니페스트를 매번 상류에 HEAD+GET 으로 확인. blob 만 캐시 |
+| 프록시 pull(digest 지정) | **0** | 상류 요청 없음 |
+| 상류 차단 + 캐시된 태그 | 성공 | 캐시 제공. 캐시에 없는 태그는 실패 |
+
+- 성질: 태그로 당기는 한 Harbor 프록시는 Nexus 요청 수를 **줄이지 못한다** (바이트만 준다). 줄이려면 digest 고정 참조, 또는 노드 캐시(Spegel) 가 앞에 있어야 한다. 반면 Nexus 점검 중에도 캐시된 태그 pull 이 유지되는 용도로는 유효하다.
+- 복제: name `dlops/app1`·tag `1.*` 필터, manual 실행 → Succeed, `nexus-repl/app1` 에 1.0·1.1 적재. `dest_namespace_replace_count: 1` 이라 첫 경로 조각이 대체된다. 이름 필터 없이 걸면 Nexus `_catalog`+태그 목록 요청이 전부 카운트된다.
+- 캐시 적재 조건: blob 까지 받은 pull 이어야 아티팩트가 남는다(매니페스트만 읽은 inspect 는 안 남음). 차트는 첫 pull 에 바로 적재.
+- 반대 방향(Nexus docker-proxy → Harbor)은 Nexus truststore 에 랩 CA 를 넣어야 해서 이번엔 안 했다.
+
 # 부록 A. 실측 기록 (랩 로그 원문)
 
 ## 커스텀 docker·helm: Nexus → Harbor 2.7(ChartMuseum) on CloudNativePG — 전체 이관 실측 (2026-11-03)
@@ -1978,4 +1997,52 @@ gzip -dcf $L/outbound-request*.log* | awk '{print $7}' | sed 's/?.*//' | sort | 
 - 양: 하루 수백만 줄이면 awk 단일 패스라도 분 단위. 날짜 gz 하나씩 돌리거나 `-s/-u` 로 자른다. 디스크 쓰기는 `$TMPDIR` 의 정규화 TSV 1개뿐.
 - 카운터와 로그가 1:1 인 것은 `/repository/*` 기준일 때다. REST API 로 수집 스크립트를 자주 돌려도 카운터는 안 오른다 — 랩에서 REST 2601건 전부 미포함.
 - CE 한도 관련 조작(카운터 리셋·시계 조작 등)은 하지 않는다. 이 분석은 "어느 클라이언트·어느 저장소가 카운트를 만드는지" 를 보고 캐시(노드 로컬 풀·Spegel)·익명 pull·폴링 주기 같은 정상 수단으로 줄이기 위한 것.
+
+# 부록 I. 7차 — Harbor → Nexus proxy cache / 복제 실측 원문 (`~/nexus-lab/logs/harbor-nexus-proxy/progress.md`)
+
+# Harbor → Nexus: Harbor 가 Nexus 를 상류(proxy cache / 복제 원본)로 볼 수 있나 (2026-11-05 실측)
+
+구성: Harbor 2.14 (k8s, https://harbor.lab) → Mac 호스트전용 IP 172.16.141.1:35601 (socat 중계) → nexus6 docker-hosted(3.82, http, 커넥터 5001).
+Harbor 어댑터 목록에 Nexus 전용은 없다 → 범용 `docker-registry` 어댑터로 등록. 비밀값은 문서에 없음.
+
+### 1. 등록
+- `POST /api/v2.0/registries/ping` → 200, `POST /registries` → 201 (type docker-registry, url http://172.16.141.1:35601, insecure true, Nexus 계정 basic)
+- `/registries/1/info`: 필터 name·tag, resource = image 만, 트리거 manual·scheduled. 상태 healthy.
+- proxy cache 프로젝트 `nexus-proxy` (registry_id=1, public) → 201.
+
+### 2. proxy cache 로 pull (전부 성공, digest 원본과 동일)
+| 경로 | 결과 |
+|---|---|
+| w1 노드 `crictl pull harbor.lab/nexus-proxy/dlops/app1:1.1` | OK, repoDigest 4bdb4ac6… |
+| registry VM `skopeo inspect --raw …/nexus-proxy/dlops/app1:1.0` sha256 | 4bdb4ac63839546d = Nexus 원본 sha256 (Mac 에서 127.0.0.1:35600 직접 조회) |
+| registry VM `helm pull oci://harbor.lab/nexus-proxy/dlops/ocicharts/h27a --version 0.1.0` | OK (Nexus docker-hosted 에 올라가 있던 OCI 차트도 프록시됨) |
+- 캐시 적재: 매니페스트만 읽은 pull(inspect, 노드에 레이어가 이미 있던 경우)은 Harbor 에 아티팩트가 안 남았다. blob 까지 받은 pull 뒤 ~15초 후 `nexus-proxy/dlops/app1` IMAGE 1개(태그 1.0·1.1 공유 digest) 적재. 차트는 첫 pull 에 바로 CHART 로 적재.
+
+### 3. Nexus 쪽에서 본 Harbor 의 요청 (request.log) — 카운터 영향
+Nexus 로그의 IP 는 socat 때문에 podman 게이트웨이(10.89.200.2)로 찍힘. UA 로 구분: 인증 핸드셰이크 `Go-http-client/1.1`, 실제 데이터 `harbor-registry-client`.
+캐시에 없던 `dlops/scale01:v1` (blob 2개) 로 깨끗하게 측정:
+
+| 시나리오 | Nexus 요청 수(=카운터 증가) | 내역 |
+|---|---|---|
+| 직접 pull (skopeo → Nexus) | **5** | /v2/ 401, token, manifest GET, blob×2 (+ 카운트 안 되는 /badMessage 1: skopeo 가 https 먼저 시도) |
+| Harbor 프록시 첫 pull (태그) | **15** | 401×3, token×6, manifest HEAD+GET, **blob×4 (blob 2개를 각각 2번: 클라이언트에 스트리밍 1회 + 캐시 적재 1회)** |
+| Harbor 프록시 두 번째 pull (태그, 캐시 있음) | **5** | 401, token×2, manifest HEAD+GET — blob 은 캐시에서. 매니페스트는 매번 상류에 확인 |
+| Harbor 프록시 pull (digest 지정, 캐시 있음) | **0** | 상류 요청 없음 |
+| 상류(Nexus) 차단 + 캐시된 태그 pull | 성공 (캐시 제공) | |
+| 상류 차단 + 캐시에 없는 태그 pull | 실패 `unknown: repository …` | |
+
+성질:
+- Harbor 는 요청마다 토큰을 새로 받는다(401→token 반복). 그래서 Nexus 요청 수 기준으로는 프록시가 **첫 pull 3배, 반복 pull 동률**이다. 줄어드는 건 bytes(blob) 뿐.
+- 태그 pull 은 항상 상류 매니페스트를 다시 확인하므로 "Harbor 프록시를 두면 Nexus 카운터가 준다" 는 기대는 **태그 기준으론 틀리고 digest 기준으론 맞다**. 노드의 containerd 가 digest 로 당기게 하거나(이미지 참조를 digest 고정), Spegel 같은 노드 캐시가 앞에 있어야 Nexus 요청이 실제로 준다.
+- 상류 장애 시 캐시된 태그는 계속 서비스된다 → Nexus 점검 중 pull 유지라는 용도로는 유효.
+
+### 4. 복제(replication, pull 모드) 도 같은 엔드포인트로 됨
+- 정책: src_registry=1, 필터 name `dlops/app1`, tag `1.*`, dest_namespace `nexus-repl`(replace_count 1 → `dlops/app1` → `nexus-repl/app1`), manual 트리거.
+- 실행 → Succeed, task `dlops/app1 [2 item(s)] → nexus-repl/app1 [2 item(s)]`, `nexus-repl/app1` 에 태그 1.0·1.1 적재.
+- 주의: docker-registry 어댑터는 `_catalog` 로 목록을 읽는다. Nexus docker-hosted 의 `/v2/_catalog` 가 허용돼 있어야 하고, 이름 필터 없이 전체를 걸면 Nexus 에 catalog + 태그 목록 요청이 전부 들어간다(카운터).
+
+### 5. 랩 상태 / 되돌리기
+- 남겨 둠: Harbor 엔드포인트 `nexus6-docker`(id 1), 프로젝트 `nexus-proxy`·`nexus-repl`, 정책 `nexus6-pull-app1`, Mac 의 socat(172.16.141.1:35601 → 127.0.0.1:35600, 재부팅 시 사라짐 → 엔드포인트 unhealthy 가 됨).
+- 되돌리기: `pkill -f 'socat TCP-LISTEN:35601'`; Harbor 에서 정책·프로젝트·엔드포인트 삭제(사용자 승인 후).
+- 반대 방향(Nexus docker-proxy → Harbor) 은 이번에 안 했다. Nexus 가 harbor.lab 인증서의 랩 CA 를 truststore 에 넣어야 해서 nexus6 재시작이 필요.
 
