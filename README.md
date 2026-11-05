@@ -182,7 +182,7 @@
 
 ## 운영 폐쇄망 인프라 사전 결정 사항 (랩 미검증 — 설계 단계에서 확정해야 할 것)
 
-> 서빙 분담과 노드 라우팅은 별도 문서로 정리했다: [docs/NEXUS-HARBOR.md](docs/NEXUS-HARBOR.md) (무엇이 되고 안 되는가), [docs/NODE-REGISTRY-ROUTING.md](docs/NODE-REGISTRY-ROUTING.md) (퍼블릭=Nexus·사내=Harbor 를 노드 `hosts.toml` 로 반영하는 절차, 카나리 검증·롤백 포함).
+> Nexus CE 한도(20만/일) 초과 시 pull/push 동작은 [docs/NEXUS-CE-LIMIT-3.82.md](docs/NEXUS-CE-LIMIT-3.82.md) (유예 전·중·후 매시간 기록). 서빙 분담과 노드 라우팅은 별도 문서로 정리했다: [docs/NEXUS-HARBOR.md](docs/NEXUS-HARBOR.md) (무엇이 되고 안 되는가), [docs/NODE-REGISTRY-ROUTING.md](docs/NODE-REGISTRY-ROUTING.md) (퍼블릭=Nexus·사내=Harbor 를 노드 `hosts.toml` 로 반영하는 절차, 카나리 검증·롤백 포함).
 
 이 랩은 IP 직결(`172.16.141.11:8443`)·사설 CA 수동 배포·단일 노드 스토리지로 돌렸습니다. 운영 폐쇄망에서는 아래 항목이 **Harbor 설치보다 먼저** 정해져야 하고, 대부분은 나중에 바꾸기 어렵습니다.
 
