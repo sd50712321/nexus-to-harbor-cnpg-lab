@@ -295,6 +295,7 @@ Harbor 어댑터 목록에 Nexus 전용은 없고 범용 `docker-registry` 어�
 - 복제: name `dlops/app1`·tag `1.*` 필터, manual 실행 → Succeed, `nexus-repl/app1` 에 1.0·1.1 적재. `dest_namespace_replace_count: 1` 이라 첫 경로 조각이 대체된다. 이름 필터 없이 걸면 Nexus `_catalog`+태그 목록 요청이 전부 카운트된다.
 - 캐시 적재 조건: blob 까지 받은 pull 이어야 아티팩트가 남는다(매니페스트만 읽은 inspect 는 안 남음). 차트는 첫 pull 에 바로 적재.
 - 반대 방향(Nexus docker-proxy → Harbor)은 Nexus truststore 에 랩 CA 를 넣어야 해서 이번엔 안 했다.
+- 추가 실측: Nexus `helm-hosted`(index.yaml 방식)는 Harbor 상류로 **불가**(차트 저장소 어댑터 없음). schema1 이미지는 프록시·복제·같은 경로 push 모두 digest 그대로 통과하지만 **containerd 2.2 가 pull 거부** → `--format oci` 변환본은 노드 pull OK. 정리본: [docs/NEXUS-HARBOR.md](docs/NEXUS-HARBOR.md).
 
 # 부록 A. 실측 기록 (랩 로그 원문)
 
