@@ -1,0 +1,43 @@
+---
+# Kubespray 전 사전 점검 (모든 노드). 실서버에서도 그대로 쓴다.
+- hosts: k8s_cluster
+  become: true
+  gather_facts: true
+  tasks:
+    - name: 설치 중 OS 자동 업데이트 정지 (Debian 계열 apt-daily / unattended-upgrades) — 패키지 잠금 경합으로 Kubespray 가 멈추는 것 방지
+      systemd: {name: "{{ item }}", state: stopped, enabled: false}
+      loop: [apt-daily.timer, apt-daily-upgrade.timer, unattended-upgrades.service]
+      failed_when: false
+      when: ansible_os_family == 'Debian'
+    - name: 설치 중 dnf-automatic 정지 (RHEL 계열)
+      systemd: {name: "{{ item }}", state: stopped, enabled: false}
+      loop: [dnf-automatic.timer, dnf-makecache.timer]
+      failed_when: false
+      when: ansible_os_family == 'RedHat'
+    - name: 클러스터 NIC 존재 확인
+      assert:
+        that: node_iface in ansible_interfaces
+        fail_msg: "{{ inventory_hostname }}: node_iface={{ node_iface }} 가 없음. 실제 NIC: {{ ansible_interfaces | join(', ') }}"
+    - name: ip 변수가 해당 NIC 의 주소인지
+      assert:
+        that: ip == hostvars[inventory_hostname]['ansible_' + node_iface | replace('-', '_')].ipv4.address
+        fail_msg: "{{ inventory_hostname }}: ip={{ ip }} 가 {{ node_iface }} 주소와 다름"
+    - name: VIP 응답 여부 (최초 설치 전에 응답이 오면 다른 장비와 IP 충돌)
+      command: "ping -c1 -W1 {{ item }}"
+      register: vip_ping
+      changed_when: false
+      failed_when: false
+      loop: ["{{ apiserver_vip }}", "{{ harbor_vip }}"]
+      run_once: true
+    - name: VIP 충돌 경고 (재설치·재실행이면 우리 클러스터가 쓰는 중이라 정상)
+      debug: {msg: "{{ item.item }} 가 이미 응답함. 최초 설치라면 IP 충돌 — IPAM 확인"}
+      loop: "{{ vip_ping.results }}"
+      when: item.rc == 0
+      run_once: true
+    - name: 시간 동기화 상태
+      command: timedatectl show -p NTPSynchronized --value
+      register: ntp
+      changed_when: false
+    - name: NTP 미동기 경고
+      debug: {msg: "{{ inventory_hostname }}: NTP 미동기. etcd·인증서 문제 위험"}
+      when: ntp.stdout != 'yes'

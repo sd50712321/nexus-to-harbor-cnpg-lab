@@ -1,0 +1,144 @@
+---
+# Kubespray 이후 애드온: Cilium L2 → Longhorn → CNPG → Harbor
+# kubectl/helm 은 첫 control plane 노드에서 실행 → 배포 호스트(Mac/Linux)에 kubectl·helm 이 없어도 된다.
+#   전부        : ansible-playbook -i inventory/<env>/inventory.ini addons.yml -b
+#   하나만      : ... --tags longhorn   (l2 | longhorn | cnpg | harbor)
+#   켜기/끄기   : 인벤토리의 *_enabled 변수 (환경에 이미 있는 구성요소는 false)
+
+- name: Longhorn 노드 사전 조건 (워커, Ubuntu/RHEL 공통)
+  hosts: kube_node
+  become: true
+  tags: [longhorn]
+  environment:
+    http_proxy: "{{ http_proxy | default('') }}"
+    https_proxy: "{{ https_proxy | default('') }}"
+  tasks:
+    - meta: end_play
+      when: not (longhorn_enabled | bool)
+    - name: 패키지 (Debian 계열)
+      apt:
+        name: [open-iscsi, nfs-common, cryptsetup, dmsetup]
+        update_cache: true
+        cache_valid_time: 3600
+      when: ansible_os_family == 'Debian'
+    - name: 패키지 (RHEL 계열)
+      dnf:
+        name: [iscsi-initiator-utils, nfs-utils, cryptsetup, device-mapper]
+      when: ansible_os_family == 'RedHat'
+    - name: iscsid 기동
+      systemd: {name: iscsid, enabled: true, state: started}
+    - name: 커널 모듈 (지금 + 부팅 시)
+      community.general.modprobe: {name: "{{ item }}", state: present, persistent: present}
+      loop: [iscsi_tcp, dm_crypt]
+    - name: multipath 설정 여부
+      stat: {path: /etc/multipath.conf}
+      register: mp
+    - name: multipathd 가 Longhorn 장치(/dev/sd*)를 잡지 않게 블랙리스트
+      blockinfile:
+        path: /etc/multipath.conf
+        block: |
+          blacklist {
+              devnode "^sd[a-z0-9]+"
+          }
+      when: mp.stat.exists
+      register: mpconf
+    - name: multipathd 재시작
+      systemd: {name: multipathd, state: restarted}
+      when: mpconf is changed
+
+- name: 클러스터 애드온 (첫 control plane 에서 kubectl/helm)
+  hosts: kube_control_plane[0]
+  become: true
+  vars:
+    longhorn_version: 1.13.0
+    cnpg_chart_version: 0.29.1
+    harbor_chart_version: 1.18.0
+    work: /root/lab-addons
+    harbor_arm64: "{{ ansible_architecture == 'aarch64' }}"
+    harbor_admin_password: "{{ lookup('ansible.builtin.password', playbook_dir + '/secrets/harbor-admin', length=20, chars=['ascii_letters', 'digits']) }}"
+  environment:
+    KUBECONFIG: /etc/kubernetes/admin.conf
+    http_proxy: "{{ http_proxy | default('') }}"
+    https_proxy: "{{ https_proxy | default('') }}"
+    no_proxy: "{{ no_proxy | default('') }}"
+    PATH: "/usr/local/bin:{{ ansible_env.PATH }}"
+  tasks:
+    - name: 작업 디렉터리
+      tags: [always]
+      file: {path: "{{ work }}", state: directory, mode: "0700"}
+    - name: 매니페스트·values 렌더링
+      tags: [always]
+      template: {src: "templates/{{ item }}.j2", dest: "{{ work }}/{{ item }}", mode: "0600"}
+      loop: [cilium-l2.yaml, longhorn-values.yaml, longhorn-sc-single.yaml, harbor-pg.yaml, harbor-values.yaml, harbor-bgp-svc.yaml]
+
+    - name: Cilium L2 공지 정책
+      command: kubectl apply -f {{ work }}/cilium-l2.yaml
+      tags: [l2]
+      when: cilium_l2_enabled | bool
+
+    - name: helm 저장소
+      tags: [longhorn, cnpg, harbor]
+      shell: |
+        helm repo add longhorn https://charts.longhorn.io --force-update
+        helm repo add cnpg https://cloudnative-pg.github.io/charts --force-update
+        helm repo add harbor https://helm.goharbor.io --force-update
+        helm repo update
+      changed_when: false
+
+    - name: Longhorn
+      command: >-
+        helm upgrade --install longhorn longhorn/longhorn -n longhorn-system --create-namespace
+        --version {{ longhorn_version }} -f {{ work }}/longhorn-values.yaml --wait --timeout 15m
+      tags: [longhorn]
+      when: longhorn_enabled | bool
+    - name: CNPG 용 StorageClass (복제 1벌, strict-local)
+      command: kubectl apply -f {{ work }}/longhorn-sc-single.yaml
+
+      tags: [longhorn]
+      when: longhorn_enabled | bool
+    - name: CloudNativePG operator
+      command: >-
+        helm upgrade --install cnpg cnpg/cloudnative-pg -n cnpg-system --create-namespace
+        --version {{ cnpg_chart_version }} --wait --timeout 10m
+      tags: [cnpg]
+      when: cnpg_enabled | bool
+    - name: harbor 네임스페이스
+      shell: kubectl create namespace harbor --dry-run=client -o yaml | kubectl apply -f -
+      tags: [cnpg, harbor]
+      when: cnpg_enabled | bool or harbor_enabled | bool
+    - name: Harbor DB (CNPG 3 인스턴스)
+      command: kubectl apply -f {{ work }}/harbor-pg.yaml
+      tags: [cnpg]
+      when: cnpg_enabled | bool
+    - name: Harbor DB Ready 대기
+      command: kubectl -n harbor wait cluster/harbor-pg --for=condition=Ready --timeout=15m
+      changed_when: false
+
+      tags: [cnpg]
+      when: cnpg_enabled | bool
+    - name: Harbor admin 비밀번호 Secret (값은 배포 호스트 secrets/harbor-admin 에만)
+      shell: |
+        kubectl -n harbor get secret harbor-admin >/dev/null 2>&1 && exit 0
+        kubectl -n harbor create secret generic harbor-admin --from-literal=HARBOR_ADMIN_PASSWORD="$P"
+      environment: {P: "{{ harbor_admin_password }}"}
+      no_log: true
+
+      tags: [harbor]
+      when: harbor_enabled | bool
+    - name: Harbor
+      command: >-
+        helm upgrade --install harbor harbor/harbor -n harbor --version {{ harbor_chart_version }}
+        -f {{ work }}/harbor-values.yaml --wait --timeout 20m
+      tags: [harbor]
+      when: harbor_enabled | bool
+    - name: Harbor BGP 서비스
+      command: kubectl apply -f {{ work }}/harbor-bgp-svc.yaml
+      tags: [harbor]
+      when: harbor_enabled | bool and bgp_enabled | bool
+    - name: 서비스 확인
+      tags: [harbor]
+      command: kubectl -n harbor get svc
+      register: svc
+      changed_when: false
+    - debug: {var: svc.stdout_lines}
+      tags: [harbor]

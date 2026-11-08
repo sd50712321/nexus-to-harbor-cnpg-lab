@@ -1,0 +1,12 @@
+# 다시 받는 것
+kubespray/
+.venv/
+.vagrant/
+# 비밀값·접속 정보 (절대 커밋 금지)
+secrets/
+inventory/*/artifacts/
+inventory/*/credentials/
+inventory/*/ssh.cfg
+# 실행 기록·개인 메모
+logs/
+notes/

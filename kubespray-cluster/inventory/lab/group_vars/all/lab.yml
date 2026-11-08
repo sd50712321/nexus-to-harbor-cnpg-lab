@@ -1,0 +1,41 @@
+---
+# ===== 환경별로 바꾸는 값 (실서버는 inventory/prod-sample 참고) =====
+ansible_user: vagrant
+ansible_ssh_common_args: "-F {{ inventory_dir }}/ssh.cfg"   # 랩 전용(vagrant ssh-config)
+
+node_iface: eth1                       # 클러스터 통신 NIC (실서버 예: bond1). kube-vip ARP, Cilium L2 공지가 이 NIC 에서 나간다
+cilium_node_devices: [eth0, eth1]      # Cilium 이 NodePort/LB 를 처리할 NIC 목록 (실서버 예: [bond0, bond1])
+
+apiserver_vip: 172.16.141.30           # API VIP (kube-vip, ARP). 노드 서브넷 안, DHCP 범위 밖
+harbor_vip: 172.16.141.210             # Harbor LB VIP (L2 풀 안)
+l2_pool_start: 172.16.141.210
+l2_pool_stop: 172.16.141.219
+
+bgp_enabled: true                      # ToR 스위치와 BGP 를 할지
+bgp_local_asn: 65010                   # 노드(Cilium) 쪽 ASN — 네트워크팀이 할당
+bgp_peer_asn: 65000                    # ToR 스위치 ASN
+bgp_peer_address: 172.16.141.29        # ToR 스위치 피어 IP (노드 서브넷의 게이트웨이/SVI)
+bgp_pool_cidr: 10.250.0.0/24           # BGP 로 광고할 VIP 대역 — 노드 서브넷 밖, 네트워크팀이 할당
+harbor_bgp_vip: 10.250.0.10
+
+# ===== 프록시 (랩: Mac 의 VMware NAT 가 죽어 Mac host-only 주소의 HTTP 프록시로 설치. 사내 프록시 망과 같은 경로) =====
+http_proxy: "http://172.16.141.1:3128"
+https_proxy: "http://172.16.141.1:3128"
+# Kubespray 가 노드 IP·서비스/파드 대역·localhost 는 자동으로 no_proxy 에 넣는다. VIP·사내 대역은 직접 추가
+additional_no_proxy: "172.16.141.0/24,10.250.0.0/24,.svc,.cluster.local"
+
+# ===== 구성요소 켜기/끄기 (환경에 이미 있는 건 false) =====
+cilium_l2_enabled: true                # L2 공지 정책. BGP 만 쓰는 환경이면 false
+longhorn_enabled: true                 # 회사 CSI(NFS/Ceph/벤더)가 있으면 false 로 두고 아래 SC 이름을 바꾼다
+cnpg_enabled: true                     # 외부 PostgreSQL 을 쓰면 false (harbor_db_* 값을 외부 DB 로)
+harbor_enabled: true
+harbor_storage_class: longhorn         # Harbor registry/redis/jobservice PVC
+cnpg_storage_class: longhorn-single    # CNPG PVC (DB 가 자체 복제하므로 스토리지 복제 1벌)
+cnpg_smart_shutdown_timeout: 15         # primary 계획 종료 시 접속 종료 대기(초). CNPG 기본 180 → 승격이 3분 늦어짐
+harbor_db_host: harbor-pg-rw.harbor.svc
+harbor_db_secret: harbor-pg-app        # 키 'password' 를 가진 Secret (CNPG 가 생성)
+
+loadbalancer_apiserver:
+  address: "{{ apiserver_vip }}"
+  port: 6443
+loadbalancer_apiserver_localhost: false

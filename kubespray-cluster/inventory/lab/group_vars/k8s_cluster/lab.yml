@@ -1,0 +1,92 @@
+---
+cluster_name: cluster.local
+container_manager: containerd
+# Cilium 은 kube_owner=root 필수 (init 컨테이너가 CAP_DAC_OVERRIDE 없이 /opt/cni/bin 에 쓴다). Kubespray 기본값 kube 면 assert 로 중단됨
+kube_owner: root
+# kubeadm 인증서는 1년. 매월 첫 월요일 자동 갱신 (systemd 타이머)
+auto_renew_certificates: true
+
+# --- CNI: Cilium, kube-proxy 없이 (eBPF kube-proxy replacement) ---
+kube_network_plugin: cilium
+cilium_kube_proxy_replacement: true
+kube_proxy_remove: true
+# Kubespray v2.32.0: kube-vip 사전검사 조건식이 이 변수를 읽는데 기본값이 없다(샘플 인벤토리에만 있음) → 명시. kube-proxy 가 없으니 값 자체는 무의미
+kube_proxy_strict_arp: false
+cilium_tunnel_mode: vxlan
+# LoadBalancer 서비스용 VIP: Cilium LB IPAM (MetalLB 대신). 광고 방식 두 가지를 같이 둔다.
+#   L2  : 노드 서브넷 안 IP 를 ARP 로 광고. 스위치가 노드 포트의 ARP/GARP·MAC 이동을 허용해야 한다
+#   BGP : 노드 서브넷 밖 대역을 ToR 에 경로로 광고. 스위치(L3)가 BGP 피어링을 받아야 한다
+cilium_l2announcements: true
+cilium_loadbalancer_ip_pools:
+  - name: l2-pool                       # 라벨 없는 서비스(기본)
+    ranges:
+      - start: "{{ l2_pool_start }}"
+        stop: "{{ l2_pool_stop }}"
+  - name: bgp-pool                      # lab.io/bgp=true 라벨 서비스만
+    cidrs: ["{{ bgp_pool_cidr }}"]
+    serviceSelector:
+      matchLabels: {lab.io/bgp: "true"}
+
+# --- BGP Control Plane (bgpv2 API): 워커 7대 ↔ ToR(ks-tor, FRR) eBGP ---
+cilium_enable_bgp_control_plane: "{{ bgp_enabled }}"
+cilium_bgp_cluster_configs: "{{ _bgp_cluster_configs if bgp_enabled else [] }}"
+cilium_bgp_peer_configs: "{{ _bgp_peer_configs if bgp_enabled else [] }}"
+cilium_bgp_advertisements: "{{ _bgp_advertisements if bgp_enabled else [] }}"
+_bgp_cluster_configs:
+  - name: lab-bgp
+    spec:
+      nodeSelector:
+        matchExpressions:
+          - {key: node-role.kubernetes.io/control-plane, operator: DoesNotExist}
+      bgpInstances:
+        - name: main
+          localASN: "{{ bgp_local_asn | int }}"
+          peers:
+            - name: tor
+              peerASN: "{{ bgp_peer_asn | int }}"
+              peerAddress: "{{ bgp_peer_address }}"
+              peerConfigRef: {name: tor-peer}
+_bgp_peer_configs:
+  - name: tor-peer
+    spec:
+      timers: {holdTimeSeconds: 9, keepAliveTimeSeconds: 3}   # 노드 다운 감지 ≈ 9초 (기본 90초). 운영은 BFD 와 함께 검토
+      gracefulRestart: {enabled: true, restartTimeSeconds: 15}
+      families:
+        - afi: ipv4
+          safi: unicast
+          advertisements:
+            matchLabels: {advertise: bgp}
+_bgp_advertisements:
+  - name: lb-services
+    labels: {advertise: bgp}
+    spec:
+      advertisements:
+        - advertisementType: Service
+          service:
+            addresses: [LoadBalancerIP]
+          selector:
+            matchLabels: {lab.io/bgp: "true"}
+cilium_extra_values:
+  # NodePort/LB 를 처리할 NIC. eth0 = Vagrant NAT(인터넷), eth1 = 클러스터망
+  devices: "{{ cilium_node_devices }}"
+  # L2 공지는 서비스마다 Lease 를 갱신 → API 호출이 늘어 기본 레이트리밋을 올린다 (Cilium 문서 권장)
+  k8sClientRateLimit:
+    qps: 20
+    burst: 40
+  operator:
+    replicas: 2
+
+# --- API VIP: kube-vip (control plane 정적 파드, ARP) ---
+kube_vip_enabled: true
+kube_vip_arp_enabled: true
+kube_vip_controlplane_enabled: true
+kube_vip_services_enabled: false     # 서비스 VIP 는 Cilium 이 맡는다
+kube_vip_address: "{{ apiserver_vip }}"
+kube_vip_interface: "{{ node_iface }}"
+supplementary_addresses_in_ssl_keys: ["{{ apiserver_vip }}"]
+
+# --- 애드온 ---
+helm_enabled: true
+metrics_server_enabled: true
+kubeconfig_localhost: true           # artifacts/admin.conf 를 Mac 에 받아 둔다
+kubectl_localhost: false

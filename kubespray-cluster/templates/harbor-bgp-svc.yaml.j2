@@ -1,0 +1,21 @@
+# 같은 Harbor 를 BGP VIP 로도 노출: 노드 서브넷 밖 {{ harbor_bgp_vip }} → ToR 에 /32 경로 광고(워커 수만큼 ECMP)
+# 실서비스에서는 둘 중 하나를 고른다. 랩은 두 방식을 비교하려고 같이 둔다.
+apiVersion: v1
+kind: Service
+metadata:
+  name: harbor-bgp
+  namespace: harbor
+  labels:
+    lab.io/bgp: "true"
+  annotations:
+    lbipam.cilium.io/ips: "{{ harbor_bgp_vip }}"
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Cluster     # 모든 BGP 노드가 경로 광고 → ToR 가 ECMP. Local 이면 파드 있는 노드만 광고
+  selector:
+    app: harbor
+    component: nginx
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080

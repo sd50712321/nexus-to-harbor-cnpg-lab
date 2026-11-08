@@ -1,0 +1,59 @@
+# -*- mode: ruby -*-
+# Kubespray HA 클러스터 랩: control plane 3 (etcd 쿼럼 2) + worker 7
+# 환경: macOS Apple Silicon + VMware Fusion + vagrant-vmware-desktop, bento/ubuntu-24.04 arm64
+#
+#   vagrant up                       # VM 10대 기동 (프로비저닝 없음, 클러스터는 Kubespray 로)
+#   ./scripts/00-inventory.sh        # vagrant ssh-config → inventory/lab/ssh.cfg
+#   ./scripts/10-cluster.sh          # Kubespray cluster.yml
+#
+# 메모리 합계 = 3 × CP_MEM + 7 × W_MEM + TOR (기본 7.5 + 13.1 + 0.5 = 약 21 GB). CP 1792MB 는 etcd+apiserver 로 메모리 150% → kube-vip 리스 실패(VIP 이동)를 겪어 2560 으로 올림. 32 GB Mac 에서 다른 VM/podman 을 끄고 돌린다.
+
+CP_COUNT = Integer(ENV.fetch("CP_COUNT", 3))      # 3 = etcd 쿼럼 2. 2 는 쓰지 않는다(한 대만 죽어도 쿼럼 상실)
+W_COUNT  = Integer(ENV.fetch("W_COUNT", 7))
+CP_MEM   = Integer(ENV.fetch("CP_MEM", 2560))
+W_MEM    = Integer(ENV.fetch("W_MEM", 1920))
+TOR_MEM  = Integer(ENV.fetch("TOR_MEM", 512))
+BOX          = "bento/ubuntu-24.04"
+BOX_VERSION  = "202510.26.0"
+
+# Apple Silicon Fusion 은 Vagrant 가 새 vmnet 을 못 만든다 → Fusion 이 잡아 둔 host-only(vmnet1) 대역을 재사용
+FUSION_NET_CONF = "/Library/Preferences/VMware Fusion/networking"
+NET = File.read(FUSION_NET_CONF)[/VNET_1_HOSTONLY_SUBNET (\d+\.\d+\.\d+)\.\d+/, 1] or abort("vmnet1 host-only 서브넷을 못 읽음")
+
+# 주소 계획 (같은 vmnet1 의 기존 k8s-core 랩 .10~.16/.100/.200 과 겹치지 않게)
+#   .29        ks-tor   — ToR(상단) 스위치/라우터 역할. FRR 로 BGP(AS 65000), 노드들(AS 65010)과 피어링
+#   .30        API VIP (kube-vip, ARP)
+#   .31~.33    ks-cp1~3
+#   .41~.47    ks-w1~7
+#   .210~.219  Cilium LB 풀 "L2" — 노드 서브넷 안 VIP, ARP 로 광고 (Harbor = .210)
+#   10.250.0.0/24  Cilium LB 풀 "BGP" — 노드 서브넷 밖 VIP 대역, BGP 로 ToR 에 경로 광고 (ECMP)
+NODES = [{ name: "ks-tor", ip: "#{NET}.29", mem: TOR_MEM }] +
+        (1..CP_COUNT).map { |i| { name: "ks-cp#{i}", ip: "#{NET}.#{30 + i}", mem: CP_MEM } } +
+        (1..W_COUNT).map  { |i| { name: "ks-w#{i}",  ip: "#{NET}.#{40 + i}", mem: W_MEM } }
+
+Vagrant.configure("2") do |config|
+  config.vm.box              = BOX
+  config.vm.box_version      = BOX_VERSION
+  config.vm.box_architecture = "arm64"
+  config.vm.synced_folder ".", "/vagrant", disabled: true
+
+  NODES.each do |n|
+    config.vm.define n[:name] do |m|
+      m.vm.hostname = n[:name]
+      m.vm.network "private_network", ip: n[:ip]
+      m.vm.provider "vmware_desktop" do |v|
+        v.gui    = false
+        v.memory = n[:mem]
+        v.cpus   = 2
+        v.linked_clone = true
+        v.vmx["displayName"] = n[:name]
+        # suspend 금지 + Tools 시간 동기화 끔: resume/RTC(KST) 로 시계가 튀면 etcd 리스·프로브가 깨진다 (k8s-core TROUBLESHOOTING 참고)
+        v.vmx["suspend.disabled"] = "TRUE"
+        %w[tools.synctime time.synchronize.continue time.synchronize.restore time.synchronize.resume.disk
+           time.synchronize.shrink time.synchronize.tools.startup time.synchronize.tools.enable].each { |k| v.vmx[k] = "FALSE" }
+        # Fusion 무료화 이후 라이선스 오인식으로 private_network 가 무시되는 문제 회피
+        v.force_vmware_license = "professional"
+      end
+    end
+  end
+end

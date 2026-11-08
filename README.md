@@ -299,6 +299,16 @@ Harbor 어댑터 목록에 Nexus 전용은 없고 범용 `docker-registry` 어�
 - 반대 방향(Nexus docker-proxy → Harbor)은 Nexus truststore 에 랩 CA 를 넣어야 해서 이번엔 안 했다.
 - 추가 실측: Nexus `helm-hosted`(index.yaml 방식)는 Harbor 상류로 **불가**(차트 저장소 어댑터 없음). schema1 이미지는 프록시·복제·같은 경로 push 모두 digest 그대로 통과하지만 **containerd 2.2 가 pull 거부** → `--format oci` 변환본은 노드 pull OK. 정리본: [docs/NEXUS-HARBOR.md](docs/NEXUS-HARBOR.md).
 
+## 8차: 대상 클러스터를 Kubespray 로 처음부터 — control plane 3 + worker 7, Cilium BGP, Longhorn, CNPG, Harbor (2026-11-08 실측)
+
+이관 대상이 될 클러스터 자체를 Kubespray v2.32.0 으로 만드는 설치·초기화 스크립트와 장애 시험이다. 전체 내용은 [kubespray-cluster/](kubespray-cluster/README.md) 에 있다.
+
+- **구성.** Kubernetes 1.36.4, Cilium 1.20.2(kube-proxy 대체, L2 공지 + BGP), kube-vip API VIP, Longhorn 1.13.0(3벌 복제), CNPG 3 인스턴스(quorum 동기 복제), Harbor 2.14.0.
+- **설치·초기화.** `install.sh` 한 번으로 VM 부터 검증까지, `reset.sh apps|cluster|vms` 세 단계. 세 모드 모두 초기화 뒤 재설치해 검증 16/16 통과. VM 까지 지운 빈 상태에서 재설치는 46분.
+- **장애 시험.** CP 정지 시 VIP 이동 13~19초, CNPG primary 파드 삭제 시 승격 18~21초(기본값 그대로면 173초), primary 노드 강제 정지 시 58~92초 뒤 새 primary 에 쓰기 성공, Longhorn 복제본 1벌 유실 시 110~120초에 재구성, BGP VIP 로 push/pull.
+- **인프라 요청서.** 스위치·BGP·방화벽 포트·주소 계획은 [kubespray-cluster/INFRA.md](kubespray-cluster/INFRA.md).
+- **실서버에 영향이 있는 발견.** CNPG `smartShutdownTimeout` 기본 180초가 계획된 승격을 3분 늦춘다. Harbor 차트 기본값은 파드 분산 규칙이 없어, 워커 1대 정지로 Harbor 전체가 최대 10분 멈출 수 있다. 진단 과정은 [kubespray-cluster/TROUBLESHOOTING.md](kubespray-cluster/TROUBLESHOOTING.md).
+
 # 부록 A. 실측 기록 (랩 로그 원문)
 
 ## 커스텀 docker·helm: Nexus → Harbor 2.7(ChartMuseum) on CloudNativePG — 전체 이관 실측 (2026-11-03)

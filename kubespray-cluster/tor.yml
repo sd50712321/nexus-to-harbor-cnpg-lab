@@ -1,0 +1,53 @@
+---
+# ks-tor: 랩의 ToR(Top of Rack) L3 스위치 역할. 실장비(Arista/Cisco/Juniper)의 BGP 설정을 FRR 로 흉내낸다.
+#   - AS 65000, 노드망 172.16.141.0/24 에서 AS 65010 피어를 동적으로 받는다(listen range)
+#   - Cilium 이 광고한 LB VIP(10.250.0.0/24 /32 경로)를 ECMP 로 설치
+- hosts: tor
+  become: true
+  environment:
+    http_proxy: "{{ http_proxy | default('') }}"
+    https_proxy: "{{ https_proxy | default('') }}"
+  tasks:
+    - name: FRR 설치
+      apt: {name: [frr, frr-pythontools], state: present, update_cache: true, cache_valid_time: 3600}
+    - name: bgpd 켜기
+      lineinfile: {path: /etc/frr/daemons, regexp: '^bgpd=', line: 'bgpd=yes'}
+      register: daemons
+    - name: IP 포워딩 (라우터)
+      sysctl: {name: net.ipv4.ip_forward, value: "1", sysctl_set: true, state: present}
+    - name: frr.conf
+      copy:
+        dest: /etc/frr/frr.conf
+        owner: frr
+        group: frr
+        mode: "0640"
+        content: |
+          frr defaults datacenter
+          hostname ks-tor
+          log syslog informational
+          !
+          router bgp 65000
+           bgp router-id 172.16.141.29
+           no bgp ebgp-requires-policy
+           bgp bestpath as-path multipath-relax
+           neighbor K8S peer-group
+           neighbor K8S remote-as 65010
+           neighbor K8S timers 3 9
+           bgp listen range 172.16.141.0/24 peer-group K8S
+           !
+           address-family ipv4 unicast
+            neighbor K8S activate
+            neighbor K8S soft-reconfiguration inbound
+            ! 노드에서 받는 건 LB VIP 대역만 (실장비에서도 prefix-list 로 반드시 제한)
+            neighbor K8S prefix-list K8S-IN in
+            neighbor K8S prefix-list DENY-ALL out
+            maximum-paths 16
+           exit-address-family
+          !
+          ip prefix-list K8S-IN seq 10 permit 10.250.0.0/24 ge 32
+          ip prefix-list DENY-ALL seq 10 deny any
+          !
+      register: conf
+    - name: FRR 재시작
+      systemd: {name: frr, enabled: true, state: restarted}
+      when: daemons is changed or conf is changed
