@@ -16,6 +16,41 @@ Kubespray + Cilium 클러스터(control plane 3, worker 7)와 Longhorn · CNPG �
 
 파드·서비스 대역은 노드 밖으로 라우팅되지 않는다(VXLAN 캡슐화, SNAT). 그래서 방화벽 규칙에는 노드 IP 와 VIP 만 등장한다.
 
+네트워크팀 요청용 문안 (복사해서 메일·티켓에 붙여넣는다):
+
+```text
+[요청] Kubernetes 클러스터(노드 10대) 구축용 주소·네트워크 할당
+
+1. 노드 서브넷/VLAN       : 노드 10대 + 여유, 고정 IP (DHCP 사용 시 예약 또는 범위 제외)
+2. API VIP              : IP 1개, 노드 서브넷 안, DHCP 범위 밖, IPAM 예약
+3. L2 LB 풀             : IP 연속 대역(/28 정도), 노드 서브넷 안, DHCP 범위 밖, IPAM 예약
+4. BGP VIP 대역          : /24~/27, 노드 서브넷 밖, 사내 어디와도 겹치지 않는 대역
+5. BGP ASN              : 노드용 사설 ASN 1개, 스위치 ASN 확인
+6. BGP 피어 IP           : 노드 서브넷의 게이트웨이/SVI (ToR 이중화면 2개)
+7. 사용 불가 대역 확인     : 아래 두 대역이 사내망과 겹치는지
+                          - 파드 대역   10.233.64.0/18
+                          - 서비스 대역 10.233.0.0/18
+                          (겹치면 다른 /18 을 지정해 주십시오)
+8. 스위치 설정           : 2절(L2), 3절(BGP) 표의 항목
+```
+
+받은 값은 `inventory/prod/group_vars/all/env.yml` 에 넣는다.
+
+```yaml
+node_iface: <클러스터 NIC, 예 bond1>
+cilium_node_devices: [<클러스터 NIC>]
+apiserver_vip: <API VIP>
+harbor_vip: <L2 풀 안의 IP>
+l2_pool_start: <L2 풀 시작>
+l2_pool_stop: <L2 풀 끝>
+bgp_enabled: true
+bgp_local_asn: <노드 ASN>
+bgp_peer_asn: <스위치 ASN>
+bgp_peer_address: <스위치 피어 IP>
+bgp_pool_cidr: <BGP VIP 대역>
+harbor_bgp_vip: <BGP VIP 대역 안의 IP>
+```
+
 ## 2. 스위치 (L2)
 
 | 요청 | 이유 |
@@ -44,17 +79,35 @@ L2 방식은 VIP 하나당 노드 한 대가 응답한다(장애 시 이동, 부
 | 상위 전파 | VIP 대역을 코어/방화벽 쪽으로 재광고할지, 정적 경로로 요약할지 네트워크팀 결정 |
 | 방화벽 | 노드 ↔ 스위치 TCP 179 |
 
-랩의 ToR 역할 FRR 설정(`tor.yml`)이 그대로 장비 설정의 견본이다.
+랩의 ToR 역할 FRR 설정(`tor.yml`)이 장비 설정의 견본이다. 아래는 랩에서 동작한 설정 전체에서 값만 자리표시자로 바꾼 것이다(FRR 문법. Cisco/Arista 는 문법이 비슷하지만 장비 문법으로 옮겨야 한다).
 
-```
+```text
 router bgp <peer_asn>
- bgp listen range <노드서브넷> peer-group K8S
+ bgp router-id <스위치 IP>
+ no bgp ebgp-requires-policy
+ bgp bestpath as-path multipath-relax
+ neighbor K8S peer-group
  neighbor K8S remote-as <local_asn>
  neighbor K8S timers 3 9
+ bgp listen range <노드 서브넷> peer-group K8S
+ !
  address-family ipv4 unicast
-  neighbor K8S prefix-list K8S-IN in      ! <bgp_pool_cidr> ge 32 만 허용
+  neighbor K8S activate
+  neighbor K8S soft-reconfiguration inbound
+  neighbor K8S prefix-list K8S-IN in
   neighbor K8S prefix-list DENY-ALL out
   maximum-paths 16
+ exit-address-family
+!
+ip prefix-list K8S-IN seq 10 permit <bgp_pool_cidr> ge 32
+ip prefix-list DENY-ALL seq 10 deny any
+```
+
+랩 ToR(FRR, 리눅스)에서 확인한 명령. 피어 7개 Established, VIP 경로의 `nexthop` 이 워커 수만큼이면 정상이다. 실장비는 같은 의미의 장비 명령으로 본다.
+
+```bash
+sudo vtysh -c 'show bgp ipv4 unicast summary'
+ip route show <harbor_bgp_vip>
 ```
 
 주의:
@@ -82,6 +135,13 @@ router bgp <peer_asn>
 
 kube-proxy 를 쓰지 않으므로 10256 은 필요 없다. Longhorn 의 9500-9503, 8500-8504, 10000-30000, 3260, 2049 는 **파드 간 통신**이라 VXLAN(8472) 안으로 지나간다. Cilium 을 native routing 으로 바꾸거나 NetworkPolicy 를 걸 때만 따로 연다.
 
+노드에 firewalld/ufw 를 켜지 않는 경우(일반적) 노드마다 끈다.
+
+```bash
+sudo ufw disable                              # Ubuntu
+sudo systemctl disable --now firewalld        # RHEL 계열
+```
+
 ### 4-2. 클러스터 바깥 ↔ 클러스터
 
 | 프로토콜/포트 | 출발 → 목적 | 용도 |
@@ -92,6 +152,25 @@ kube-proxy 를 쓰지 않으므로 10256 은 필요 없다. Longhorn 의 9500-95
 | TCP 179 | 워커 ↔ ToR 스위치 | BGP |
 | VIP 대역 (L2 풀, BGP 대역) | 사용자망 → VIP | 서비스 접근. 방화벽 객체를 "VIP 대역" 으로 만들어 두면 서비스 추가 때마다 신청하지 않아도 된다 |
 | UDP/TCP 53, UDP 123 | 전 노드 → 사내 DNS / NTP | 이름 해석, 시간 동기화(etcd·인증서) |
+
+방화벽 신청서용 (4-1·4-2 를 한 표로, 탭 구분. 복사해 엑셀에 붙여넣으면 칸이 나뉜다. 켤 때만 필요한 Hubble·WireGuard·NodePort 는 뺐다):
+
+```text
+출발지	목적지	프로토콜	포트	용도
+전 노드	CP 3대, API VIP	TCP	6443	kube-apiserver
+CP 3대	CP 3대	TCP	2379-2380	etcd
+CP 3대	전 노드	TCP	10250	kubelet
+전 노드	전 노드	UDP	8472	Cilium VXLAN
+전 노드	전 노드	TCP	4240	cilium-health
+전 노드	전 노드	ICMP	echo request/reply	cilium-health
+배포 호스트	전 노드	TCP	22	Ansible
+배포 호스트, 관리자, CI	API VIP	TCP	6443	kubectl, helm
+사용자, CI 러너, 전 노드	Harbor VIP (L2, BGP)	TCP	80, 443	이미지 push/pull
+워커 7대	ToR 스위치	TCP	179	BGP
+사용자망	L2 LB 풀, BGP VIP 대역	TCP	서비스 포트	서비스 접근
+전 노드	사내 DNS	TCP/UDP	53	이름 해석
+전 노드	사내 NTP	UDP	123	시간 동기화
+```
 
 ### 4-3. 설치 시 외부 접속 (인터넷이 되는 경우)
 

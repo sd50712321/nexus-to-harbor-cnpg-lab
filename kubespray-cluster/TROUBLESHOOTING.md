@@ -1,6 +1,7 @@
 # 구축 중 막힌 지점과 원인을 좁힌 과정
 
 해법만이 아니라 어떻게 원인을 좁혔는지를 남긴다. 실서버에서도 같은 증상이 나올 수 있는 것은 [실서버 영향] 으로 표시.
+그대로 붙여넣어 쓰는 명령·설정은 코드블럭으로 두었다. `<...>` 는 바꿔 넣을 값이다.
 
 ## 1. Kubespray 가 `system_packages` 직후 로그 없이 멈춤 [실서버 영향]
 
@@ -11,20 +12,43 @@
 - 원인 2: 프록시를 넣은 뒤에도 `apt-daily` 타이머가 프록시 없이 apt 를 돌려 잠금을 쥐고 멈춤. `pkill -f apt` 는 자기 셸까지 죽여서(명령줄에 apt 포함) `pkill -x http` 로, 남은 부모(Ansible 원격 모듈)까지 정리.
 - 조치: `preflight.yml` 이 설치 전에 apt-daily·unattended-upgrades(RHEL 은 dnf-automatic)를 끈다. 실서버도 설치 중 자동 업데이트가 패키지 잠금을 잡으면 똑같이 멈춘다.
 
+멈춘 노드에서 확인하고 푸는 명령:
+
+```bash
+ps -ef | grep -E 'apt|dpkg' | grep -v grep          # apt/methods/http 가 오래 돌고 있으면 이 증상
+sudo pkill -x http                                   # pkill -f apt 는 쓰지 말 것 (자기 셸까지 죽는다)
+sudo systemctl disable --now apt-daily.timer apt-daily-upgrade.timer unattended-upgrades.service
+```
+
 ## 2. 랩 VM 이 인터넷에 못 나감 (랩 전용)
 
 - 증상: 노드에서 `curl ports.ubuntu.com` 타임아웃, DNS(192.168.149.2) 실패.
 - 좁히기: 노드 기본 게이트웨이 192.168.149.2 의 ARP 가 `INCOMPLETE` → Mac 에 `vmnet-natd` 프로세스 없음(dhcpd 만 실행). `nat.conf` 는 정상, 바이너리도 있음. macOS 브리지 주소(.1)를 게이트웨이로 바꿔도 안 됨(IP forwarding 0). `vmnet-cli --status` 는 root 필요.
 - 조치: sudo 없이 가능한 우회로 Mac host-only 주소(172.16.141.1:3128)에 HTTP 프록시(proxy.py)를 띄우고 Kubespray `http_proxy`/`https_proxy`/`additional_no_proxy` 로 설치. 사내 프록시 망 설치와 같은 경로라 그 검증을 겸한다.
-- 근본 해결(사용자 sudo): `sudo vmnet-cli --stop && sudo vmnet-cli --start`.
+- 근본 해결(사용자 sudo, Mac 에서):
+
+```bash
+sudo "/Applications/VMware Fusion.app/Contents/Library/vmnet-cli" --stop
+sudo "/Applications/VMware Fusion.app/Contents/Library/vmnet-cli" --start
+```
 
 ## 3. `kube_owner is set to 'kube', but cilium requires it to be 'root'` [실서버 영향]
 
 - Kubespray 기본값과 샘플 인벤토리 모두 `kube_owner: kube`. Cilium 을 쓰면 직접 `root` 로 바꿔야 한다. 사전검사(assert)라 노드 변경 전에 멈춤.
 
+```yaml
+# inventory/<환경>/group_vars/k8s_cluster/*.yml
+kube_owner: root
+```
+
 ## 4. `'kube_proxy_strict_arp' is undefined` [실서버 영향]
 
-- kube-vip + kube-proxy 제거 조합에서 kube-vip 사전검사 조건식이 이 변수를 읽는데 role 기본값이 없다(샘플 인벤토리에만 있음). 샘플을 통째로 복사하지 않고 필요한 값만 쓰는 인벤토리에서 걸린다. `kube_proxy_strict_arp: false` 명시.
+- kube-vip + kube-proxy 제거 조합에서 kube-vip 사전검사 조건식이 이 변수를 읽는데 role 기본값이 없다(샘플 인벤토리에만 있음). 샘플을 통째로 복사하지 않고 필요한 값만 쓰는 인벤토리에서 걸린다. 명시한다.
+
+```yaml
+# inventory/<환경>/group_vars/k8s_cluster/*.yml
+kube_proxy_strict_arp: false
+```
 - 교훈: Kubespray 인벤토리는 샘플(`inventory/sample/group_vars`)을 복사한 뒤 바꾸는 방식이 안전하다. 이 랩은 바꾼 값만 보이게 하려고 덮어쓰기 파일만 두었고, 그 대가로 위 두 건을 만났다.
 
 ## 5. etcd `--version` 실패 (무시됨, 정상)
@@ -36,6 +60,15 @@
 - 증상: CNPG operator helm 설치가 VIP(.30) 경유로 끊김. 직후 VIP 보유 노드가 cp1 → cp2 로 바뀜.
 - 좁히기: `kubectl top`/`describe node` 에서 CP 메모리 요청·사용이 할당 가능량의 137~150%. cp1 의 kube-vip 컨테이너가 재시작돼 리더 lease 를 놓쳤고, 그 순간 VIP 로 가던 연결이 끊긴 것.
 - 조치: CP 메모리 1792 → 2560MB (Vagrantfile `CP_MEM`), 한 대씩 재기동. 실서버 CP 는 etcd+apiserver+Cilium operator+kube-vip 를 감안해 최소 4GB 를 권장.
+
+확인 명령:
+
+```bash
+kubectl top nodes
+kubectl describe node <cp 노드> | grep -A8 'Allocated resources'
+kubectl -n kube-system get pods -o wide | grep kube-vip      # RESTARTS 가 늘면 lease 를 놓친 것
+kubectl -n kube-system get lease plndr-cp-lock -o jsonpath='{.spec.holderIdentity}{"\n"}'   # 지금 VIP 를 가진 CP
+```
 
 ## 7. Mac 디스크 가득 참(ENOSPC) → 모든 명령 중단 (랩 전용)
 
@@ -55,6 +88,22 @@
 - 증상: 장애 시험 B 에서 새 primary 까지 173s.
 - 좁히기: operator 로그가 `Waiting for all WAL receivers to be down to elect a new primary` 를 3분 가까이 반복. 삭제된 primary 가 종료 중에도 WAL 을 계속 보내고 있었다는 뜻. CRD 설명: `smartShutdownTimeout` = smart shutdown(클라이언트 접속 종료 대기) 시간, **기본 180초** → 측정치와 일치.
 - 조치: `smartShutdownTimeout: 15` (변수 `cnpg_smart_shutdown_timeout`). 재측정: 새 primary 21s, Harbor DB 조회 복구 24s.
+
+```yaml
+# CNPG Cluster (templates/harbor-pg.yaml.j2)
+spec:
+  smartShutdownTimeout: 15
+```
+
+확인 명령 (Cluster 이름 `harbor-pg`, 네임스페이스 `harbor`):
+
+```bash
+kubectl -n cnpg-system logs deploy/cnpg-cloudnative-pg --since=10m | grep 'WAL receivers'
+kubectl -n harbor get cluster harbor-pg -o jsonpath='{.status.currentPrimary}{"\n"}'
+kubectl -n harbor get pods -l cnpg.io/cluster=harbor-pg -L cnpg.io/instanceRole -o wide
+P=$(kubectl -n harbor get cluster harbor-pg -o jsonpath='{.status.currentPrimary}')
+kubectl -n harbor exec $P -c postgres -- psql -Atc "select application_name, state, sync_state from pg_stat_replication"
+```
 - 범위: 파드 삭제·drain·롤링 업데이트 같은 **계획된 종료**에만 해당. 노드가 갑자기 죽으면 이 대기는 없다.
 - 남은 관찰: 지운 인스턴스는 36s 에 WAL 스트리밍 재개, 44s 에 파드 Ready 였는데 Cluster `readyInstances=3` 은 326s 후에 반영. operator 로그는 `Cannot extract Pod status` → 약 4분 반 뒤 `Setting replica label`. 원인 미확인. 복구 판정은 Cluster 상태값보다 `pg_stat_replication` 이나 파드 Ready 를 같이 본다.
 
@@ -68,7 +117,21 @@
 
 - 측정: 워커 정지 → 다른 노드에서 registry Running 395s, 그 뒤 기존 이미지 pull 8s. Longhorn 볼륨은 복제본이 있던 노드로 재부착(healthy 유지).
 - 원인: 쿠버네티스 기본값. 노드 NotReady 판정(~40s) 후 파드의 `node.kubernetes.io/unreachable` toleration **300s** 를 기다린 뒤에야 축출. Longhorn `nodeDownPodDeletionPolicy` 는 그 뒤 Terminating 에 걸린 파드를 정리해 주는 역할.
-- 줄이려면: Harbor 파드에 `tolerationSeconds` 를 짧게(예 30~60s) 주거나 apiserver `--default-unreachable-toleration-seconds` 조정. 짧은 네트워크 단절에도 파드가 옮겨지는 대가가 있어 이 랩은 기본값 유지.
+- 줄이려면: Harbor 파드에 `tolerationSeconds` 를 짧게(예 30~60s) 주거나 apiserver `--default-unreachable-toleration-seconds` 조정. 짧은 네트워크 단절에도 파드가 옮겨지는 대가가 있어 이 랩은 기본값 유지(아래는 미실측 예시).
+
+```yaml
+# Harbor values: core / registry / jobservice / portal / nginx 각각에 같은 블럭
+core:
+  tolerations:
+    - key: node.kubernetes.io/unreachable
+      operator: Exists
+      effect: NoExecute
+      tolerationSeconds: 60
+    - key: node.kubernetes.io/not-ready
+      operator: Exists
+      effect: NoExecute
+      tolerationSeconds: 60
+```
 
 ## 12. Kubespray reset 의 `ipvsadm -C` 실패 (무시됨, 정상)
 
@@ -84,6 +147,35 @@
 - 좁히기: 이벤트에 `TaintManagerEviction` 이 registry 외에 core·nginx·jobservice·redis 에도 찍힘 → 이번 설치에서는 Harbor 파드 5개가 정지한 ks-w3 한 노드에 있었다. Redis·jobservice 도 Longhorn 볼륨 재부착을 기다려야 해서 core 가 가장 늦게(정지 후 9분 18초) Ready. 첫 설치 때는 파드가 흩어져 있어 registry 만 옮겨 가면 됐다.
 - 결론: Harbor 차트 기본값에는 컴포넌트 간 분산 규칙이 없고 각 1개라, 스케줄러가 한 노드에 몰아도 막지 않는다. 장애 영향이 설치마다 달라진다.
 - 실서버 권장: core·portal·nginx·registry 는 replicas 2 이상 + `topologySpreadConstraints`(hostname). registry 를 2개 이상으로 하려면 RWX 스토리지나 S3 호환 저장소가 필요하다(Longhorn RWO 볼륨은 1개 노드에만 붙는다). Redis 는 외부 HA Redis(Sentinel) 로.
+
+Harbor chart 1.18.0 values 예시(미실측). 차트가 `labelSelector` 를 컴포넌트별로 자동으로 붙이므로(`templates/core/core-dpl.yaml`), 이 설정은 **같은 컴포넌트의 복제본끼리** 다른 노드로 흩는다.
+
+```yaml
+core:
+  replicas: 2
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: DoNotSchedule
+portal:
+  replicas: 2
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: DoNotSchedule
+nginx:
+  replicas: 2
+  topologySpreadConstraints:
+    - maxSkew: 1
+      topologyKey: kubernetes.io/hostname
+      whenUnsatisfiable: DoNotSchedule
+```
+
+지금 어느 노드에 몰려 있는지 확인:
+
+```bash
+kubectl -n harbor get pods -o custom-columns=POD:.metadata.name,NODE:.spec.nodeName | sort -k2
+```
 - 시험 스크립트: registry 가 떠도 Harbor 전체가 healthy 가 될 때까지 기다린 뒤 pull 하도록 고쳤다. 같은 노드에 있던 다른 Harbor 파드도 출력한다.
 
 ## 15. CP 1대 정지 17초 뒤 쓰기 1회 실패 `keepalive ping failed to receive ACK` (일시적)

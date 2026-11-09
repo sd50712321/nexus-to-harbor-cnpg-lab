@@ -10,6 +10,7 @@ Harbor 의 DB 는 CloudNativePG(CNPG) 3개 인스턴스, 이미지 저장소는 
 |---|---|
 | [INFRA.md](INFRA.md) | 네트워크·보안팀에 요청할 것: 주소 계획, 스위치(L2), BGP, 방화벽 포트 표, 주의점 |
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | 구축 중 막힌 지점과 원인을 좁힌 과정 (실서버에도 해당하는 것 표시) |
+| [BUNDLE.md](BUNDLE.md) | **다운로드가 안 될 때**: 모든 코드 파일을 붙여넣기용 블럭으로 모은 것 (아래 '파일 옮기기') |
 
 ## 구성
 
@@ -56,7 +57,11 @@ INVENTORY=inventory/prod ./install.sh  # 실서버: VM 단계 없이 SSH 도달 
 **구성요소 하나만 설치하거나 바꿀 때**는 `scripts/addon.sh` 를 쓴다. 환경에 이미 있는 것은 인벤토리에서 끈다.
 
 ```bash
-./scripts/addon.sh longhorn|cnpg|harbor|l2|tor
+./scripts/addon.sh longhorn
+./scripts/addon.sh cnpg
+./scripts/addon.sh harbor
+./scripts/addon.sh l2       # Cilium L2 공지·LB 풀
+./scripts/addon.sh tor      # (랩) ToR FRR
 ```
 
 | 이미 있는 것 | 인벤토리에서 |
@@ -66,7 +71,26 @@ INVENTORY=inventory/prod ./install.sh  # 실서버: VM 단계 없이 SSH 도달 
 | BGP 를 안 씀 | `bgp_enabled: false` (L2 VIP 만) |
 | 노드가 Longhorn 패키지를 이미 가짐 | 그대로 둬도 된다. 설치 작업이 멱등이다 |
 
+```yaml
+# inventory/prod/group_vars/all/env.yml — 회사 스토리지 + 외부 DB + BGP 미사용 예
+longhorn_enabled: false
+harbor_storage_class: <회사 StorageClass>
+cnpg_enabled: false
+harbor_db_host: <외부 PostgreSQL 주소>
+harbor_db_secret: <키 password 를 가진 Secret 이름>
+bgp_enabled: false
+```
+
 **실서버**는 `inventory/prod-sample` 을 `inventory/prod` 로 복사해 값을 바꾼다. 값은 모두 자리표시자이고, 무엇을 받아야 하는지는 INFRA.md 1절에 있다.
+
+```bash
+cp -r inventory/prod-sample inventory/prod
+vi inventory/prod/inventory.ini                    # 노드 이름·IP, [tor] 그룹 없음
+vi inventory/prod/group_vars/all/env.yml           # NIC, VIP, L2 풀, BGP, 프록시, 스토리지·DB 토글
+vi inventory/prod/group_vars/k8s_cluster/k8s.yml   # 파드·서비스 대역 (사내망과 겹치지 않게)
+INVENTORY=inventory/prod ./install.sh
+```
+
 배포 서버는 리눅스(점프 호스트)를 전제로 한다. 노드 OS 는 Ubuntu 24.04 에서 실측했다. `preflight.yml` 과 Longhorn 준비 작업은 RHEL 계열 분기도 갖고 있지만 실측하지 않았다.
 
 ## 초기화
@@ -85,6 +109,14 @@ Longhorn 볼륨, CNPG DB, Harbor 이미지가 모두 사라진다. 실서버는 
 
 랩 사양: Apple Silicon Mac(32GB), VMware Fusion, Ubuntu 24.04 arm64. CP 2560MB, worker 1920MB, 2 vCPU.
 아래 시간은 이 랩 기준이다. 실서버 값으로 단정하지 말고 같은 스크립트로 다시 잰다.
+
+시험 실행 명령. 결과는 `logs/` 에 남는다. 40·50 은 **랩 VM 을 끄고 켜는 시험**이라 실서버에서 그대로 돌리지 않는다.
+
+```bash
+./scripts/30-verify.sh               # 검증 16항목
+./scripts/40-failover.sh             # 장애 시험 A·B·C
+./scripts/50-more-tests.sh           # 추가 시험 F·D·E (하나만: ./scripts/50-more-tests.sh E)
+```
 
 **검증** (`scripts/30-verify.sh`): 16개 항목 모두 통과. BGP 피어 7대 Established, ToR 에 Harbor BGP VIP ECMP 경로 7개, CNPG 복제 2개 quorum, Mac 에서 L2 VIP 로 push/pull.
 
@@ -124,6 +156,23 @@ Longhorn 볼륨, CNPG DB, Harbor 이미지가 모두 사라진다. 실서버는 
 - **ToR.** `ks-tor` VM 이 FRR 로 스위치 역할을 한다(`tor.yml`). 실서버에서는 인벤토리에 `[tor]` 그룹을 두지 않는다.
 - **arm64 이미지.** Harbor 공식 이미지는 arm64 가 없어, 노드가 arm64 일 때만 대체 이미지를 쓴다(`templates/harbor-values.yaml.j2`). amd64 실서버는 공식 이미지 그대로다.
 - **그 밖의 랩 스크립트.** `scripts/rolling-reload.sh` 는 VM 을 한 대씩 재기동해 메모리 변경을 반영한다.
+
+## 파일 옮기기 (다운로드·git clone 이 안 될 때)
+
+[BUNDLE.md](BUNDLE.md) 에 이 디렉터리의 코드 파일이 파일마다 블럭 하나씩 들어 있다. 각 블럭은 그 파일을 만드는 셸 명령(`cat > 파일 <<'__KS_EOF__' … __KS_EOF__`)이다.
+
+1. 작업할 디렉터리를 만들고 들어간다.
+
+   ```bash
+   mkdir -p ~/kubespray-cluster && cd ~/kubespray-cluster
+   ```
+
+2. BUNDLE.md 의 블럭을 위에서부터 차례로 복사해 터미널에 붙여넣는다. GitHub 화면에서 블럭 오른쪽 위 복사 버튼을 쓰면 들여쓰기가 그대로 간다. 터미널 붙여넣기가 불안하면, 블럭들을 편집기로 `bundle.sh` 한 파일에 붙여 모은 뒤 `bash bundle.sh` 로 실행해도 된다.
+3. 마지막 블럭(sha256 대조)을 붙여넣어 모든 줄이 `OK` 인지 확인한다.
+
+BUNDLE.md 는 `scripts/make-bundle.sh` 로 다시 만든다. 코드를 고치면 같이 다시 만든다.
+
+이 파일들만으로 설치가 끝나지는 않는다. Kubespray 소스(`git clone`), Python 패키지(pip), Helm 차트, 컨테이너 이미지는 설치 중에 인터넷(또는 프록시)에서 받는다. 인터넷이 전혀 없는 망은 INFRA.md 4-3 의 오프라인 절차가 따로 필요하다(미실측).
 
 ## 비밀값
 
