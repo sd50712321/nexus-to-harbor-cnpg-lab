@@ -26,7 +26,7 @@ spec:
       shared_buffers: "128MB"
   storage:
     storageClass: "{{ cnpg_storage_class }}"
-    size: 2Gi
+    size: {{ cnpg_storage_size | default('2Gi') }}
   resources:
     requests: {cpu: 100m, memory: 256Mi}
     limits:   {memory: 512Mi}

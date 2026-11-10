@@ -1,8 +1,8 @@
 ---
-# Kubespray 이후 애드온: Cilium L2 → Longhorn → CNPG → Harbor
+# Kubespray 이후 애드온: Cilium L2 → ingress-nginx → Longhorn → CNPG → Harbor
 # kubectl/helm 은 첫 control plane 노드에서 실행 → 배포 호스트(Mac/Linux)에 kubectl·helm 이 없어도 된다.
 #   전부        : ansible-playbook -i inventory/<env>/inventory.ini addons.yml -b
-#   하나만      : ... --tags longhorn   (l2 | longhorn | cnpg | harbor)
+#   하나만      : ... --tags longhorn   (l2 | ingress | longhorn | cnpg | harbor)
 #   켜기/끄기   : 인벤토리의 *_enabled 변수 (환경에 이미 있는 구성요소는 false)
 
 - name: Longhorn 노드 사전 조건 (워커, Ubuntu/RHEL 공통)
@@ -49,10 +49,8 @@
 - name: 클러스터 애드온 (첫 control plane 에서 kubectl/helm)
   hosts: kube_control_plane[0]
   become: true
+  vars_files: [versions.yml]
   vars:
-    longhorn_version: 1.13.0
-    cnpg_chart_version: 0.29.1
-    harbor_chart_version: 1.18.0
     work: /root/lab-addons
     harbor_arm64: "{{ ansible_architecture == 'aarch64' }}"
     harbor_admin_password: "{{ lookup('ansible.builtin.password', playbook_dir + '/secrets/harbor-admin', length=20, chars=['ascii_letters', 'digits']) }}"
@@ -69,7 +67,7 @@
     - name: 매니페스트·values 렌더링
       tags: [always]
       template: {src: "templates/{{ item }}.j2", dest: "{{ work }}/{{ item }}", mode: "0600"}
-      loop: [cilium-l2.yaml, longhorn-values.yaml, longhorn-sc-single.yaml, harbor-pg.yaml, harbor-values.yaml, harbor-bgp-svc.yaml]
+      loop: [cilium-l2.yaml, ingress-nginx-values.yaml, longhorn-values.yaml, longhorn-sc-single.yaml, harbor-pg.yaml, harbor-values.yaml, harbor-bgp-svc.yaml]
 
     - name: Cilium L2 공지 정책
       command: kubectl apply -f {{ work }}/cilium-l2.yaml
@@ -77,13 +75,21 @@
       when: cilium_l2_enabled | bool
 
     - name: helm 저장소
-      tags: [longhorn, cnpg, harbor]
+      tags: [ingress, longhorn, cnpg, harbor]
       shell: |
+        helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx --force-update
         helm repo add longhorn https://charts.longhorn.io --force-update
         helm repo add cnpg https://cloudnative-pg.github.io/charts --force-update
         helm repo add harbor https://helm.goharbor.io --force-update
         helm repo update
       changed_when: false
+
+    - name: ingress-nginx (밖에서 들어오는 HTTP(S) 를 VIP 하나로 받는다)
+      command: >-
+        helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx --create-namespace
+        --version {{ ingress_nginx_chart_version }} -f {{ work }}/ingress-nginx-values.yaml --wait --timeout 10m
+      tags: [ingress]
+      when: ingress_nginx_enabled | bool
 
     - name: Longhorn
       command: >-
@@ -131,13 +137,17 @@
         -f {{ work }}/harbor-values.yaml --wait --timeout 20m
       tags: [harbor]
       when: harbor_enabled | bool
-    - name: Harbor BGP 서비스
+    - name: 옛 Harbor 전용 BGP 서비스 정리 (노출을 loadBalancer → ingress 로 바꾼 클러스터. 같은 BGP VIP 를 쥐고 있어 새 서비스가 IP 를 못 받는다)
+      command: kubectl -n harbor delete svc harbor-bgp --ignore-not-found
+      tags: [harbor, ingress]
+      when: bgp_enabled | bool and harbor_expose == 'ingress'
+    - name: BGP 서비스 (ingress-nginx 또는 Harbor 앞)
       command: kubectl apply -f {{ work }}/harbor-bgp-svc.yaml
-      tags: [harbor]
-      when: harbor_enabled | bool and bgp_enabled | bool
+      tags: [harbor, ingress]
+      when: bgp_enabled | bool and ((harbor_expose == 'ingress' and ingress_nginx_enabled | bool) or (harbor_expose != 'ingress' and harbor_enabled | bool))
     - name: 서비스 확인
       tags: [harbor]
-      command: kubectl -n harbor get svc
+      shell: kubectl -n harbor get svc,ingress; kubectl -n ingress-nginx get svc 2>/dev/null || true
       register: svc
       changed_when: false
     - debug: {var: svc.stdout_lines}

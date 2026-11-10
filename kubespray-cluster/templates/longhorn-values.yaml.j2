@@ -10,11 +10,11 @@ defaultSettings:
   storageOverProvisioningPercentage: 200
   nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod   # 노드 다운 시 파드를 지워 다른 노드에서 볼륨 재부착
   replicaReplenishmentWaitInterval: 60
-# 랩 메모리 절약 (워커 2.25GB). 운영은 기본값(3)
+# 랩은 메모리 절약으로 2 (longhorn_csi_replicas). 차트 기본값은 3
 csi:
-  attacherReplicaCount: 2
-  provisionerReplicaCount: 2
-  resizerReplicaCount: 2
-  snapshotterReplicaCount: 2
+  attacherReplicaCount: {{ longhorn_csi_replicas | default(2) }}
+  provisionerReplicaCount: {{ longhorn_csi_replicas | default(2) }}
+  resizerReplicaCount: {{ longhorn_csi_replicas | default(2) }}
+  snapshotterReplicaCount: {{ longhorn_csi_replicas | default(2) }}
 longhornUI:
   replicas: 1

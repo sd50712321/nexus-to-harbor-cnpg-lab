@@ -1,10 +1,17 @@
-# 같은 Harbor 를 BGP VIP 로도 노출: 노드 서브넷 밖 {{ harbor_bgp_vip }} → ToR 에 /32 경로 광고(워커 수만큼 ECMP)
-# 실서비스에서는 둘 중 하나를 고른다. 랩은 두 방식을 비교하려고 같이 둔다.
+# 같은 진입점을 BGP VIP 로도 노출: 노드 서브넷 밖 {{ harbor_bgp_vip }} → ToR 에 /32 경로 광고(워커 수만큼 ECMP)
+# 실서비스에서는 L2 와 BGP 중 하나를 고른다. 랩은 두 방식을 비교하려고 같이 둔다.
+#   harbor_expose=ingress      → ingress-nginx 컨트롤러 앞에 붙는다 (호스트명으로 들어와야 Harbor 로 간다)
+#   harbor_expose=loadBalancer → Harbor 자체 nginx 앞에 붙는다
 apiVersion: v1
 kind: Service
 metadata:
+{% if harbor_expose == 'ingress' %}
+  name: ingress-nginx-bgp
+  namespace: ingress-nginx
+{% else %}
   name: harbor-bgp
   namespace: harbor
+{% endif %}
   labels:
     lab.io/bgp: "true"
   annotations:
@@ -12,6 +19,15 @@ metadata:
 spec:
   type: LoadBalancer
   externalTrafficPolicy: Cluster     # 모든 BGP 노드가 경로 광고 → ToR 가 ECMP. Local 이면 파드 있는 노드만 광고
+{% if harbor_expose == 'ingress' %}
+  selector:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/instance: ingress-nginx
+    app.kubernetes.io/component: controller
+  ports:
+    - {name: http, port: 80, targetPort: http}
+    - {name: https, port: 443, targetPort: https}
+{% else %}
   selector:
     app: harbor
     component: nginx
@@ -19,3 +35,4 @@ spec:
     - name: http
       port: 80
       targetPort: 8080
+{% endif %}

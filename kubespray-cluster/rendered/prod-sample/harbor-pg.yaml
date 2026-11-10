@@ -1,0 +1,32 @@
+# Harbor 전용 PostgreSQL: CNPG 3 인스턴스(primary 1 + 동기 standby), 노드 분산
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: harbor-pg
+  namespace: harbor
+spec:
+  instances: 3
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.15-minimal-bookworm
+  primaryUpdateStrategy: unsupervised
+  # primary 파드 삭제·drain 시 Postgres 는 먼저 smart shutdown(클라이언트 접속 종료 대기)을 한다.
+  # 기본 180s 동안 WAL 송신이 살아 있어 standby 승격이 그만큼 늦어진다(랩 실측 173s). Harbor 는 재접속하므로 짧게.
+  smartShutdownTimeout: 15
+  affinity:
+    enablePodAntiAffinity: true
+    topologyKey: kubernetes.io/hostname
+    podAntiAffinityType: required    # 인스턴스 3개가 반드시 서로 다른 노드
+  bootstrap:
+    initdb: {database: registry, owner: harbor}
+  postgresql:
+    synchronous:                     # 커밋은 standby 1대 이상 확인 후 → primary 장애에도 커밋된 데이터 손실 0
+      method: any
+      number: 1
+    parameters:
+      max_connections: "200"
+      shared_buffers: "128MB"
+  storage:
+    storageClass: "longhorn-single"
+    size: 20Gi
+  resources:
+    requests: {cpu: 100m, memory: 256Mi}
+    limits:   {memory: 512Mi}

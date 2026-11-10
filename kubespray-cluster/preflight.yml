@@ -27,7 +27,7 @@
       register: vip_ping
       changed_when: false
       failed_when: false
-      loop: ["{{ apiserver_vip }}", "{{ harbor_vip }}"]
+      loop: ["{{ apiserver_vip }}", "{{ ingress_vip if harbor_expose | default('ingress') == 'ingress' else harbor_vip }}"]
       run_once: true
     - name: VIP 충돌 경고 (재설치·재실행이면 우리 클러스터가 쓰는 중이라 정상)
       debug: {msg: "{{ item.item }} 가 이미 응답함. 최초 설치라면 IP 충돌 — IPAM 확인"}
@@ -41,3 +41,29 @@
     - name: NTP 미동기 경고
       debug: {msg: "{{ inventory_hostname }}: NTP 미동기. etcd·인증서 문제 위험"}
       when: ntp.stdout != 'yes'
+
+    # ----- 노드가 VM 일 때: 같은 템플릿에서 복제한 VM 은 식별자가 겹칠 수 있다 (INFRA.md 6절) -----
+    - name: 가상화 종류
+      debug: {msg: "{{ inventory_hostname }}: {{ ansible_virtualization_role }} / {{ ansible_virtualization_type }}, 메모리 {{ ansible_memtotal_mb }}MB, vCPU {{ ansible_processor_vcpus }}, swap {{ ansible_swaptotal_mb }}MB"}
+    - name: (VM 복제) machine-id · product_uuid · 클러스터 NIC 의 MAC 이 노드마다 다른지 — kubeadm 설치 조건
+      assert:
+        that:
+          - (ansible_play_hosts | map('extract', hostvars, 'ansible_machine_id') | unique | length) == (ansible_play_hosts | length)
+          - (ansible_play_hosts | map('extract', hostvars, 'ansible_product_uuid') | unique | length) == (ansible_play_hosts | length)
+          - (ansible_play_hosts | map('extract', hostvars, ['ansible_' + node_iface | replace('-', '_'), 'macaddress']) | unique | length) == (ansible_play_hosts | length)
+        fail_msg: "겹치는 식별자가 있다. machine-id {{ ansible_play_hosts | map('extract', hostvars, 'ansible_machine_id') | unique | length }}종, product_uuid {{ ansible_play_hosts | map('extract', hostvars, 'ansible_product_uuid') | unique | length }}종 / 노드 {{ ansible_play_hosts | length }}대. VM 템플릿 복제 후 재생성 필요(INFRA.md 6절)"
+      run_once: true
+    - name: (VM 복제) iSCSI initiator 이름
+      shell: sed -n 's/^InitiatorName=//p' /etc/iscsi/initiatorname.iscsi 2>/dev/null || true
+      register: iqn
+      changed_when: false
+    - name: (VM 복제) iSCSI initiator 이름이 겹침 — 경고만. 템플릿에 open-iscsi 가 들어 있으면 복제본이 같은 이름을 갖는다
+      debug:
+        msg: "initiator 이름 {{ _iqns | unique | length }}종 / 이름이 있는 노드 {{ _iqns | length }}대. Longhorn 은 노드 안의 타깃에만 붙어 동작하지만, 사내 iSCSI 스토리지를 같이 쓰면 충돌한다. 고치는 법은 INFRA.md 6절"
+      vars:
+        _iqns: "{{ ansible_play_hosts | map('extract', hostvars, ['iqn', 'stdout']) | select | list }}"
+      when: (_iqns | unique | length) < (_iqns | length)
+      run_once: true
+    - name: swap 이 켜져 있음 — 경고 (Kubespray 가 끄지만 템플릿의 fstab·swapfile 이 재부팅 때 되살리는지 확인)
+      debug: {msg: "{{ inventory_hostname }}: swap {{ ansible_swaptotal_mb }}MB"}
+      when: ansible_swaptotal_mb | int > 0

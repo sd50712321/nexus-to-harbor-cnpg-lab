@@ -27,7 +27,7 @@ cilium_loadbalancer_ip_pools:
     serviceSelector:
       matchLabels: {lab.io/bgp: "true"}
 
-# --- BGP Control Plane (bgpv2 API): 워커 7대 ↔ ToR(ks-tor, FRR) eBGP ---
+# --- BGP Control Plane (bgpv2 API): 워커 전체 ↔ ToR 스위치 eBGP. env 의 bgp_enabled 가 false 면 전부 꺼진다 ---
 cilium_enable_bgp_control_plane: "{{ bgp_enabled }}"
 cilium_bgp_cluster_configs: "{{ _bgp_cluster_configs if bgp_enabled else [] }}"
 cilium_bgp_peer_configs: "{{ _bgp_peer_configs if bgp_enabled else [] }}"
@@ -67,7 +67,7 @@ _bgp_advertisements:
           selector:
             matchLabels: {lab.io/bgp: "true"}
 cilium_extra_values:
-  # NodePort/LB 를 처리할 NIC. eth0 = Vagrant NAT(인터넷), eth1 = 클러스터망
+  # NodePort/LB 를 처리할 NIC 목록 (env 의 cilium_node_devices)
   devices: "{{ cilium_node_devices }}"
   # L2 공지는 서비스마다 Lease 를 갱신 → API 호출이 늘어 기본 레이트리밋을 올린다 (Cilium 문서 권장)
   k8sClientRateLimit:

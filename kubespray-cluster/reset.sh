@@ -4,7 +4,7 @@
 #
 #   ./reset.sh apps      Harbor·CNPG·Longhorn 만 제거 (클러스터 유지)       → install.sh --from addons
 #   ./reset.sh cluster   Kubespray reset.yml: 노드에서 k8s 전부 제거 (OS·VM 유지) → install.sh --from cluster
-#   ./reset.sh vms       (랩 전용) VM 11대 삭제                               → install.sh --from vms
+#   ./reset.sh vms       (랩 전용) VM 삭제                                    → install.sh --from vms
 #
 #   INVENTORY=inventory/prod ./reset.sh cluster   # 실서버
 #   FORCE=1 ./reset.sh ...                        # 확인 문구 생략(자동화용)

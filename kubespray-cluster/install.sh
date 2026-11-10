@@ -2,7 +2,7 @@
 # =============================================================================
 # 처음부터 끝까지 설치: 도구 준비 → (랩) VM 기동 → Kubespray → ToR/L2/Longhorn/CNPG/Harbor → 검증
 #
-#   ./install.sh                     # 랩: Vagrant VM 11대 + 전체 설치
+#   ./install.sh                     # 랩: Vagrant VM 9대 + 전체 설치
 #   ./install.sh --from cluster      # 특정 단계부터 재개 (tools|vms|cluster|addons|verify)
 #   INVENTORY=inventory/prod ./install.sh   # 실서버: VM 단계 건너뜀, 해당 인벤토리로 설치
 #

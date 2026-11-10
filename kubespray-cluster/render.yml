@@ -1,0 +1,23 @@
+---
+# 클러스터에 손대지 않고 templates/ 를 인벤토리 값으로 풀어 rendered/<인벤토리 이름>/ 에 쓴다.
+#   ./scripts/render-values.sh                                   # 랩 (arm64)
+#   INVENTORY=inventory/prod-sample ./scripts/render-values.sh   # 견본 값 (amd64)
+# 쓰임: 설치 전에 values 를 눈으로 검토, ansible 없이 helm/kubectl 로 직접 설치, 변경 전후 비교(diff)
+- name: values·매니페스트 렌더링 (로컬)
+  hosts: kube_control_plane[0]
+  connection: local
+  gather_facts: false
+  become: false
+  vars_files: [versions.yml]
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"   # 로컬에서 도는데 인벤토리 호스트의 인터프리터 경로를 쓰지 않게
+    harbor_arm64: "{{ (render_arch | default('amd64')) in ['arm64', 'aarch64'] }}"
+    out: "{{ playbook_dir }}/rendered/{{ inventory_dir | basename }}"
+  tasks:
+    - name: 출력 디렉터리
+      file: {path: "{{ out }}", state: directory, mode: "0755"}
+    - name: 렌더링
+      template: {src: "templates/{{ item }}.j2", dest: "{{ out }}/{{ item }}", mode: "0644"}
+      loop: [cilium-l2.yaml, ingress-nginx-values.yaml, longhorn-values.yaml, longhorn-sc-single.yaml, harbor-pg.yaml, harbor-values.yaml, harbor-bgp-svc.yaml]
+    - name: 적용 순서
+      template: {src: templates/apply-order.md.j2, dest: "{{ out }}/README.md", mode: "0644"}

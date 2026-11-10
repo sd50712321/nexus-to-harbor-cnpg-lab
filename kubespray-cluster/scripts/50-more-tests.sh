@@ -7,7 +7,7 @@
 set -uo pipefail
 cd "$(dirname "$0")/.."
 export KUBECONFIG=$PWD/${INVENTORY:-inventory/lab}/artifacts/admin.conf
-HB=172.16.141.210; BGP=10.250.0.10; HA="admin:$(cat secrets/harbor-admin)"; TAG=$(cat logs/last-tag)
+. scripts/harbor-env.sh; BGP=10.250.0.10; TAG=$(cat logs/last-tag)
 SRC_IMG=${SRC_IMG:-docker://docker.io/library/busybox:1.37}    # 새 레이어를 쓰기 위한 외부 이미지(Mac 에서 받음)
 TESTS=${*:-F D E}
 OUT=logs/more-tests-$(date +%m%d-%H%M).txt; exec > >(tee "$OUT") 2>&1
@@ -27,11 +27,12 @@ replicas(){ kubectl -n longhorn-system get replicas.longhorn.io -o jsonpath="{ra
 
 for T in $TESTS; do case $T in
 F)
-echo "== F. BGP VIP($BGP) 로 push/pull (ToR 에서)"
+echo "== F. BGP VIP($BGP) 로 push/pull (ToR 에서. ToR 의 /etc/hosts 에 $HH → $BGP 를 넣어 토큰 발급까지 BGP 경로로 가게 한다)"
+vagrant ssh ks-tor -c "grep -q ' $HH\$' /etc/hosts || echo '$BGP $HH' | sudo tee -a /etc/hosts >/dev/null" 2>/dev/null
 vagrant ssh ks-tor -c 'command -v skopeo >/dev/null || sudo env http_proxy=http://172.16.141.1:3128 https_proxy=http://172.16.141.1:3128 DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::http::Proxy=http://172.16.141.1:3128 install -y -q skopeo >/dev/null 2>&1' 2>/dev/null
-cat secrets/harbor-admin | vagrant ssh ks-tor -c "read -r P; C=\"admin:\$P\"; B=$BGP; N=bgp-\$(date +%H%M%S); rm -rf /tmp/bgp1 /tmp/bgp2
-echo \"   경로: \$(ip route show \$B | grep -c nexthop) 개 다음 홉(ECMP)\"
-echo \"   토큰 주소: \$(curl -s -o /dev/null -D - http://\$B/v2/ | grep -io 'realm=\"[^\"]*\"')\"
+cat secrets/harbor-admin | vagrant ssh ks-tor -c "read -r P; C=\"admin:\$P\"; V=$BGP; B=$HH; N=bgp-\$(date +%H%M%S); rm -rf /tmp/bgp1 /tmp/bgp2
+echo \"   경로: \$(ip route show \$V | grep -c nexthop) 개 다음 홉(ECMP)\"
+echo \"   토큰 주소: \$(curl -sk -o /dev/null -D - https://\$B/v2/ | grep -io 'realm=\"[^\"]*\"')\"
 skopeo copy -q --src-tls-verify=false --src-creds \"\$C\" docker://\$B/lab/alpine:$TAG dir:/tmp/bgp1 && echo '   [OK] pull' || echo '   [NG] pull'
 skopeo copy -q --dest-tls-verify=false --dest-creds \"\$C\" dir:/tmp/bgp1 docker://\$B/lab/alpine:\$N && echo \"   [OK] push lab/alpine:\$N\" || echo '   [NG] push'
 skopeo copy -q --src-tls-verify=false --src-creds \"\$C\" docker://\$B/lab/alpine:\$N dir:/tmp/bgp2 && cmp -s /tmp/bgp1/manifest.json /tmp/bgp2/manifest.json && echo '   [OK] 되받은 manifest 동일' || echo '   [NG] 되받기/비교 실패'" 2>/dev/null | tr -d '\r'
@@ -70,7 +71,7 @@ echo "$(ts) primary $X @ $XN → $XN 강제 정지"
 vagrant halt $XN --force >/dev/null 2>&1; S=$(date +%s)
 t=$(wait_until 300 "pgc '{.status.currentPrimary}' | grep -vqx $X") && echo "$(ts) 새 primary $(pgc '{.status.currentPrimary}'): 정지 후 $(( $(date +%s)-S ))s" || echo "$(ts) [NG] 300s 안에 승격 안 됨"
 P=fo$(date +%H%M%S)
-t=$(wait_until 120 "curl -s -o /dev/null -w '%{http_code}' -u '$HA' -H 'Content-Type: application/json' -X POST http://$HB/api/v2.0/projects -d '{\"project_name\":\"$P\",\"public\":false}' | grep -qE '201|409'") \
+t=$(wait_until 120 "hcurl -o /dev/null -w '%{http_code}' -u '$HA' -H 'Content-Type: application/json' -X POST $HU/api/v2.0/projects -d '{\"project_name\":\"$P\",\"public\":false}' | grep -qE '201|409'") \
   && echo "$(ts) [OK] 프로젝트 생성(DB 쓰기) $P: 정지 후 $(( $(date +%s)-S ))s" || echo "$(ts) [NG] 프로젝트 생성 실패"
 push_new $P/busybox:after-failover && echo "$(ts) [OK] 새 프로젝트에 이미지 push" || echo "$(ts) [NG] push 실패"
 pull_back $P/busybox:after-failover && echo "$(ts) [OK] 되받기" || echo "$(ts) [NG] 되받기 실패"

@@ -1,0 +1,50 @@
+# Harbor chart 1.18.0 (Harbor 2.14.0) on Kubespray 클러스터
+#   저장소 = Longhorn(3벌 복제, 노드 장애 시 다른 노드로 재부착), DB = CNPG(harbor-pg, 3 인스턴스)
+#   노출 = harbor_expose 로 고른다
+#     ingress      : ingress-nginx 의 VIP(10.0.10.211) 뒤에 호스트명 harbor.example.internal 로 붙는다. TLS 는 ingress-nginx 에서 끝난다. Harbor 자체 nginx 파드는 생기지 않는다
+#     loadBalancer : Harbor 전용 VIP(10.0.10.210, Cilium LB IPAM + L2 공지), http
+#   이미지: amd64 = 차트 기본(goharbor/*), arm64 노드일 때만 ghcr.io/octohelm/harbor/* 로 대체 (goharbor 는 arm64 이미지 없음)
+expose:
+  type: ingress
+  tls:
+    enabled: true
+    certSource: auto          # 차트가 자체 서명 인증서를 만든다(랩). 실서버는 certSource: secret + 사내 인증서 Secret
+  ingress:
+    className: nginx
+    hosts:
+      core: "harbor.example.internal"
+    # annotations 는 차트 기본값을 그대로 쓴다: nginx.ingress.kubernetes.io/proxy-body-size "0" (레이어 업로드 크기 제한 없음), ssl-redirect "true"
+externalURL: https://harbor.example.internal
+
+# registry·jobservice 볼륨이 RWO(Longhorn) 라 한 번에 한 노드에만 붙는다. 기본값 RollingUpdate 는 새 파드를 먼저 띄우는데,
+# 새 파드가 다른 노드에 잡히면 볼륨을 못 붙여 멈춘다(TROUBLESHOOTING 23절). 옛 파드를 먼저 내리게 한다.
+updateStrategy:
+  type: Recreate
+
+existingSecretAdminPassword: harbor-admin
+existingSecretAdminPasswordKey: HARBOR_ADMIN_PASSWORD
+
+persistence:
+  enabled: true
+  resourcePolicy: "keep"
+  persistentVolumeClaim:
+    registry:   {storageClass: "longhorn", size: 200Gi}
+    jobservice:
+      jobLog:   {storageClass: "longhorn", size: 1Gi}
+    redis:      {storageClass: "longhorn", size: 1Gi}
+
+database:
+  type: external
+  external:
+    host: "harbor-pg-rw.harbor.svc"
+    port: "5432"
+    username: harbor
+    coreDatabase: registry
+    existingSecret: "harbor-pg-app"
+    sslmode: require
+  maxIdleConns: 10
+  maxOpenConns: 50
+
+trivy:   {enabled: false}
+metrics: {enabled: false}
+

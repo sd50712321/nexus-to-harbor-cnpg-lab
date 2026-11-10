@@ -1,7 +1,7 @@
 #!/bin/bash
 # Kubespray 이후 애드온. 재실행 안전.
 #   - tor 그룹이 있으면(랩) FRR 로 ToR 스위치 역할 구성. 실서버는 네트워크팀이 스위치에 BGP 설정(INFRA.md)
-#   - addons.yml: Longhorn 준비 → Cilium L2 → Longhorn → CNPG → Harbor (첫 control plane 에서 kubectl/helm)
+#   - addons.yml: Longhorn 준비 → Cilium L2 → ingress-nginx → Longhorn → CNPG → Harbor (첫 control plane 에서 kubectl/helm)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 . .venv/bin/activate

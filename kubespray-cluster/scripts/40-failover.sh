@@ -6,7 +6,7 @@
 set -uo pipefail
 cd "$(dirname "$0")/.."
 export KUBECONFIG=$PWD/${INVENTORY:-inventory/lab}/artifacts/admin.conf
-VIP=172.16.141.30; HB=172.16.141.210; HA="admin:$(cat secrets/harbor-admin)"; TAG=$(cat logs/last-tag)
+VIP=172.16.141.30; . scripts/harbor-env.sh; TAG=$(cat logs/last-tag)
 OUT=logs/failover-$(date +%m%d-%H%M).txt; exec > >(tee "$OUT") 2>&1
 ts(){ date +%H:%M:%S; }
 pull_ok(){ rm -rf /tmp/ks-fo; skopeo copy -q --src-tls-verify=false --src-creds "$HA" docker://$HB/lab/alpine:$TAG dir:/tmp/ks-fo >/dev/null 2>&1; }
@@ -16,7 +16,7 @@ wait_until(){ local max=$1; shift; local s=$(date +%s); while ! eval "$@" >/dev/
 node_back(){ local n=$1 since=$2; kubectl get node $n --no-headers | grep -qw Ready || return 1
   local r=$(kubectl -n kube-node-lease get lease $n -o jsonpath='{.spec.renewTime}'); [ -n "$r" ] || return 1
   [ $(python3 -c "import sys,datetime;print(int(datetime.datetime.fromisoformat(sys.argv[1].replace('Z','+00:00')).timestamp()))" "$r") -gt $since ]; }
-harbor_healthy(){ curl -s -m 3 http://$HB/api/v2.0/health | python3 -c 'import sys,json; sys.exit(0 if json.load(sys.stdin)["status"]=="healthy" else 1)'; }
+harbor_healthy(){ hcurl -m 3 $HU/api/v2.0/health | python3 -c 'import sys,json; sys.exit(0 if json.load(sys.stdin)["status"]=="healthy" else 1)'; }
 vip_holder(){ for n in ks-cp1 ks-cp2 ks-cp3; do vagrant ssh $n -c "ip -4 a show eth1 | grep -q $VIP && hostname" 2>/dev/null; done | tr -d '\r' | head -1; }
 
 echo "== A. API VIP 보유 control plane 정지"
@@ -39,7 +39,7 @@ P=$(kubectl -n harbor get pods -l cnpg.io/instanceRole=primary -o jsonpath='{.it
 echo "$(ts) primary: $P ($PN) → 삭제"
 kubectl -n harbor delete pod $P --wait=false >/dev/null
 t=$(wait_until 180 "kubectl -n harbor get cluster harbor-pg -o jsonpath={.status.currentPrimary} | grep -vqx $P") && echo "$(ts) 새 primary: $(kubectl -n harbor get cluster harbor-pg -o jsonpath={.status.currentPrimary}) (${t}s)"
-t=$(wait_until 180 "curl -s -m 3 -u '$HA' http://$HB/api/v2.0/projects | grep -q lab") && echo "$(ts) Harbor API(DB 조회) 복구 ${t}s"
+t=$(wait_until 180 "hcurl -m 3 -u '$HA' $HU/api/v2.0/projects | grep -q lab") && echo "$(ts) Harbor API(DB 조회) 복구 ${t}s"
 pull_ok && echo "$(ts) Harbor pull OK" || echo "$(ts) [NG] pull 실패"
 # Cluster.status.readyInstances 는 수 분 늦게 갱신될 수 있다(TROUBLESHOOTING 9절) → 지운 인스턴스의 파드 Ready 와 실제 복제 연결 수로 판정
 t=$(wait_until 300 "kubectl -n harbor get pod $P -o jsonpath='{.status.conditions[?(@.type==\"Ready\")].status}' | grep -qx True") && echo "$(ts) $P 재기동 Ready ${t}s"

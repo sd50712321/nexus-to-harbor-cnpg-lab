@@ -8,7 +8,7 @@ cd "$(dirname "$0")/.."
 python3 -I - "${1:-}" <<'PY'
 import os, sys, hashlib, subprocess, tempfile, filecmp
 D = '__KS_' + 'EOF__'          # heredoc 구분자 (이 파일 안에 그 줄이 그대로 나오지 않게 나눠 씀)
-SKIP_DIRS = {'kubespray', '.venv', '.vagrant', 'secrets', 'logs', 'notes', '.git', 'artifacts', 'credentials'}
+SKIP_DIRS = {'kubespray', '.venv', '.vagrant', 'secrets', 'logs', 'notes', '.git', 'artifacts', 'credentials', 'rendered'}
 SKIP_FILES = {'ssh.cfg', 'BUNDLE.md'}
 files = []
 for root, dirs, names in os.walk('.'):

@@ -3,11 +3,14 @@
 ansible_user: vagrant
 ansible_ssh_common_args: "-F {{ inventory_dir }}/ssh.cfg"   # 랩 전용(vagrant ssh-config)
 
-node_iface: eth1                       # 클러스터 통신 NIC (실서버 예: bond1). kube-vip ARP, Cilium L2 공지가 이 NIC 에서 나간다
-cilium_node_devices: [eth0, eth1]      # Cilium 이 NodePort/LB 를 처리할 NIC 목록 (실서버 예: [bond0, bond1])
+node_iface: eth1                       # 클러스터 통신 NIC (VM 예: ens192, 물리 서버 예: bond1). kube-vip ARP, Cilium L2 공지가 이 NIC 에서 나간다
+cilium_node_devices: [eth0, eth1]      # Cilium 이 NodePort/LB 를 처리할 NIC 목록 (실서버는 실제 NIC 이름으로)
 
 apiserver_vip: 172.16.141.30           # API VIP (kube-vip, ARP). 노드 서브넷 안, DHCP 범위 밖
-harbor_vip: 172.16.141.210             # Harbor LB VIP (L2 풀 안)
+ingress_vip: 172.16.141.211            # ingress-nginx VIP (L2 풀 안). 밖에서 들어오는 HTTP(S) 는 전부 이 주소 하나로 받는다
+harbor_expose: ingress                 # ingress = ingress-nginx 뒤에 호스트명으로 / loadBalancer = Harbor 전용 VIP(harbor_vip)
+harbor_host: "harbor.{{ ingress_vip }}.sslip.io"   # Harbor 호스트명. 랩 전용: Mac 에 /etc/hosts 권한이 없어 IP 가 들어간 이름을 공개 DNS(sslip.io)로 푼다. 실서버는 사내 DNS 레코드
+harbor_vip: 172.16.141.210             # Harbor 전용 LB VIP (harbor_expose=loadBalancer 일 때만)
 l2_pool_start: 172.16.141.210
 l2_pool_stop: 172.16.141.219
 
@@ -29,6 +32,8 @@ cilium_l2_enabled: true                # L2 공지 정책. BGP 만 쓰는 환경
 longhorn_enabled: true                 # 회사 CSI(NFS/Ceph/벤더)가 있으면 false 로 두고 아래 SC 이름을 바꾼다
 cnpg_enabled: true                     # 외부 PostgreSQL 을 쓰면 false (harbor_db_* 값을 외부 DB 로)
 harbor_enabled: true
+ingress_nginx_enabled: true            # 이미 ingress 컨트롤러가 있으면 false (그때 Harbor Ingress 의 className 은 templates/harbor-values.yaml.j2 에서 맞춘다)
+ingress_replicas: 3                    # 컨트롤러 파드 수. 워커마다 하나씩만 뜬다
 harbor_storage_class: longhorn         # Harbor registry/redis/jobservice PVC
 cnpg_storage_class: longhorn-single    # CNPG PVC (DB 가 자체 복제하므로 스토리지 복제 1벌)
 cnpg_smart_shutdown_timeout: 15         # primary 계획 종료 시 접속 종료 대기(초). CNPG 기본 180 → 승격이 3분 늦어짐

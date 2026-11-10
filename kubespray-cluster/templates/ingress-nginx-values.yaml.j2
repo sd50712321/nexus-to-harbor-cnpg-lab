@@ -1,0 +1,22 @@
+# ingress-nginx chart {{ ingress_nginx_chart_version }}: 밖에서 들어오는 HTTP(S) 를 VIP 하나({{ ingress_vip }})로 받아 호스트명(Ingress 규칙)으로 서비스에 나눈다.
+#   VIP 는 Cilium LB IPAM 이 주고 L2 공지(ARP)로 알린다. 컨트롤러는 워커에 {{ ingress_replicas }}개, 노드마다 하나씩.
+#   워커 → apiserver 사이의 nginx-proxy(Kubespray) 와는 다른 것이다.
+controller:
+  replicaCount: {{ ingress_replicas }}
+  ingressClassResource:
+    name: nginx
+    default: true
+  service:
+    type: LoadBalancer
+    annotations:
+      lbipam.cilium.io/ips: "{{ ingress_vip }}"
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - topologyKey: kubernetes.io/hostname
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: ingress-nginx
+              app.kubernetes.io/component: controller
+  resources:
+    requests: {cpu: 50m, memory: 128Mi}

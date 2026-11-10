@@ -12,39 +12,48 @@ mkdir -p ~/kubespray-cluster && cd ~/kubespray-cluster
 
 3. 맨 아래 sha256 대조 블럭을 붙여넣어 모든 줄이 `OK` 인지 확인한다.
 
-파일 29개. 문서(README·INFRA·TROUBLESHOOTING)는 GitHub 화면에서 바로 읽으면 되므로 넣지 않았다.
+파일 38개. 문서(README·INFRA·TROUBLESHOOTING)는 GitHub 화면에서 바로 읽으면 되므로 넣지 않았다.
 
 | # | 파일 | 줄 수 |
 |---|---|---|
 | 1 | [.gitignore](#1-gitignore) | 12 |
-| 2 | [Vagrantfile](#2-vagrantfile) | 59 |
-| 3 | [addons.yml](#3-addonsyml) | 144 |
+| 2 | [Vagrantfile](#2-vagrantfile) | 62 |
+| 3 | [addons.yml](#3-addonsyml) | 154 |
 | 4 | [install.sh](#4-installsh) | 85 |
-| 5 | [preflight.yml](#5-preflightyml) | 43 |
-| 6 | [reset.sh](#6-resetsh) | 56 |
-| 7 | [tor.yml](#7-toryml) | 53 |
-| 8 | [scripts/00-inventory.sh](#8-scripts00-inventorysh) | 6 |
-| 9 | [scripts/10-cluster.sh](#9-scripts10-clustersh) | 12 |
-| 10 | [scripts/20-addons.sh](#10-scripts20-addonssh) | 15 |
-| 11 | [scripts/30-verify.sh](#11-scripts30-verifysh) | 61 |
-| 12 | [scripts/40-failover.sh](#12-scripts40-failoversh) | 64 |
-| 13 | [scripts/50-more-tests.sh](#13-scripts50-more-testssh) | 91 |
-| 14 | [scripts/addon.sh](#14-scriptsaddonsh) | 11 |
-| 15 | [scripts/lab-proxy.sh](#15-scriptslab-proxysh) | 16 |
-| 16 | [scripts/make-bundle.sh](#16-scriptsmake-bundlesh) | 79 |
-| 17 | [scripts/rolling-reload.sh](#17-scriptsrolling-reloadsh) | 16 |
-| 18 | [templates/cilium-l2.yaml.j2](#18-templatescilium-l2yamlj2) | 15 |
-| 19 | [templates/harbor-bgp-svc.yaml.j2](#19-templatesharbor-bgp-svcyamlj2) | 21 |
-| 20 | [templates/harbor-pg.yaml.j2](#20-templatesharbor-pgyamlj2) | 32 |
-| 21 | [templates/harbor-values.yaml.j2](#21-templatesharbor-valuesyamlj2) | 64 |
-| 22 | [templates/longhorn-sc-single.yaml.j2](#22-templateslonghorn-sc-singleyamlj2) | 14 |
-| 23 | [templates/longhorn-values.yaml.j2](#23-templateslonghorn-valuesyamlj2) | 20 |
-| 24 | [inventory/lab/inventory.ini](#24-inventorylabinventoryini) | 25 |
-| 25 | [inventory/prod-sample/inventory.ini](#25-inventoryprod-sampleinventoryini) | 24 |
-| 26 | [inventory/lab/group_vars/all/lab.yml](#26-inventorylabgroup_varsalllabyml) | 41 |
-| 27 | [inventory/lab/group_vars/k8s_cluster/lab.yml](#27-inventorylabgroup_varsk8s_clusterlabyml) | 92 |
-| 28 | [inventory/prod-sample/group_vars/all/env.yml](#28-inventoryprod-samplegroup_varsallenvyml) | 44 |
-| 29 | [inventory/prod-sample/group_vars/k8s_cluster/k8s.yml](#29-inventoryprod-samplegroup_varsk8s_clusterk8syml) | 96 |
+| 5 | [preflight.yml](#5-preflightyml) | 69 |
+| 6 | [render.yml](#6-renderyml) | 23 |
+| 7 | [reset.sh](#7-resetsh) | 56 |
+| 8 | [tor.yml](#8-toryml) | 53 |
+| 9 | [versions.yml](#9-versionsyml) | 6 |
+| 10 | [scripts/00-inventory.sh](#10-scripts00-inventorysh) | 6 |
+| 11 | [scripts/10-cluster.sh](#11-scripts10-clustersh) | 12 |
+| 12 | [scripts/20-addons.sh](#12-scripts20-addonssh) | 15 |
+| 13 | [scripts/30-verify.sh](#13-scripts30-verifysh) | 68 |
+| 14 | [scripts/40-failover.sh](#14-scripts40-failoversh) | 64 |
+| 15 | [scripts/50-more-tests.sh](#15-scripts50-more-testssh) | 92 |
+| 16 | [scripts/60-db-node-loss.sh](#16-scripts60-db-node-losssh) | 76 |
+| 17 | [scripts/61-db-move-instance.sh](#17-scripts61-db-move-instancesh) | 53 |
+| 18 | [scripts/62-ingress-failover.sh](#18-scripts62-ingress-failoversh) | 82 |
+| 19 | [scripts/addon.sh](#19-scriptsaddonsh) | 11 |
+| 20 | [scripts/harbor-env.sh](#20-scriptsharbor-envsh) | 10 |
+| 21 | [scripts/lab-proxy.sh](#21-scriptslab-proxysh) | 16 |
+| 22 | [scripts/make-bundle.sh](#22-scriptsmake-bundlesh) | 79 |
+| 23 | [scripts/render-values.sh](#23-scriptsrender-valuessh) | 13 |
+| 24 | [scripts/rolling-reload.sh](#24-scriptsrolling-reloadsh) | 29 |
+| 25 | [templates/apply-order.md.j2](#25-templatesapply-ordermdj2) | 71 |
+| 26 | [templates/cilium-l2.yaml.j2](#26-templatescilium-l2yamlj2) | 15 |
+| 27 | [templates/harbor-bgp-svc.yaml.j2](#27-templatesharbor-bgp-svcyamlj2) | 38 |
+| 28 | [templates/harbor-pg.yaml.j2](#28-templatesharbor-pgyamlj2) | 32 |
+| 29 | [templates/harbor-values.yaml.j2](#29-templatesharbor-valuesyamlj2) | 85 |
+| 30 | [templates/ingress-nginx-values.yaml.j2](#30-templatesingress-nginx-valuesyamlj2) | 22 |
+| 31 | [templates/longhorn-sc-single.yaml.j2](#31-templateslonghorn-sc-singleyamlj2) | 14 |
+| 32 | [templates/longhorn-values.yaml.j2](#32-templateslonghorn-valuesyamlj2) | 20 |
+| 33 | [inventory/lab/inventory.ini](#33-inventorylabinventoryini) | 23 |
+| 34 | [inventory/prod-sample/inventory.ini](#34-inventoryprod-sampleinventoryini) | 22 |
+| 35 | [inventory/lab/group_vars/all/lab.yml](#35-inventorylabgroup_varsalllabyml) | 46 |
+| 36 | [inventory/lab/group_vars/k8s_cluster/lab.yml](#36-inventorylabgroup_varsk8s_clusterlabyml) | 92 |
+| 37 | [inventory/prod-sample/group_vars/all/env.yml](#37-inventoryprod-samplegroup_varsallenvyml) | 58 |
+| 38 | [inventory/prod-sample/group_vars/k8s_cluster/k8s.yml](#38-inventoryprod-samplegroup_varsk8s_clusterk8syml) | 96 |
 
 ## 1. .gitignore
 
@@ -70,19 +79,22 @@ __KS_EOF__
 ```bash
 cat > 'Vagrantfile' <<'__KS_EOF__'
 # -*- mode: ruby -*-
-# Kubespray HA 클러스터 랩: control plane 3 (etcd 쿼럼 2) + worker 7
+# Kubespray HA 클러스터 랩: control plane 3 (etcd 쿼럼 2) + worker 5
 # 환경: macOS Apple Silicon + VMware Fusion + vagrant-vmware-desktop, bento/ubuntu-24.04 arm64
 #
-#   vagrant up                       # VM 10대 기동 (프로비저닝 없음, 클러스터는 Kubespray 로)
+#   vagrant up                       # VM 9대 기동 (프로비저닝 없음, 클러스터는 Kubespray 로)
 #   ./scripts/00-inventory.sh        # vagrant ssh-config → inventory/lab/ssh.cfg
 #   ./scripts/10-cluster.sh          # Kubespray cluster.yml
 #
-# 메모리 합계 = 3 × CP_MEM + 7 × W_MEM + TOR (기본 7.5 + 13.1 + 0.5 = 약 21 GB). CP 1792MB 는 etcd+apiserver 로 메모리 150% → kube-vip 리스 실패(VIP 이동)를 겪어 2560 으로 올림. 32 GB Mac 에서 다른 VM/podman 을 끄고 돌린다.
+# 메모리 합계 = 3 × CP_MEM + W_COUNT × W_MEM + TOR (기본 3×2560 + 5×2688 + 512 MB = 약 21 GB). CP 1792MB 는 etcd+apiserver 로 메모리 150% → kube-vip 리스 실패(VIP 이동)를 겪어 2560 으로 올림. 32 GB Mac 에서 다른 VM/podman 을 끄고 돌린다.
+# 워커는 처음에 7대 × 1920MB 였다. kubelet 이 노드마다 868Mi 를 떼어 두고(kubeReserved 256 + systemReserved 512 + eviction 100) Cilium·Longhorn 데몬이 또 깔려서,
+# DB 복구처럼 I/O 가 몰리면 memory.available < 100Mi → Longhorn 파드 퇴거 → 그 노드 볼륨 정지가 반복됐다(TROUBLESHOOTING 16절). 같은 합계로 5대 × 2688MB 로 바꿨다.
+# 7대로 되돌리려면 W_COUNT=7 W_MEM=1920 을 주고 scale.yml 로 ks-w6·ks-w7 을 다시 넣는다(두 VM 은 지우지 않고 꺼 두었다).
 
 CP_COUNT = Integer(ENV.fetch("CP_COUNT", 3))      # 3 = etcd 쿼럼 2. 2 는 쓰지 않는다(한 대만 죽어도 쿼럼 상실)
-W_COUNT  = Integer(ENV.fetch("W_COUNT", 7))
+W_COUNT  = Integer(ENV.fetch("W_COUNT", 5))
 CP_MEM   = Integer(ENV.fetch("CP_MEM", 2560))
-W_MEM    = Integer(ENV.fetch("W_MEM", 1920))
+W_MEM    = Integer(ENV.fetch("W_MEM", 2688))
 TOR_MEM  = Integer(ENV.fetch("TOR_MEM", 512))
 BOX          = "bento/ubuntu-24.04"
 BOX_VERSION  = "202510.26.0"
@@ -95,7 +107,7 @@ NET = File.read(FUSION_NET_CONF)[/VNET_1_HOSTONLY_SUBNET (\d+\.\d+\.\d+)\.\d+/, 
 #   .29        ks-tor   — ToR(상단) 스위치/라우터 역할. FRR 로 BGP(AS 65000), 노드들(AS 65010)과 피어링
 #   .30        API VIP (kube-vip, ARP)
 #   .31~.33    ks-cp1~3
-#   .41~.47    ks-w1~7
+#   .41~.45    ks-w1~5 (.46·.47 = 꺼 둔 ks-w6·7)
 #   .210~.219  Cilium LB 풀 "L2" — 노드 서브넷 안 VIP, ARP 로 광고 (Harbor = .210)
 #   10.250.0.0/24  Cilium LB 풀 "BGP" — 노드 서브넷 밖 VIP 대역, BGP 로 ToR 에 경로 광고 (ECMP)
 NODES = [{ name: "ks-tor", ip: "#{NET}.29", mem: TOR_MEM }] +
@@ -136,10 +148,10 @@ __KS_EOF__
 ```bash
 cat > 'addons.yml' <<'__KS_EOF__'
 ---
-# Kubespray 이후 애드온: Cilium L2 → Longhorn → CNPG → Harbor
+# Kubespray 이후 애드온: Cilium L2 → ingress-nginx → Longhorn → CNPG → Harbor
 # kubectl/helm 은 첫 control plane 노드에서 실행 → 배포 호스트(Mac/Linux)에 kubectl·helm 이 없어도 된다.
 #   전부        : ansible-playbook -i inventory/<env>/inventory.ini addons.yml -b
-#   하나만      : ... --tags longhorn   (l2 | longhorn | cnpg | harbor)
+#   하나만      : ... --tags longhorn   (l2 | ingress | longhorn | cnpg | harbor)
 #   켜기/끄기   : 인벤토리의 *_enabled 변수 (환경에 이미 있는 구성요소는 false)
 
 - name: Longhorn 노드 사전 조건 (워커, Ubuntu/RHEL 공통)
@@ -186,10 +198,8 @@ cat > 'addons.yml' <<'__KS_EOF__'
 - name: 클러스터 애드온 (첫 control plane 에서 kubectl/helm)
   hosts: kube_control_plane[0]
   become: true
+  vars_files: [versions.yml]
   vars:
-    longhorn_version: 1.13.0
-    cnpg_chart_version: 0.29.1
-    harbor_chart_version: 1.18.0
     work: /root/lab-addons
     harbor_arm64: "{{ ansible_architecture == 'aarch64' }}"
     harbor_admin_password: "{{ lookup('ansible.builtin.password', playbook_dir + '/secrets/harbor-admin', length=20, chars=['ascii_letters', 'digits']) }}"
@@ -206,7 +216,7 @@ cat > 'addons.yml' <<'__KS_EOF__'
     - name: 매니페스트·values 렌더링
       tags: [always]
       template: {src: "templates/{{ item }}.j2", dest: "{{ work }}/{{ item }}", mode: "0600"}
-      loop: [cilium-l2.yaml, longhorn-values.yaml, longhorn-sc-single.yaml, harbor-pg.yaml, harbor-values.yaml, harbor-bgp-svc.yaml]
+      loop: [cilium-l2.yaml, ingress-nginx-values.yaml, longhorn-values.yaml, longhorn-sc-single.yaml, harbor-pg.yaml, harbor-values.yaml, harbor-bgp-svc.yaml]
 
     - name: Cilium L2 공지 정책
       command: kubectl apply -f {{ work }}/cilium-l2.yaml
@@ -214,13 +224,21 @@ cat > 'addons.yml' <<'__KS_EOF__'
       when: cilium_l2_enabled | bool
 
     - name: helm 저장소
-      tags: [longhorn, cnpg, harbor]
+      tags: [ingress, longhorn, cnpg, harbor]
       shell: |
+        helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx --force-update
         helm repo add longhorn https://charts.longhorn.io --force-update
         helm repo add cnpg https://cloudnative-pg.github.io/charts --force-update
         helm repo add harbor https://helm.goharbor.io --force-update
         helm repo update
       changed_when: false
+
+    - name: ingress-nginx (밖에서 들어오는 HTTP(S) 를 VIP 하나로 받는다)
+      command: >-
+        helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx --create-namespace
+        --version {{ ingress_nginx_chart_version }} -f {{ work }}/ingress-nginx-values.yaml --wait --timeout 10m
+      tags: [ingress]
+      when: ingress_nginx_enabled | bool
 
     - name: Longhorn
       command: >-
@@ -268,13 +286,17 @@ cat > 'addons.yml' <<'__KS_EOF__'
         -f {{ work }}/harbor-values.yaml --wait --timeout 20m
       tags: [harbor]
       when: harbor_enabled | bool
-    - name: Harbor BGP 서비스
+    - name: 옛 Harbor 전용 BGP 서비스 정리 (노출을 loadBalancer → ingress 로 바꾼 클러스터. 같은 BGP VIP 를 쥐고 있어 새 서비스가 IP 를 못 받는다)
+      command: kubectl -n harbor delete svc harbor-bgp --ignore-not-found
+      tags: [harbor, ingress]
+      when: bgp_enabled | bool and harbor_expose == 'ingress'
+    - name: BGP 서비스 (ingress-nginx 또는 Harbor 앞)
       command: kubectl apply -f {{ work }}/harbor-bgp-svc.yaml
-      tags: [harbor]
-      when: harbor_enabled | bool and bgp_enabled | bool
+      tags: [harbor, ingress]
+      when: bgp_enabled | bool and ((harbor_expose == 'ingress' and ingress_nginx_enabled | bool) or (harbor_expose != 'ingress' and harbor_enabled | bool))
     - name: 서비스 확인
       tags: [harbor]
-      command: kubectl -n harbor get svc
+      shell: kubectl -n harbor get svc,ingress; kubectl -n ingress-nginx get svc 2>/dev/null || true
       register: svc
       changed_when: false
     - debug: {var: svc.stdout_lines}
@@ -290,7 +312,7 @@ cat > 'install.sh' <<'__KS_EOF__'
 # =============================================================================
 # 처음부터 끝까지 설치: 도구 준비 → (랩) VM 기동 → Kubespray → ToR/L2/Longhorn/CNPG/Harbor → 검증
 #
-#   ./install.sh                     # 랩: Vagrant VM 11대 + 전체 설치
+#   ./install.sh                     # 랩: Vagrant VM 9대 + 전체 설치
 #   ./install.sh --from cluster      # 특정 단계부터 재개 (tools|vms|cluster|addons|verify)
 #   INVENTORY=inventory/prod ./install.sh   # 실서버: VM 단계 건너뜀, 해당 인벤토리로 설치
 #
@@ -408,7 +430,7 @@ cat > 'preflight.yml' <<'__KS_EOF__'
       register: vip_ping
       changed_when: false
       failed_when: false
-      loop: ["{{ apiserver_vip }}", "{{ harbor_vip }}"]
+      loop: ["{{ apiserver_vip }}", "{{ ingress_vip if harbor_expose | default('ingress') == 'ingress' else harbor_vip }}"]
       run_once: true
     - name: VIP 충돌 경고 (재설치·재실행이면 우리 클러스터가 쓰는 중이라 정상)
       debug: {msg: "{{ item.item }} 가 이미 응답함. 최초 설치라면 IP 충돌 — IPAM 확인"}
@@ -422,10 +444,66 @@ cat > 'preflight.yml' <<'__KS_EOF__'
     - name: NTP 미동기 경고
       debug: {msg: "{{ inventory_hostname }}: NTP 미동기. etcd·인증서 문제 위험"}
       when: ntp.stdout != 'yes'
+
+    # ----- 노드가 VM 일 때: 같은 템플릿에서 복제한 VM 은 식별자가 겹칠 수 있다 (INFRA.md 6절) -----
+    - name: 가상화 종류
+      debug: {msg: "{{ inventory_hostname }}: {{ ansible_virtualization_role }} / {{ ansible_virtualization_type }}, 메모리 {{ ansible_memtotal_mb }}MB, vCPU {{ ansible_processor_vcpus }}, swap {{ ansible_swaptotal_mb }}MB"}
+    - name: (VM 복제) machine-id · product_uuid · 클러스터 NIC 의 MAC 이 노드마다 다른지 — kubeadm 설치 조건
+      assert:
+        that:
+          - (ansible_play_hosts | map('extract', hostvars, 'ansible_machine_id') | unique | length) == (ansible_play_hosts | length)
+          - (ansible_play_hosts | map('extract', hostvars, 'ansible_product_uuid') | unique | length) == (ansible_play_hosts | length)
+          - (ansible_play_hosts | map('extract', hostvars, ['ansible_' + node_iface | replace('-', '_'), 'macaddress']) | unique | length) == (ansible_play_hosts | length)
+        fail_msg: "겹치는 식별자가 있다. machine-id {{ ansible_play_hosts | map('extract', hostvars, 'ansible_machine_id') | unique | length }}종, product_uuid {{ ansible_play_hosts | map('extract', hostvars, 'ansible_product_uuid') | unique | length }}종 / 노드 {{ ansible_play_hosts | length }}대. VM 템플릿 복제 후 재생성 필요(INFRA.md 6절)"
+      run_once: true
+    - name: (VM 복제) iSCSI initiator 이름
+      shell: sed -n 's/^InitiatorName=//p' /etc/iscsi/initiatorname.iscsi 2>/dev/null || true
+      register: iqn
+      changed_when: false
+    - name: (VM 복제) iSCSI initiator 이름이 겹침 — 경고만. 템플릿에 open-iscsi 가 들어 있으면 복제본이 같은 이름을 갖는다
+      debug:
+        msg: "initiator 이름 {{ _iqns | unique | length }}종 / 이름이 있는 노드 {{ _iqns | length }}대. Longhorn 은 노드 안의 타깃에만 붙어 동작하지만, 사내 iSCSI 스토리지를 같이 쓰면 충돌한다. 고치는 법은 INFRA.md 6절"
+      vars:
+        _iqns: "{{ ansible_play_hosts | map('extract', hostvars, ['iqn', 'stdout']) | select | list }}"
+      when: (_iqns | unique | length) < (_iqns | length)
+      run_once: true
+    - name: swap 이 켜져 있음 — 경고 (Kubespray 가 끄지만 템플릿의 fstab·swapfile 이 재부팅 때 되살리는지 확인)
+      debug: {msg: "{{ inventory_hostname }}: swap {{ ansible_swaptotal_mb }}MB"}
+      when: ansible_swaptotal_mb | int > 0
 __KS_EOF__
 ```
 
-## 6. reset.sh
+## 6. render.yml
+
+```bash
+cat > 'render.yml' <<'__KS_EOF__'
+---
+# 클러스터에 손대지 않고 templates/ 를 인벤토리 값으로 풀어 rendered/<인벤토리 이름>/ 에 쓴다.
+#   ./scripts/render-values.sh                                   # 랩 (arm64)
+#   INVENTORY=inventory/prod-sample ./scripts/render-values.sh   # 견본 값 (amd64)
+# 쓰임: 설치 전에 values 를 눈으로 검토, ansible 없이 helm/kubectl 로 직접 설치, 변경 전후 비교(diff)
+- name: values·매니페스트 렌더링 (로컬)
+  hosts: kube_control_plane[0]
+  connection: local
+  gather_facts: false
+  become: false
+  vars_files: [versions.yml]
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"   # 로컬에서 도는데 인벤토리 호스트의 인터프리터 경로를 쓰지 않게
+    harbor_arm64: "{{ (render_arch | default('amd64')) in ['arm64', 'aarch64'] }}"
+    out: "{{ playbook_dir }}/rendered/{{ inventory_dir | basename }}"
+  tasks:
+    - name: 출력 디렉터리
+      file: {path: "{{ out }}", state: directory, mode: "0755"}
+    - name: 렌더링
+      template: {src: "templates/{{ item }}.j2", dest: "{{ out }}/{{ item }}", mode: "0644"}
+      loop: [cilium-l2.yaml, ingress-nginx-values.yaml, longhorn-values.yaml, longhorn-sc-single.yaml, harbor-pg.yaml, harbor-values.yaml, harbor-bgp-svc.yaml]
+    - name: 적용 순서
+      template: {src: templates/apply-order.md.j2, dest: "{{ out }}/README.md", mode: "0644"}
+__KS_EOF__
+```
+
+## 7. reset.sh
 
 ```bash
 cat > 'reset.sh' <<'__KS_EOF__'
@@ -435,7 +513,7 @@ cat > 'reset.sh' <<'__KS_EOF__'
 #
 #   ./reset.sh apps      Harbor·CNPG·Longhorn 만 제거 (클러스터 유지)       → install.sh --from addons
 #   ./reset.sh cluster   Kubespray reset.yml: 노드에서 k8s 전부 제거 (OS·VM 유지) → install.sh --from cluster
-#   ./reset.sh vms       (랩 전용) VM 11대 삭제                               → install.sh --from vms
+#   ./reset.sh vms       (랩 전용) VM 삭제                                    → install.sh --from vms
 #
 #   INVENTORY=inventory/prod ./reset.sh cluster   # 실서버
 #   FORCE=1 ./reset.sh ...                        # 확인 문구 생략(자동화용)
@@ -489,7 +567,7 @@ __KS_EOF__
 chmod +x 'reset.sh'
 ```
 
-## 7. tor.yml
+## 8. tor.yml
 
 ```bash
 cat > 'tor.yml' <<'__KS_EOF__'
@@ -549,7 +627,20 @@ cat > 'tor.yml' <<'__KS_EOF__'
 __KS_EOF__
 ```
 
-## 8. scripts/00-inventory.sh
+## 9. versions.yml
+
+```bash
+cat > 'versions.yml' <<'__KS_EOF__'
+---
+# 애드온 버전 (addons.yml 설치, render.yml 렌더링이 같이 읽는다). 랩에서 실측한 조합이다.
+ingress_nginx_chart_version: 4.15.1   # ingress-nginx 컨트롤러 1.15.1
+longhorn_version: 1.13.0
+cnpg_chart_version: 0.29.1            # CloudNativePG operator 1.30.1
+harbor_chart_version: 1.18.0          # Harbor 2.14.0
+__KS_EOF__
+```
+
+## 10. scripts/00-inventory.sh
 
 ```bash
 mkdir -p 'scripts'
@@ -564,7 +655,7 @@ __KS_EOF__
 chmod +x 'scripts/00-inventory.sh'
 ```
 
-## 9. scripts/10-cluster.sh
+## 11. scripts/10-cluster.sh
 
 ```bash
 mkdir -p 'scripts'
@@ -585,7 +676,7 @@ __KS_EOF__
 chmod +x 'scripts/10-cluster.sh'
 ```
 
-## 10. scripts/20-addons.sh
+## 12. scripts/20-addons.sh
 
 ```bash
 mkdir -p 'scripts'
@@ -593,7 +684,7 @@ cat > 'scripts/20-addons.sh' <<'__KS_EOF__'
 #!/bin/bash
 # Kubespray 이후 애드온. 재실행 안전.
 #   - tor 그룹이 있으면(랩) FRR 로 ToR 스위치 역할 구성. 실서버는 네트워크팀이 스위치에 BGP 설정(INFRA.md)
-#   - addons.yml: Longhorn 준비 → Cilium L2 → Longhorn → CNPG → Harbor (첫 control plane 에서 kubectl/helm)
+#   - addons.yml: Longhorn 준비 → Cilium L2 → ingress-nginx → Longhorn → CNPG → Harbor (첫 control plane 에서 kubectl/helm)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 . .venv/bin/activate
@@ -609,7 +700,7 @@ __KS_EOF__
 chmod +x 'scripts/20-addons.sh'
 ```
 
-## 11. scripts/30-verify.sh
+## 13. scripts/30-verify.sh
 
 ```bash
 mkdir -p 'scripts'
@@ -619,14 +710,17 @@ cat > 'scripts/30-verify.sh' <<'__KS_EOF__'
 set -uo pipefail
 cd "$(dirname "$0")/.."
 export KUBECONFIG=$PWD/${INVENTORY:-inventory/lab}/artifacts/admin.conf
-VIP=172.16.141.30; HB=172.16.141.210; HA="admin:$(cat secrets/harbor-admin)"
+VIP=172.16.141.30; . scripts/harbor-env.sh      # HV(ingress VIP) HH(Harbor 호스트명) HB HU HA hcurl
 OUT=logs/verify-$(date +%m%d-%H%M).txt; mkdir -p logs
 exec > >(tee "$OUT") 2>&1
+# 기대 대수는 인벤토리에서 읽는다 (워커 수를 바꿔도 스크립트를 안 고치게). 클러스터에서 세면 "있는 만큼 있다" 가 되어 검증이 아니다
+cnt(){ awk -v g="[$1]" '$0==g{f=1;next} /^\[/{f=0} f&&NF&&$0!~/^#/{c++} END{print c+0}' ${INVENTORY:-inventory/lab}/inventory.ini; }
+NCP=$(cnt kube_control_plane); NW=$(cnt kube_node); NALL=$((NCP+NW))
 ok=0; ng=0; chk(){ if eval "$2" >/dev/null 2>&1; then echo "  [OK] $1"; ok=$((ok+1)); else echo "  [NG] $1"; ng=$((ng+1)); fi; }
 
 echo "== 1. 노드 / 컨트롤플레인"
 kubectl get nodes -o wide
-chk "노드 10대 Ready" '[ $(kubectl get nodes --no-headers | grep -cw Ready) = 10 ]'
+chk "노드 ${NALL}대 Ready (CP $NCP + 워커 $NW)" "[ \$(kubectl get nodes --no-headers | grep -cw Ready) = $NALL ]"
 chk "API VIP $VIP:6443 응답 (Mac 에서)" "curl -sk -m 5 https://$VIP:6443/livez | grep -q ok"
 echo "  kubeconfig server: $(kubectl config view -o jsonpath='{.clusters[0].cluster.server}')"
 vagrant ssh ks-cp1 -c 'sudo ETCDCTL_API=3 etcdctl --endpoints=https://172.16.141.31:2379,https://172.16.141.32:2379,https://172.16.141.33:2379 --cacert=/etc/ssl/etcd/ssl/ca.pem --cert=/etc/ssl/etcd/ssl/admin-ks-cp1.pem --key=/etc/ssl/etcd/ssl/admin-ks-cp1-key.pem endpoint status -w table' 2>/dev/null
@@ -635,24 +729,26 @@ echo "  kube-vip 리더(VIP 보유 노드): $(for n in ks-cp1 ks-cp2 ks-cp3; do 
 
 echo "== 2. Cilium"
 chk "kube-proxy 없음" '[ $(kubectl -n kube-system get ds kube-proxy --no-headers 2>/dev/null | wc -l) = 0 ]'
-chk "cilium 에이전트 10/10 Ready" '[ "$(kubectl -n kube-system get ds cilium -o jsonpath={.status.numberReady})" = 10 ]'
+chk "cilium 에이전트 $NALL/$NALL Ready" "[ \"\$(kubectl -n kube-system get ds cilium -o jsonpath={.status.numberReady})\" = $NALL ]"
 kubectl -n kube-system exec ds/cilium -c cilium-agent -- cilium-dbg status 2>/dev/null | grep -E 'KubeProxyReplacement|Cilium:|Host Routing|Masquerading'
 kubectl get ciliumloadbalancerippool,ciliuml2announcementpolicy
 
 echo "== 2-1. BGP (ToR ks-tor ↔ 워커)"
 vagrant ssh ks-tor -c "sudo vtysh -c 'show bgp ipv4 unicast summary'" 2>/dev/null | sed -n '/Neighbor/,$p'
-chk "ToR 에 BGP 세션 7개 Established" "[ \$(vagrant ssh ks-tor -c \"sudo vtysh -c 'show bgp ipv4 unicast summary json'\" 2>/dev/null | python3 -I -c 'import sys,json;d=json.load(sys.stdin);print(sum(1 for p in d[\"peers\"].values() if p[\"state\"]==\"Established\"))') = 7 ]"
+chk "ToR 에 BGP 세션 ${NW}개 Established" "[ \$(vagrant ssh ks-tor -c \"sudo vtysh -c 'show bgp ipv4 unicast summary json'\" 2>/dev/null | python3 -I -c 'import sys,json;d=json.load(sys.stdin);print(sum(1 for p in d[\"peers\"].values() if p[\"state\"]==\"Established\"))') = $NW ]"
 vagrant ssh ks-tor -c "ip route show 10.250.0.10" 2>/dev/null | sed 's/^/    /'
 chk "ToR 라우팅 테이블에 10.250.0.10 ECMP 경로(다음 홉 2개 이상)" "[ \$(vagrant ssh ks-tor -c 'ip route show 10.250.0.10' 2>/dev/null | grep -c nexthop) -ge 2 ]"
-chk "ToR → http://10.250.0.10/api/v2.0/ping (BGP VIP)" "vagrant ssh ks-tor -c 'curl -s -m 5 http://10.250.0.10/api/v2.0/ping' 2>/dev/null | grep -q Pong"
+chk "ToR → BGP VIP 10.250.0.10 → ingress-nginx → Harbor ping" "vagrant ssh ks-tor -c 'curl -sk -m 5 --resolve $HH:443:10.250.0.10 $HU/api/v2.0/ping' 2>/dev/null | grep -q Pong"
 
 echo "== 3. Longhorn"
 kubectl -n longhorn-system get nodes.longhorn.io
-chk "Longhorn 노드 7대 Ready·Schedulable" '[ $(kubectl -n longhorn-system get nodes.longhorn.io --no-headers | grep -c "True.*true.*True") = 7 ]'
+chk "Longhorn 노드 ${NW}대 Ready·Schedulable" "[ \$(kubectl -n longhorn-system get nodes.longhorn.io --no-headers | grep -c 'True.*true.*True') = $NW ]"
 kubectl -n longhorn-system get volumes.longhorn.io -o custom-columns=VOL:.metadata.name,STATE:.status.state,ROBUST:.status.robustness,REPLICAS:.spec.numberOfReplicas,NODE:.status.currentNodeID
 echo "  복제본 배치(볼륨 → 노드):"
 kubectl -n longhorn-system get replicas.longhorn.io -o custom-columns=VOL:.spec.volumeName,NODE:.spec.nodeID,STATE:.status.currentState --no-headers | sort | awk '{a[$1]=a[$1]" "$2"("$3")"} END{for(k in a) print "   ",k":"a[k]}'
-chk "모든 Longhorn 볼륨 healthy" '[ $(kubectl -n longhorn-system get volumes.longhorn.io --no-headers | grep -vc healthy) = 0 ]'
+chk "붙어 있는 Longhorn 볼륨 모두 healthy" '[ $(kubectl -n longhorn-system get volumes.longhorn.io -o jsonpath="{range .items[?(@.status.state==\"attached\")]}{.status.robustness}{\"\\n\"}{end}" | grep -vc healthy) = 0 ]'
+# 떼어진 볼륨 = DB 인스턴스를 다시 만들 때 남은 옛 볼륨(PV reclaim=Retain → Released). 서비스에는 안 쓰이지만 디스크를 차지하고, 그 노드의 drain 을 막는다(TROUBLESHOOTING 20절)
+echo "  떼어진(옛) 볼륨: $(kubectl -n longhorn-system get volumes.longhorn.io -o jsonpath='{range .items[?(@.status.state=="detached")]}{.metadata.name}{" "}{end}' | wc -w | tr -d ' ')개"
 
 echo "== 4. CNPG"
 kubectl -n harbor get cluster harbor-pg
@@ -664,11 +760,13 @@ kubectl -n harbor exec harbor-pg-1 -c postgres -- psql -tAc "select application_
 
 echo "== 5. Harbor"
 kubectl -n harbor get pods -o wide | grep -v harbor-pg
-kubectl -n harbor get svc harbor
-chk "Harbor LB IP = $HB" "[ \"\$(kubectl -n harbor get svc harbor -o jsonpath='{.status.loadBalancer.ingress[0].ip}')\" = $HB ]"
-chk "Mac → http://$HB/api/v2.0/ping" "curl -s -m 5 http://$HB/api/v2.0/ping | grep -q Pong"
-curl -s -m 5 -u "$HA" http://$HB/api/v2.0/health | python3 -I -c 'import sys,json;d=json.load(sys.stdin);print("  health:",d["status"],{c["name"]:c["status"] for c in d["components"]})'
-curl -s -o /dev/null -u "$HA" -X POST http://$HB/api/v2.0/projects -H 'Content-Type: application/json' -d '{"project_name":"lab","public":false}'
+kubectl -n ingress-nginx get pods -o wide --no-headers | awk '{print "    "$1,$2,$3,$7}'
+kubectl -n ingress-nginx get svc ingress-nginx-controller; kubectl -n harbor get ingress
+echo "  VIP $HV 를 ARP 로 알리는 노드: $(kubectl -n kube-system get lease cilium-l2announce-ingress-nginx-ingress-nginx-controller -o jsonpath='{.spec.holderIdentity}')"
+chk "ingress-nginx VIP = $HV, Harbor Ingress 호스트 = $HH" "[ \"\$(kubectl -n ingress-nginx get svc ingress-nginx-controller -o jsonpath='{.status.loadBalancer.ingress[0].ip}')\" = $HV ] && [ \"\$(kubectl -n harbor get ingress harbor-ingress -o jsonpath='{.spec.rules[0].host}')\" = $HH ]"
+chk "Mac → $HU/api/v2.0/ping (VIP $HV)" "hcurl -m 5 $HU/api/v2.0/ping | grep -q Pong"
+hcurl -m 5 -u "$HA" $HU/api/v2.0/health | python3 -I -c 'import sys,json;d=json.load(sys.stdin);print("  health:",d["status"],{c["name"]:c["status"] for c in d["components"]})'
+hcurl -o /dev/null -u "$HA" -X POST $HU/api/v2.0/projects -H 'Content-Type: application/json' -d '{"project_name":"lab","public":false}'
 TAG=v$(date +%H%M)
 chk "skopeo push lab/alpine:$TAG" "skopeo copy -q --override-os linux --override-arch arm64 --dest-tls-verify=false --dest-creds '$HA' docker://docker.io/library/alpine:3.20 docker://$HB/lab/alpine:$TAG"
 rm -rf /tmp/ks-pull; chk "skopeo pull 되돌려 받기" "skopeo copy -q --src-tls-verify=false --src-creds '$HA' docker://$HB/lab/alpine:$TAG dir:/tmp/ks-pull"
@@ -679,7 +777,7 @@ __KS_EOF__
 chmod +x 'scripts/30-verify.sh'
 ```
 
-## 12. scripts/40-failover.sh
+## 14. scripts/40-failover.sh
 
 ```bash
 mkdir -p 'scripts'
@@ -692,7 +790,7 @@ cat > 'scripts/40-failover.sh' <<'__KS_EOF__'
 set -uo pipefail
 cd "$(dirname "$0")/.."
 export KUBECONFIG=$PWD/${INVENTORY:-inventory/lab}/artifacts/admin.conf
-VIP=172.16.141.30; HB=172.16.141.210; HA="admin:$(cat secrets/harbor-admin)"; TAG=$(cat logs/last-tag)
+VIP=172.16.141.30; . scripts/harbor-env.sh; TAG=$(cat logs/last-tag)
 OUT=logs/failover-$(date +%m%d-%H%M).txt; exec > >(tee "$OUT") 2>&1
 ts(){ date +%H:%M:%S; }
 pull_ok(){ rm -rf /tmp/ks-fo; skopeo copy -q --src-tls-verify=false --src-creds "$HA" docker://$HB/lab/alpine:$TAG dir:/tmp/ks-fo >/dev/null 2>&1; }
@@ -702,7 +800,7 @@ wait_until(){ local max=$1; shift; local s=$(date +%s); while ! eval "$@" >/dev/
 node_back(){ local n=$1 since=$2; kubectl get node $n --no-headers | grep -qw Ready || return 1
   local r=$(kubectl -n kube-node-lease get lease $n -o jsonpath='{.spec.renewTime}'); [ -n "$r" ] || return 1
   [ $(python3 -c "import sys,datetime;print(int(datetime.datetime.fromisoformat(sys.argv[1].replace('Z','+00:00')).timestamp()))" "$r") -gt $since ]; }
-harbor_healthy(){ curl -s -m 3 http://$HB/api/v2.0/health | python3 -c 'import sys,json; sys.exit(0 if json.load(sys.stdin)["status"]=="healthy" else 1)'; }
+harbor_healthy(){ hcurl -m 3 $HU/api/v2.0/health | python3 -c 'import sys,json; sys.exit(0 if json.load(sys.stdin)["status"]=="healthy" else 1)'; }
 vip_holder(){ for n in ks-cp1 ks-cp2 ks-cp3; do vagrant ssh $n -c "ip -4 a show eth1 | grep -q $VIP && hostname" 2>/dev/null; done | tr -d '\r' | head -1; }
 
 echo "== A. API VIP 보유 control plane 정지"
@@ -725,7 +823,7 @@ P=$(kubectl -n harbor get pods -l cnpg.io/instanceRole=primary -o jsonpath='{.it
 echo "$(ts) primary: $P ($PN) → 삭제"
 kubectl -n harbor delete pod $P --wait=false >/dev/null
 t=$(wait_until 180 "kubectl -n harbor get cluster harbor-pg -o jsonpath={.status.currentPrimary} | grep -vqx $P") && echo "$(ts) 새 primary: $(kubectl -n harbor get cluster harbor-pg -o jsonpath={.status.currentPrimary}) (${t}s)"
-t=$(wait_until 180 "curl -s -m 3 -u '$HA' http://$HB/api/v2.0/projects | grep -q lab") && echo "$(ts) Harbor API(DB 조회) 복구 ${t}s"
+t=$(wait_until 180 "hcurl -m 3 -u '$HA' $HU/api/v2.0/projects | grep -q lab") && echo "$(ts) Harbor API(DB 조회) 복구 ${t}s"
 pull_ok && echo "$(ts) Harbor pull OK" || echo "$(ts) [NG] pull 실패"
 # Cluster.status.readyInstances 는 수 분 늦게 갱신될 수 있다(TROUBLESHOOTING 9절) → 지운 인스턴스의 파드 Ready 와 실제 복제 연결 수로 판정
 t=$(wait_until 300 "kubectl -n harbor get pod $P -o jsonpath='{.status.conditions[?(@.type==\"Ready\")].status}' | grep -qx True") && echo "$(ts) $P 재기동 Ready ${t}s"
@@ -752,7 +850,7 @@ __KS_EOF__
 chmod +x 'scripts/40-failover.sh'
 ```
 
-## 13. scripts/50-more-tests.sh
+## 15. scripts/50-more-tests.sh
 
 ```bash
 mkdir -p 'scripts'
@@ -766,7 +864,7 @@ cat > 'scripts/50-more-tests.sh' <<'__KS_EOF__'
 set -uo pipefail
 cd "$(dirname "$0")/.."
 export KUBECONFIG=$PWD/${INVENTORY:-inventory/lab}/artifacts/admin.conf
-HB=172.16.141.210; BGP=10.250.0.10; HA="admin:$(cat secrets/harbor-admin)"; TAG=$(cat logs/last-tag)
+. scripts/harbor-env.sh; BGP=10.250.0.10; TAG=$(cat logs/last-tag)
 SRC_IMG=${SRC_IMG:-docker://docker.io/library/busybox:1.37}    # 새 레이어를 쓰기 위한 외부 이미지(Mac 에서 받음)
 TESTS=${*:-F D E}
 OUT=logs/more-tests-$(date +%m%d-%H%M).txt; exec > >(tee "$OUT") 2>&1
@@ -786,11 +884,12 @@ replicas(){ kubectl -n longhorn-system get replicas.longhorn.io -o jsonpath="{ra
 
 for T in $TESTS; do case $T in
 F)
-echo "== F. BGP VIP($BGP) 로 push/pull (ToR 에서)"
+echo "== F. BGP VIP($BGP) 로 push/pull (ToR 에서. ToR 의 /etc/hosts 에 $HH → $BGP 를 넣어 토큰 발급까지 BGP 경로로 가게 한다)"
+vagrant ssh ks-tor -c "grep -q ' $HH\$' /etc/hosts || echo '$BGP $HH' | sudo tee -a /etc/hosts >/dev/null" 2>/dev/null
 vagrant ssh ks-tor -c 'command -v skopeo >/dev/null || sudo env http_proxy=http://172.16.141.1:3128 https_proxy=http://172.16.141.1:3128 DEBIAN_FRONTEND=noninteractive apt-get -o Acquire::http::Proxy=http://172.16.141.1:3128 install -y -q skopeo >/dev/null 2>&1' 2>/dev/null
-cat secrets/harbor-admin | vagrant ssh ks-tor -c "read -r P; C=\"admin:\$P\"; B=$BGP; N=bgp-\$(date +%H%M%S); rm -rf /tmp/bgp1 /tmp/bgp2
-echo \"   경로: \$(ip route show \$B | grep -c nexthop) 개 다음 홉(ECMP)\"
-echo \"   토큰 주소: \$(curl -s -o /dev/null -D - http://\$B/v2/ | grep -io 'realm=\"[^\"]*\"')\"
+cat secrets/harbor-admin | vagrant ssh ks-tor -c "read -r P; C=\"admin:\$P\"; V=$BGP; B=$HH; N=bgp-\$(date +%H%M%S); rm -rf /tmp/bgp1 /tmp/bgp2
+echo \"   경로: \$(ip route show \$V | grep -c nexthop) 개 다음 홉(ECMP)\"
+echo \"   토큰 주소: \$(curl -sk -o /dev/null -D - https://\$B/v2/ | grep -io 'realm=\"[^\"]*\"')\"
 skopeo copy -q --src-tls-verify=false --src-creds \"\$C\" docker://\$B/lab/alpine:$TAG dir:/tmp/bgp1 && echo '   [OK] pull' || echo '   [NG] pull'
 skopeo copy -q --dest-tls-verify=false --dest-creds \"\$C\" dir:/tmp/bgp1 docker://\$B/lab/alpine:\$N && echo \"   [OK] push lab/alpine:\$N\" || echo '   [NG] push'
 skopeo copy -q --src-tls-verify=false --src-creds \"\$C\" docker://\$B/lab/alpine:\$N dir:/tmp/bgp2 && cmp -s /tmp/bgp1/manifest.json /tmp/bgp2/manifest.json && echo '   [OK] 되받은 manifest 동일' || echo '   [NG] 되받기/비교 실패'" 2>/dev/null | tr -d '\r'
@@ -829,7 +928,7 @@ echo "$(ts) primary $X @ $XN → $XN 강제 정지"
 vagrant halt $XN --force >/dev/null 2>&1; S=$(date +%s)
 t=$(wait_until 300 "pgc '{.status.currentPrimary}' | grep -vqx $X") && echo "$(ts) 새 primary $(pgc '{.status.currentPrimary}'): 정지 후 $(( $(date +%s)-S ))s" || echo "$(ts) [NG] 300s 안에 승격 안 됨"
 P=fo$(date +%H%M%S)
-t=$(wait_until 120 "curl -s -o /dev/null -w '%{http_code}' -u '$HA' -H 'Content-Type: application/json' -X POST http://$HB/api/v2.0/projects -d '{\"project_name\":\"$P\",\"public\":false}' | grep -qE '201|409'") \
+t=$(wait_until 120 "hcurl -o /dev/null -w '%{http_code}' -u '$HA' -H 'Content-Type: application/json' -X POST $HU/api/v2.0/projects -d '{\"project_name\":\"$P\",\"public\":false}' | grep -qE '201|409'") \
   && echo "$(ts) [OK] 프로젝트 생성(DB 쓰기) $P: 정지 후 $(( $(date +%s)-S ))s" || echo "$(ts) [NG] 프로젝트 생성 실패"
 push_new $P/busybox:after-failover && echo "$(ts) [OK] 새 프로젝트에 이미지 push" || echo "$(ts) [NG] push 실패"
 pull_back $P/busybox:after-failover && echo "$(ts) [OK] 되받기" || echo "$(ts) [NG] 되받기 실패"
@@ -852,18 +951,256 @@ __KS_EOF__
 chmod +x 'scripts/50-more-tests.sh'
 ```
 
-## 14. scripts/addon.sh
+## 16. scripts/60-db-node-loss.sh
+
+```bash
+mkdir -p 'scripts'
+cat > 'scripts/60-db-node-loss.sh' <<'__KS_EOF__'
+#!/bin/bash
+# DB 인스턴스가 있던 워커가 "돌아오지 않는" 경우 (이 랩 VM 만 정지/기동). 결과 logs/db-node-loss-<시각>.txt
+#   G1. standby 인스턴스가 있는 워커 강제 정지 → OBS 초 동안 관찰: CNPG 가 스스로 다른 노드에 새 인스턴스를 만드는가, 그동안 DB 쓰기는 되는가
+#   G2. 영구 손실 절차: 그 인스턴스의 PVC + 파드 삭제 → 다른 워커에 새 인스턴스가 생기는가(소요 시간, 복제 연결 수)
+#   G3. 꺼 두었던 워커 기동 → 옛 볼륨(PV Retain)이 어떻게 남는가
+# 근거: CNPG docs failure_modes.md "Standby Failure"(PVC 가 있으면 그 PVC 로 재기동, 없으면 primary 에서 새로 만든다),
+#       troubleshooting.md "delete the PVC and let the operator rebuild the replica"
+#   OBS=420 ./scripts/60-db-node-loss.sh
+set -uo pipefail
+cd "$(dirname "$0")/.."
+export KUBECONFIG=$PWD/${INVENTORY:-inventory/lab}/artifacts/admin.conf
+. scripts/harbor-env.sh; OBS=${OBS:-420}; NS=harbor; CL=harbor-pg
+OUT=logs/db-node-loss-$(date +%m%d-%H%M).txt; exec > >(tee "$OUT") 2>&1
+ts(){ date +%H:%M:%S; }
+wait_until(){ local max=$1; shift; local s=$(date +%s); while ! eval "$@" >/dev/null 2>&1; do sleep 3; [ $(( $(date +%s)-s )) -ge $max ] && return 1; done; echo $(( $(date +%s)-s )); }
+node_back(){ local n=$1 since=$2; kubectl get node $n --no-headers | grep -qw Ready || return 1
+  local r=$(kubectl -n kube-node-lease get lease $n -o jsonpath='{.spec.renewTime}'); [ -n "$r" ] || return 1
+  [ $(python3 -c "import sys,datetime;print(int(datetime.datetime.fromisoformat(sys.argv[1].replace('Z','+00:00')).timestamp()))" "$r") -gt $since ]; }
+pgc(){ kubectl -n $NS get cluster $CL -o jsonpath="$1"; }
+inst(){ kubectl -n $NS get pods -l cnpg.io/cluster=$CL -o jsonpath='{range .items[*]}{.metadata.name}{"@"}{.spec.nodeName}{"("}{.metadata.labels.cnpg\.io/instanceRole}{","}{.status.phase}{") "}{end}'; }
+pvcs(){ kubectl -n $NS get pvc -l cnpg.io/cluster=$CL -o jsonpath='{range .items[*]}{.metadata.name}{"="}{.status.phase}{" "}{end}'; }
+streaming(){ kubectl -n $NS exec "$(pgc '{.status.currentPrimary}')" -c postgres -- psql -tAc "select count(*) from pg_stat_replication where state='streaming'" 2>/dev/null; }
+# 주의: macOS 기본 bash 3.2 는 "$( … \"…\" … )" 안의 이스케이프 따옴표를 잘못 쪼갠다("[: too many arguments") → 본문은 변수에, 결과도 변수에 받아서 비교
+db_write(){ local n=g$(date +%s) body c; body=$(printf '{"project_name":"%s","public":false}' "$n")
+  c=$(hcurl -m 8 -o /dev/null -w '%{http_code}' -u "$HA" -X POST "$HU/api/v2.0/projects" -H 'Content-Type: application/json' -d "$body")
+  [ "$c" = 201 ] || return 1; hcurl -m 8 -o /dev/null -u "$HA" -X DELETE "$HU/api/v2.0/projects/$n"; return 0; }
+
+echo "== 사전 상태"
+echo "CNPG: phase='$(pgc '{.status.phase}')' primary=$(pgc '{.status.currentPrimary}') instances=$(pgc '{.status.instances}') ready=$(pgc '{.status.readyInstances}')"
+echo "인스턴스: $(inst)"; echo "PVC: $(pvcs)"; echo "복제 streaming: $(streaming)"
+[ "$(pgc '{.status.readyInstances}')" = 3 ] || { echo "[중단] ready 3 이 아님"; exit 1; }
+P=$(pgc '{.status.currentPrimary}')
+# standby 중, 그 노드에 Harbor 파드가 가장 적은 것을 고른다(다른 영향과 섞이지 않게)
+X=""; XN=""; best=999
+for p in $(kubectl -n $NS get pods -l cnpg.io/cluster=$CL -o jsonpath='{.items[*].metadata.name}'); do [ $p = $P ] && continue
+  n=$(kubectl -n $NS get pod $p -o jsonpath='{.spec.nodeName}'); c=$(kubectl -n $NS get pods --field-selector spec.nodeName=$n --no-headers | grep -vc "^$CL-")
+  [ $c -lt $best ] && { best=$c; X=$p; XN=$n; }; done
+ORIG=$(kubectl -n $NS get pods -l cnpg.io/cluster=$CL -o jsonpath='{.items[*].metadata.name}'); ORIGUID=$(kubectl -n $NS get pods -l cnpg.io/cluster=$CL -o jsonpath='{.items[*].metadata.uid}')
+PV=$(kubectl -n $NS get pvc $X -o jsonpath='{.spec.volumeName}')
+echo "대상: standby $X @ $XN (그 노드의 다른 harbor 파드 $best 개), PV $PV, Longhorn 복제본 위치: $(kubectl -n longhorn-system get replicas.longhorn.io -o jsonpath="{range .items[?(@.spec.volumeName=='$PV')]}{.spec.nodeID} {end}")"
+echo "DB 가 없는 워커: $(comm -23 <(kubectl get nodes -l '!node-role.kubernetes.io/control-plane' -o name | sed 's|node/||' | sort) <(kubectl -n $NS get pods -l cnpg.io/cluster=$CL -o jsonpath='{range .items[*]}{.spec.nodeName}{"\n"}{end}' | sort) | tr '\n' ' ')"
+
+echo; echo "== G1. $XN 강제 정지 후 ${OBS}s 관찰 (아무것도 손대지 않음)"
+vagrant halt $XN --force >/dev/null 2>&1; S=$(date +%s); echo "$(ts) $XN 정지"
+W1=""; while [ $(( $(date +%s)-S )) -lt $OBS ]; do
+  e=$(( $(date +%s)-S ))
+  [ -z "$W1" ] && [ $e -ge 20 ] && { db_write && W1="OK(${e}s)" || W1=""; [ -n "$W1" ] && echo "$(ts) +${e}s DB 쓰기(프로젝트 생성) $W1"; }
+  echo "$(ts) +${e}s node=$(kubectl get node $XN --no-headers | awk '{print $2}') pod=$(kubectl -n $NS get pod $X --no-headers 2>/dev/null | awk '{print $2"/"$3}') phase='$(pgc '{.status.phase}')' ready=$(pgc '{.status.readyInstances}')/$(pgc '{.status.instances}') streaming=$(streaming) pods=[$(kubectl -n $NS get pods -l cnpg.io/cluster=$CL -o jsonpath='{.items[*].metadata.name}')]"
+  sleep 30; done
+NEW=$(kubectl -n $NS get pods -l cnpg.io/cluster=$CL -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.metadata.uid}{"\n"}{end}' | awk -v u="$ORIGUID" 'index(u,$2)==0{print $1}')
+[ -z "$NEW" ] && echo "$(ts) 결과: ${OBS}s 동안 새 인스턴스가 만들어지지 않음. PVC: $(pvcs)" || echo "$(ts) 결과: 새 인스턴스가 스스로 생김 → $NEW"
+db_write && echo "$(ts) DB 쓰기 OK (standby 1개 없는 상태)" || echo "$(ts) [NG] DB 쓰기 실패"
+kubectl -n $NS get events --field-selector involvedObject.name=$X --sort-by=.lastTimestamp 2>/dev/null | tail -4 | sed 's/^/    /'
+
+echo; echo "== G2. 영구 손실 절차: PVC + 파드 삭제"
+T=$(date +%s)
+kubectl -n $NS delete pvc $X --wait=false | sed 's/^/    /'
+kubectl -n $NS delete pod $X --force --grace-period=0 2>&1 | grep -v Warning | sed 's/^/    /'
+joinpod(){ kubectl -n $NS get pods -l cnpg.io/cluster=$CL,cnpg.io/jobRole --no-headers 2>/dev/null | grep -q .; }
+t=$(wait_until 600 joinpod) && echo "$(ts) 새 인스턴스 생성 작업(join) 시작: ${t}s" || { echo "$(ts) [NG] 600s 안에 생성 작업 없음"; kubectl -n $NS get pods,pvc,jobs | sed 's/^/    /'; }
+# 새 인스턴스 = cnpg.io/instanceName 라벨이 붙은 파드 중, 꺼진 노드가 아닌 곳에서 Ready 이고 원래 있던 UID 가 아닌 것
+newinst(){ kubectl -n $NS get pods -l cnpg.io/cluster=$CL,cnpg.io/podRole=instance -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.metadata.uid}{" "}{.spec.nodeName}{" "}{.status.conditions[?(@.type=="Ready")].status}{"\n"}{end}' | awk -v u="$ORIGUID" -v xn=$XN 'index(u,$2)==0 && $3!=xn && $4=="True"{print $1"@"$3; f=1} END{exit !f}'; }
+t=$(wait_until 900 newinst) && echo "$(ts) 새 인스턴스 Ready: $(newinst) — 삭제 후 $(( $(date +%s)-T ))s" || { echo "$(ts) [NG] 900s 안에 새 인스턴스 Ready 안 됨"; kubectl -n $NS get pods,pvc,jobs | sed 's/^/    /'; }
+t=$(wait_until 300 "[ \$(streaming) = 2 ]") && echo "$(ts) 복제 2개 streaming — 삭제 후 $(( $(date +%s)-T ))s"
+kubectl -n $NS exec "$(pgc '{.status.currentPrimary}')" -c postgres -- psql -tAc "select application_name,state,sync_state from pg_stat_replication" | sed 's/^/    /'
+echo "인스턴스: $(inst)"; echo "PVC: $(pvcs)"
+echo "옛 PV $PV: $(kubectl get pv $PV -o jsonpath='{.status.phase} reclaim={.spec.persistentVolumeReclaimPolicy}' 2>/dev/null || echo 없음) / Longhorn 볼륨: $(kubectl -n longhorn-system get volumes.longhorn.io $PV -o jsonpath='{.status.state}/{.status.robustness}' 2>/dev/null || echo 없음)"
+
+echo; echo "== G3. $XN 기동"
+B=$(date +%s); vagrant up $XN >/dev/null 2>&1
+wait_until 300 "node_back $XN $B" >/dev/null && echo "$(ts) $XN kubelet 복귀(기동 명령 후 $(( $(date +%s)-B ))s)" || echo "$(ts) [NG] $XN 복귀 안 됨"
+sleep 60
+echo "CNPG: phase='$(pgc '{.status.phase}')' primary=$(pgc '{.status.currentPrimary}') instances=$(pgc '{.status.instances}') ready=$(pgc '{.status.readyInstances}')"
+echo "인스턴스: $(inst)"; echo "PVC: $(pvcs)"
+echo "옛 PV $PV: $(kubectl get pv $PV -o jsonpath='{.status.phase}' 2>/dev/null || echo 없음) / Longhorn 볼륨: $(kubectl -n longhorn-system get volumes.longhorn.io $PV -o jsonpath='{.status.state}/{.status.robustness}' 2>/dev/null || echo 없음) (지우지 않고 남겨 둠)"
+kubectl get nodes --no-headers | awk '{print "   ",$1,$2}'
+__KS_EOF__
+chmod +x 'scripts/60-db-node-loss.sh'
+```
+
+## 17. scripts/61-db-move-instance.sh
+
+```bash
+mkdir -p 'scripts'
+cat > 'scripts/61-db-move-instance.sh' <<'__KS_EOF__'
+#!/bin/bash
+# 계획된 노드 제거/교체 전에, 그 노드에 있는 DB standby 인스턴스를 다른 워커로 옮긴다. 결과 logs/db-move-<시각>.txt
+#   전제: 그 인스턴스가 있는 노드를 먼저 cordon 해 둔다 (새 인스턴스가 같은 노드로 돌아오지 않게). primary 는 대상이 아니다(먼저 switchover).
+#   방법: 그 인스턴스의 PVC + 파드 삭제 → operator 가 primary 에서 받아 다른 노드에 새로 만든다. 볼륨이 노드 로컬(strict-local)이라 "이동"이 아니라 "다시 만들기"다.
+#   근거: CNPG docs troubleshooting.md "delete the PVC and let the operator rebuild the replica" (kubectl cnpg destroy 와 같은 동작)
+#   옛 PV 는 reclaim=Retain 이라 Released 로 남는다 → 확인 후 따로 지운다(이 스크립트는 지우지 않음).
+#   ./scripts/61-db-move-instance.sh harbor-pg-2
+set -uo pipefail
+cd "$(dirname "$0")/.."
+export KUBECONFIG=$PWD/${INVENTORY:-inventory/lab}/artifacts/admin.conf
+X=${1:?옮길 인스턴스 이름}; . scripts/harbor-env.sh; NS=harbor; CL=harbor-pg
+OUT=logs/db-move-$(date +%m%d-%H%M).txt; exec > >(tee "$OUT") 2>&1
+ts(){ date +%H:%M:%S; }
+pgc(){ kubectl -n $NS get cluster $CL -o jsonpath="$1"; }
+inst(){ kubectl -n $NS get pods -l cnpg.io/cluster=$CL,cnpg.io/podRole=instance -o jsonpath='{range .items[*]}{.metadata.name}{"@"}{.spec.nodeName}{"("}{.metadata.labels.cnpg\.io/instanceRole}{","}{.status.phase}{") "}{end}'; }
+streaming(){ kubectl -n $NS exec "$(pgc '{.status.currentPrimary}')" -c postgres -- psql -tAc "select count(*) from pg_stat_replication where state='streaming'" 2>/dev/null; }
+# bash 3.2(macOS) 따옴표 문제 때문에 본문·결과를 변수로 받는다 (60-db-node-loss.sh 와 같은 이유)
+db_write(){ local n=m$(date +%s) body c; body=$(printf '{"project_name":"%s","public":false}' "$n")
+  c=$(hcurl -m 8 -o /dev/null -w '%{http_code}' -u "$HA" -X POST "$HU/api/v2.0/projects" -H 'Content-Type: application/json' -d "$body")
+  [ "$c" = 201 ] || return 1; hcurl -m 8 -o /dev/null -u "$HA" -X DELETE "$HU/api/v2.0/projects/$n"; return 0; }
+
+P=$(pgc '{.status.currentPrimary}'); XN=$(kubectl -n $NS get pod $X -o jsonpath='{.spec.nodeName}'); XUID=$(kubectl -n $NS get pod $X -o jsonpath='{.metadata.uid}')
+PV=$(kubectl -n $NS get pvc $X -o jsonpath='{.spec.volumeName}')
+echo "== 사전 상태"
+echo "CNPG: phase='$(pgc '{.status.phase}')' primary=$P ready=$(pgc '{.status.readyInstances}')/$(pgc '{.status.instances}') streaming=$(streaming)"
+echo "인스턴스: $(inst)"
+echo "대상: $X @ $XN, PV $PV"
+[ "$X" != "$P" ] || { echo "[중단] $X 는 primary. 먼저 switchover"; exit 1; }
+[ "$(pgc '{.status.readyInstances}')" = "$(pgc '{.status.instances}')" ] || { echo "[중단] 모든 인스턴스가 ready 가 아님 — 하나를 더 빼면 동기 복제 대상이 없어 쓰기가 멈춘다"; exit 1; }
+[ "$(kubectl get node $XN -o jsonpath='{.spec.unschedulable}')" = true ] || { echo "[중단] $XN 이 cordon 되어 있지 않음 (새 인스턴스가 같은 노드로 돌아올 수 있다)"; exit 1; }
+db_write && echo "쓰기 확인(사전): OK" || { echo "[중단] 사전 쓰기 실패"; exit 1; }
+
+echo; echo "== $X 의 PVC + 파드 삭제"
+T=$(date +%s)
+kubectl -n $NS delete pvc $X --wait=false 2>&1 | sed 's/^/    /'
+kubectl -n $NS delete pod $X --wait=false 2>&1 | sed 's/^/    /'
+ok=0; ng=0; done_at=""; join_at=""
+while :; do
+  e=$(( $(date +%s)-T ))
+  db_write && { ok=$((ok+1)); w=OK; } || { ng=$((ng+1)); w=NG; }
+  [ -z "$join_at" ] && kubectl -n $NS get pods -l cnpg.io/cluster=$CL,cnpg.io/jobRole --no-headers 2>/dev/null | grep -q . && join_at=$e
+  new=$(kubectl -n $NS get pods -l cnpg.io/cluster=$CL,cnpg.io/podRole=instance,cnpg.io/instanceName=$X -o jsonpath='{range .items[*]}{.metadata.uid}{" "}{.spec.nodeName}{" "}{.status.conditions[?(@.type=="Ready")].status}{"\n"}{end}' 2>/dev/null | awk -v u=$XUID '$1!=u{print $2" "$3}')
+  s=$(streaming); ph=$(pgc '{.status.phase}')
+  echo "$(ts) +${e}s 쓰기=$w streaming=${s:-?} phase='$ph' 새 $X: ${new:-없음}"
+  if [ "${new#* }" = True ] && [ "$s" = 2 ] && [ "$ph" = "Cluster in healthy state" ]; then done_at=$e; break; fi
+  [ $e -ge 900 ] && break
+  sleep 4
+done
+echo
+[ -n "$done_at" ] && echo "$(ts) 결과: 새 $X 가 ${new% *} 에서 Ready + 복제 2개 streaming — 삭제 후 ${done_at}s (join 작업 시작 ${join_at:-?}s)" || echo "$(ts) [NG] 900s 안에 복구 안 됨"
+echo "그동안 쓰기: 성공 $ok / 실패 $ng"
+echo "인스턴스: $(inst)"
+echo "옛 PV $PV: $(kubectl get pv $PV -o jsonpath='{.status.phase} reclaim={.spec.persistentVolumeReclaimPolicy}' 2>/dev/null) (지우지 않고 남겨 둠, 복제본은 $XN 에 있음)"
+__KS_EOF__
+chmod +x 'scripts/61-db-move-instance.sh'
+```
+
+## 18. scripts/62-ingress-failover.sh
+
+```bash
+mkdir -p 'scripts'
+cat > 'scripts/62-ingress-failover.sh' <<'__KS_EOF__'
+#!/bin/bash
+# 진입점(ingress-nginx VIP) 시험 (이 랩 VM 만 정지/기동). 결과 logs/ingress-<시각>.txt, 1초 간격 탐침 기록 logs/ingress-probe-<시각>.txt
+#   K. 큰 요청 본문: Ingress 의 proxy-body-size 를 1m 로 줄였다가 되돌리며 3MB 업로드 응답 코드를 본다 (Harbor 차트 기본값 "0" = 제한 없음)
+#   L. VIP 를 ARP 로 알리는 워커 정지 → 다른 워커가 VIP 를 넘겨받을 때까지 끊기는 시간
+#   M. ingress-nginx 컨트롤러 파드가 있는 워커(VIP 를 알리는 노드가 아닌 것) 정지 → 남은 컨트롤러로만 갈 때까지 실패하는 요청
+#   ./scripts/62-ingress-failover.sh [K] [L] [M]   (인자 없으면 전부)
+# 탐침 두 가지: nginx = VIP 에 호스트명 없이 요청(컨트롤러 자체가 404 로 답함, Harbor 와 무관), harbor = Harbor ping(컨트롤러 → core 까지)
+# registry·jobservice 까지는 10초마다 찍는 상태 줄의 Harbor=(health API)로 본다
+set -uo pipefail
+cd "$(dirname "$0")/.."
+export KUBECONFIG=$PWD/${INVENTORY:-inventory/lab}/artifacts/admin.conf
+. scripts/harbor-env.sh
+TESTS=${*:-K L M}; DOWN=${DOWN:-150}
+STAMP=$(date +%m%d-%H%M); OUT=logs/ingress-$STAMP.txt; PR=logs/ingress-probe-$STAMP.txt; mkdir -p logs
+exec > >(tee "$OUT") 2>&1
+ts(){ date +%H:%M:%S; }
+LEASE=cilium-l2announce-ingress-nginx-ingress-nginx-controller
+holder(){ kubectl -n kube-system get lease $LEASE -o jsonpath='{.spec.holderIdentity}' 2>/dev/null; }
+health(){ hcurl -m 3 $HU/api/v2.0/health 2>/dev/null | python3 -c "import sys,json;d=json.load(sys.stdin);b=[c['name'] for c in d['components'] if c['status']!='healthy'];print(d['status']+('('+','.join(b)+')' if b else ''))" 2>/dev/null || echo 응답없음; }
+ctl_nodes(){ kubectl -n ingress-nginx get pods -l app.kubernetes.io/component=controller -o jsonpath='{range .items[*]}{.spec.nodeName}{"("}{.status.phase}{") "}{end}'; }
+on_node(){ kubectl get pods -A -o jsonpath='{range .items[*]}{.spec.nodeName}{" "}{.metadata.namespace}{"/"}{.metadata.name}{"\n"}{end}' | awk -v n=$1 '$1==n{print $2}' | grep -E '^(harbor|ingress-nginx|cnpg-system)/' | sed -E 's/-[a-z0-9]{8,10}-[a-z0-9]{5}$//' | tr '\n' ' '; }
+node_back(){ local n=$1 since=$2; kubectl get node $n --no-headers | grep -qw Ready || return 1
+  local r=$(kubectl -n kube-node-lease get lease $n -o jsonpath='{.spec.renewTime}'); [ -n "$r" ] || return 1
+  [ $(python3 -c "import sys,datetime;print(int(datetime.datetime.fromisoformat(sys.argv[1].replace('Z','+00:00')).timestamp()))" "$r") -gt $since ]; }
+wait_until(){ local max=$1; shift; local s=$(date +%s); while ! eval "$@" >/dev/null 2>&1; do sleep 3; [ $(( $(date +%s)-s )) -ge $max ] && return 1; done; echo $(( $(date +%s)-s )); }
+probe(){ while :; do
+    a=$(curl -sk -m 2 -o /dev/null -w '%{http_code}' https://$HV/); b=$(hcurl -m 2 -o /dev/null -w '%{http_code}' $HU/api/v2.0/ping)
+    echo "$(date +%s) $(ts) nginx=$a harbor=$b"; sleep 1; done >> "$PR"; }
+# 탐침 기록에서 [from,to] 구간의 실패(nginx 404 아님 / harbor 200 아님)를 센다
+summary(){ awk -v f=$1 -v t=$2 '$1>=f && $1<=t { n++; split($3,a,"="); split($4,b,"=");
+    if (a[2]!="404") { na++; if(!fa) fa=$2; la=$2 }  if (b[2]!="200") { nb++; if(!fb) fb=$2; lb=$2 } }
+  END { printf "    탐침 %d번: nginx 실패 %d번%s, harbor 실패 %d번%s\n", n, na, (na? " ("fa"~"la")":""), nb, (nb? " ("fb"~"lb")":"") }' "$PR"; }
+stop_node(){ # $1=노드
+  local N=$1; echo "$(ts) $N 에 있던 것: $(on_node $N)"
+  probe & PP=$!; sleep 10
+  S=$(date +%s); echo "$(ts) $N 강제 정지"; vagrant halt $N --force >/dev/null 2>&1
+  local e; while e=$(( $(date +%s)-S )); [ $e -lt $DOWN ]; do
+    echo "$(ts) +${e}s VIP 알리는 노드=$(holder) 컨트롤러=[$(ctl_nodes)] 노드=$(kubectl get node $N --no-headers 2>/dev/null | awk '{print $2}') Harbor=$(health)"; sleep 10; done
+  E=$(date +%s); echo "$(ts) 정지 중 ${DOWN}s:"; summary $S $E
+  echo "$(ts) $N 기동"; B=$(date +%s); vagrant up $N >/dev/null 2>&1
+  wait_until 300 "node_back $N $B" >/dev/null && echo "$(ts) $N kubelet 복귀(기동 명령 후 $(( $(date +%s)-B ))s)" || echo "$(ts) [NG] $N 복귀 안 됨"
+  wait_until 600 "[ \"\$(kubectl -n harbor get cluster harbor-pg -o jsonpath='{.status.phase} {.status.readyInstances}')\" = 'Cluster in healthy state 3' ] && [ \$(kubectl -n ingress-nginx get pods -l app.kubernetes.io/component=controller --no-headers | grep -c '1/1.*Running') -ge 3 ]" >/dev/null \
+    && echo "$(ts) DB 3/3, 컨트롤러 3개 Running: [$(ctl_nodes)]" || echo "$(ts) [NG] 600s 안에 원상 복귀 안 됨: [$(ctl_nodes)]"
+  # ping 은 core 까지만 본다. registry·jobservice 는 볼륨을 다시 붙여야 해서 더 늦게 돌아온다(health API 로 확인)
+  wait_until 600 "[ \"\$(health)\" = healthy ]" >/dev/null && echo "$(ts) Harbor health 전 구성요소 healthy (기동 명령 후 $(( $(date +%s)-B ))s, 정지 후 $(( $(date +%s)-S ))s)" || echo "$(ts) [NG] Harbor health: $(health)"
+  sleep 5; kill $PP 2>/dev/null; wait $PP 2>/dev/null
+  echo "$(ts) 기동 뒤:"; summary $E $(date +%s)
+}
+
+for T in $TESTS; do case $T in
+K)
+echo "== K. 큰 요청 본문 (3MB 업로드)"
+head -c 3000000 /dev/urandom > /tmp/ks-body.bin
+up(){ local loc; loc=$(hcurl -m 10 -u "$HA" -X POST -o /dev/null -D - $HU/v2/lab/bodytest/blobs/uploads/ | tr -d '\r' | awk 'tolower($1)=="location:"{print $2}')
+  case "$loc" in /*) loc=$HU$loc;; esac
+  hcurl -m 30 -u "$HA" -X PATCH -H 'Content-Type: application/octet-stream' --data-binary @/tmp/ks-body.bin -o /dev/null -w '%{http_code}' "$loc"; }
+cur(){ kubectl -n harbor get ingress harbor-ingress -o jsonpath='{.metadata.annotations.nginx\.ingress\.kubernetes\.io/proxy-body-size}'; }
+echo "$(ts) proxy-body-size=$(cur) → 업로드 응답 $(up)   (202 = 받음)"
+kubectl -n harbor annotate ingress harbor-ingress nginx.ingress.kubernetes.io/proxy-body-size=1m --overwrite >/dev/null; sleep 8
+echo "$(ts) proxy-body-size=$(cur) → 업로드 응답 $(up)   (413 = nginx 가 크기 초과로 거절)"
+kubectl -n harbor annotate ingress harbor-ingress nginx.ingress.kubernetes.io/proxy-body-size=0 --overwrite >/dev/null; sleep 8
+echo "$(ts) proxy-body-size=$(cur) 로 되돌림 → 업로드 응답 $(up)"
+rm -f /tmp/ks-body.bin
+;;
+L)
+echo; echo "== L. VIP $HV 를 ARP 로 알리는 워커 정지"
+N=$(holder); echo "$(ts) VIP 알리는 노드: $N / 컨트롤러: [$(ctl_nodes)]"
+stop_node $N
+echo "    지금 VIP 알리는 노드: $(holder)"
+;;
+M)
+echo; echo "== M. 컨트롤러 파드가 있는 워커 정지 (VIP 를 알리는 노드 제외, DB primary 노드 제외)"
+H=$(holder); PN=$(kubectl -n harbor get pods -l cnpg.io/instanceRole=primary -o jsonpath='{.items[0].spec.nodeName}')
+N=""; for c in $(kubectl -n ingress-nginx get pods -l app.kubernetes.io/component=controller -o jsonpath='{range .items[*]}{.spec.nodeName}{"\n"}{end}' | sort); do
+  [ "$c" != "$H" ] && [ "$c" != "$PN" ] && { N=$c; break; }; done
+[ -z "$N" ] && { echo "   [SKIP] 조건에 맞는 노드 없음"; continue; }
+echo "$(ts) VIP 알리는 노드: $H / 컨트롤러: [$(ctl_nodes)] → $N 정지"
+stop_node $N
+;;
+esac; done
+echo; echo "== 마무리"; kubectl get nodes --no-headers | awk '{printf "%s=%s ",$1,$2}'; echo
+echo "VIP 알리는 노드=$(holder) 컨트롤러=[$(ctl_nodes)] DB=$(kubectl -n harbor get cluster harbor-pg -o jsonpath='{.status.phase} {.status.readyInstances}/{.status.instances}')"
+__KS_EOF__
+chmod +x 'scripts/62-ingress-failover.sh'
+```
+
+## 19. scripts/addon.sh
 
 ```bash
 mkdir -p 'scripts'
 cat > 'scripts/addon.sh' <<'__KS_EOF__'
 #!/bin/bash
-# 구성요소 하나만 설치/갱신:  ./scripts/addon.sh longhorn|cnpg|harbor|l2|tor
+# 구성요소 하나만 설치/갱신:  ./scripts/addon.sh ingress|longhorn|cnpg|harbor|l2|tor
 #   INVENTORY=inventory/prod ./scripts/addon.sh harbor
 set -euo pipefail
 cd "$(dirname "$0")/.."
 . .venv/bin/activate
-C=${1:?"구성요소: l2 | longhorn | cnpg | harbor | tor"}
+C=${1:?"구성요소: l2 | ingress | longhorn | cnpg | harbor | tor"}
 INV=${INVENTORY:-inventory/lab}/inventory.ini
 export ANSIBLE_CONFIG=kubespray/ansible.cfg ANSIBLE_HOST_KEY_CHECKING=False OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
 mkdir -p logs secrets; chmod 700 secrets
@@ -872,7 +1209,25 @@ __KS_EOF__
 chmod +x 'scripts/addon.sh'
 ```
 
-## 15. scripts/lab-proxy.sh
+## 20. scripts/harbor-env.sh
+
+```bash
+mkdir -p 'scripts'
+cat > 'scripts/harbor-env.sh' <<'__KS_EOF__'
+# Harbor 접속 정보. 시험 스크립트가 source 해서 쓴다 (랩 디렉터리에서 실행). 인벤토리의 ingress_vip / harbor_host 와 같아야 한다.
+#   경로: 밖 → ingress-nginx VIP:443 → 호스트명으로 Harbor Ingress → core/portal
+#   curl 은 --resolve 로 VIP 를 직접 지정해 DNS 없이도 된다. skopeo 는 이름을 풀 수 있어야 한다(랩: sslip.io, 실서버: 사내 DNS 또는 /etc/hosts)
+#   실서버: INGRESS_VIP=<VIP> HARBOR_HOST=<호스트명> ./scripts/30-verify.sh
+HV=${INGRESS_VIP:-172.16.141.211}
+HH=${HARBOR_HOST:-harbor.$HV.sslip.io}
+HB=$HH                    # skopeo 용 (docker://$HB/…)
+HU=https://$HH            # API 주소
+HA="admin:$(cat secrets/harbor-admin)"
+hcurl(){ curl -sk --resolve "$HH:443:$HV" "$@"; }
+__KS_EOF__
+```
+
+## 21. scripts/lab-proxy.sh
 
 ```bash
 mkdir -p 'scripts'
@@ -897,7 +1252,7 @@ __KS_EOF__
 chmod +x 'scripts/lab-proxy.sh'
 ```
 
-## 16. scripts/make-bundle.sh
+## 22. scripts/make-bundle.sh
 
 ```bash
 mkdir -p 'scripts'
@@ -912,7 +1267,7 @@ cd "$(dirname "$0")/.."
 python3 -I - "${1:-}" <<'PY'
 import os, sys, hashlib, subprocess, tempfile, filecmp
 D = '__KS_' + 'EOF__'          # heredoc 구분자 (이 파일 안에 그 줄이 그대로 나오지 않게 나눠 씀)
-SKIP_DIRS = {'kubespray', '.venv', '.vagrant', 'secrets', 'logs', 'notes', '.git', 'artifacts', 'credentials'}
+SKIP_DIRS = {'kubespray', '.venv', '.vagrant', 'secrets', 'logs', 'notes', '.git', 'artifacts', 'credentials', 'rendered'}
 SKIP_FILES = {'ssh.cfg', 'BUNDLE.md'}
 files = []
 for root, dirs, names in os.walk('.'):
@@ -985,7 +1340,29 @@ __KS_EOF__
 chmod +x 'scripts/make-bundle.sh'
 ```
 
-## 17. scripts/rolling-reload.sh
+## 23. scripts/render-values.sh
+
+```bash
+mkdir -p 'scripts'
+cat > 'scripts/render-values.sh' <<'__KS_EOF__'
+#!/bin/bash
+# templates/ 를 인벤토리 값으로 풀어 rendered/<인벤토리 이름>/ 에 쓴다. 클러스터에 접속하지 않는다.
+#   ./scripts/render-values.sh                                   # 랩
+#   INVENTORY=inventory/prod-sample ./scripts/render-values.sh   # 견본 값
+#   ARCH=arm64 …                                                 # 노드가 arm64 일 때(Harbor 대체 이미지). 랩은 자동으로 arm64
+set -euo pipefail
+cd "$(dirname "$0")/.."
+. .venv/bin/activate
+INVD=${INVENTORY:-inventory/lab}
+ARCH=${ARCH:-$([ "$(basename $INVD)" = lab ] && echo arm64 || echo amd64)}
+export ANSIBLE_CONFIG=kubespray/ansible.cfg OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
+ansible-playbook -i $INVD/inventory.ini render.yml -e render_arch=$ARCH | grep -E "^(fatal|failed)|ok="
+ls -1 rendered/$(basename $INVD)
+__KS_EOF__
+chmod +x 'scripts/render-values.sh'
+```
+
+## 24. scripts/rolling-reload.sh
 
 ```bash
 mkdir -p 'scripts'
@@ -993,6 +1370,8 @@ cat > 'scripts/rolling-reload.sh' <<'__KS_EOF__'
 #!/bin/bash
 # (랩) 노드를 한 대씩 재기동(vagrant reload) — Vagrantfile 의 메모리 변경 반영 + 쿼럼 유지 확인
 #   ./scripts/rolling-reload.sh ks-cp3 ks-cp2 ks-cp1
+#   W_MEM=2688 WAIT_DB=1 ./scripts/rolling-reload.sh ks-w1 ks-w2     # 워커: 다음 노드로 넘어가기 전에 DB 3/3 + 붙어 있는 Longhorn 볼륨 healthy 를 기다린다
+#   (메모리 값은 Vagrantfile 이 읽는 환경변수 W_MEM/CP_MEM 또는 그 기본값. reload 때 VM 설정에 반영된다)
 set -uo pipefail
 cd "$(dirname "$0")/.."
 export KUBECONFIG=$PWD/inventory/lab/artifacts/admin.conf
@@ -1004,13 +1383,103 @@ for n in "$@"; do
   B=$(date +%s); vagrant reload $n >/dev/null 2>&1 || echo "  [NG] vagrant reload 실패"
   for i in $(seq 1 60); do kubectl get node $n --no-headers 2>/dev/null | grep -qw Ready && renewed_after $n $B && break; sleep 5; done
   echo "$(date +%H:%M:%S) $n $(kubectl get node $n --no-headers | awk '{print $2}'), API(VIP): $(curl -sk -m 3 https://172.16.141.30:6443/livez)"
+  if [ "${WAIT_DB:-0}" = 1 ]; then
+    # DB 인스턴스·Longhorn 복제본이 그 노드에 있으면 돌아와 다시 붙을 때까지 다음 노드를 건드리지 않는다 (동시에 둘이 빠지면 동기 복제 대상이 없어 쓰기가 멈춘다)
+    S=$(date +%s); ok=0
+    for i in $(seq 1 120); do
+      ph=$(kubectl -n harbor get cluster harbor-pg -o jsonpath='{.status.phase} {.status.readyInstances}/{.status.instances}' 2>/dev/null)
+      bad=$(kubectl -n longhorn-system get volumes.longhorn.io --no-headers 2>/dev/null | awk '$3=="attached" && $4!="healthy"' | wc -l | tr -d ' ')
+      [ "$ph" = "Cluster in healthy state 3/3" ] && [ "$bad" = 0 ] && { ok=1; break; }; sleep 5
+    done
+    echo "$(date +%H:%M:%S) $n 이후 DB='$ph' 비정상 볼륨=$bad ($(( $(date +%s)-S ))s 대기) mem=$(kubectl get node $n -o jsonpath='{.status.capacity.memory}')"
+    [ $ok = 1 ] || { echo "  [중단] 600s 안에 정상으로 안 돌아옴 — 다음 노드 진행 안 함"; exit 1; }
+  fi
   sleep 20
 done
 __KS_EOF__
 chmod +x 'scripts/rolling-reload.sh'
 ```
 
-## 18. templates/cilium-l2.yaml.j2
+## 25. templates/apply-order.md.j2
+
+```bash
+mkdir -p 'templates'
+cat > 'templates/apply-order.md.j2' <<'__KS_EOF__'
+# 풀어 놓은 values·매니페스트 ({{ inventory_dir | basename }})
+
+`./scripts/render-values.sh` 가 `templates/` 를 `{{ inventory_dir | basename }}` 인벤토리 값으로 풀어 만든 파일이다. 손으로 고치지 않는다(다시 만들면 덮어쓴다).
+`addons.yml` 이 하는 일을 helm·kubectl 명령으로 적으면 아래 순서다. 첫 control plane 에서, 이 디렉터리 안에서 실행한다.
+{% if (render_arch | default('amd64')) in ['arm64', 'aarch64'] %}
+
+노드가 arm64 라 Harbor 는 대체 이미지를 쓰게 풀었다. amd64 노드는 `ARCH=amd64` 로 다시 만든다.
+{% endif %}
+
+| 파일 | 내용 | 값이 오는 곳 |
+|---|---|---|
+| `cilium-l2.yaml` | L2 공지 정책 (어느 노드·NIC 이 VIP 를 ARP 로 알릴지) | `node_iface` |
+| `ingress-nginx-values.yaml` | ingress-nginx 차트 values (컨트롤러 {{ ingress_replicas }}개, VIP {{ ingress_vip }}) | `ingress_vip`, `ingress_replicas` |
+| `longhorn-values.yaml` | Longhorn 차트 values | `longhorn_csi_replicas` |
+| `longhorn-sc-single.yaml` | CNPG 용 StorageClass (복제 1벌, strict-local) | 고정 |
+| `harbor-pg.yaml` | Harbor DB: CNPG Cluster 3 인스턴스 | `cnpg_storage_class`, `cnpg_storage_size`, `cnpg_smart_shutdown_timeout` |
+| `harbor-values.yaml` | Harbor 차트 values (노출 방식 `{{ harbor_expose }}`) | `harbor_expose`, `harbor_host`, `harbor_storage_class`, `harbor_registry_size`, `harbor_db_host`, `harbor_db_secret` |
+| `harbor-bgp-svc.yaml` | BGP VIP 를 받는 Service (`bgp_enabled: {{ bgp_enabled | lower }}`) | `harbor_bgp_vip` |
+
+클러스터 자체의 설정(Kubernetes·Cilium·kube-vip·LB 풀·BGP)은 values 파일이 아니라 Kubespray 변수다: `{{ inventory_dir | basename }}/group_vars/k8s_cluster/` 와 `group_vars/all/`.
+
+## 순서
+
+    helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+    helm repo add longhorn https://charts.longhorn.io
+    helm repo add cnpg https://cloudnative-pg.github.io/charts
+    helm repo add harbor https://helm.goharbor.io
+    helm repo update
+
+{% if cilium_l2_enabled | bool %}
+    # 1. L2 공지 정책
+    kubectl apply -f cilium-l2.yaml
+
+{% endif %}
+{% if ingress_nginx_enabled | bool %}
+    # 2. ingress-nginx
+    helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx -n ingress-nginx --create-namespace \
+      --version {{ ingress_nginx_chart_version }} -f ingress-nginx-values.yaml --wait --timeout 10m
+
+{% endif %}
+{% if longhorn_enabled | bool %}
+    # 3. Longhorn (worker 에 open-iscsi·nfs 클라이언트·커널 모듈 iscsi_tcp 가 먼저 있어야 한다 — addons.yml 첫 플레이)
+    helm upgrade --install longhorn longhorn/longhorn -n longhorn-system --create-namespace \
+      --version {{ longhorn_version }} -f longhorn-values.yaml --wait --timeout 15m
+    kubectl apply -f longhorn-sc-single.yaml
+
+{% endif %}
+{% if cnpg_enabled | bool %}
+    # 4. CloudNativePG operator + Harbor DB
+    helm upgrade --install cnpg cnpg/cloudnative-pg -n cnpg-system --create-namespace \
+      --version {{ cnpg_chart_version }} --wait --timeout 10m
+    kubectl create namespace harbor --dry-run=client -o yaml | kubectl apply -f -
+    kubectl apply -f harbor-pg.yaml
+    kubectl -n harbor wait cluster/harbor-pg --for=condition=Ready --timeout=15m
+
+{% endif %}
+{% if harbor_enabled | bool %}
+    # 5. Harbor. admin 비밀번호는 values 에 없다. Secret 으로 먼저 만든다(값은 직접 정한다)
+    kubectl create namespace harbor --dry-run=client -o yaml | kubectl apply -f -
+    kubectl -n harbor create secret generic harbor-admin --from-literal=HARBOR_ADMIN_PASSWORD='<비밀번호>'
+    helm upgrade --install harbor harbor/harbor -n harbor --version {{ harbor_chart_version }} \
+      -f harbor-values.yaml --wait --timeout 20m
+
+{% endif %}
+{% if bgp_enabled | bool %}
+    # 6. BGP VIP 서비스
+    kubectl apply -f harbor-bgp-svc.yaml
+
+{% endif %}
+    # 확인
+    kubectl -n ingress-nginx get svc; kubectl -n harbor get ingress,pods
+__KS_EOF__
+```
+
+## 26. templates/cilium-l2.yaml.j2
 
 ```bash
 mkdir -p 'templates'
@@ -1033,18 +1502,25 @@ spec:
 __KS_EOF__
 ```
 
-## 19. templates/harbor-bgp-svc.yaml.j2
+## 27. templates/harbor-bgp-svc.yaml.j2
 
 ```bash
 mkdir -p 'templates'
 cat > 'templates/harbor-bgp-svc.yaml.j2' <<'__KS_EOF__'
-# 같은 Harbor 를 BGP VIP 로도 노출: 노드 서브넷 밖 {{ harbor_bgp_vip }} → ToR 에 /32 경로 광고(워커 수만큼 ECMP)
-# 실서비스에서는 둘 중 하나를 고른다. 랩은 두 방식을 비교하려고 같이 둔다.
+# 같은 진입점을 BGP VIP 로도 노출: 노드 서브넷 밖 {{ harbor_bgp_vip }} → ToR 에 /32 경로 광고(워커 수만큼 ECMP)
+# 실서비스에서는 L2 와 BGP 중 하나를 고른다. 랩은 두 방식을 비교하려고 같이 둔다.
+#   harbor_expose=ingress      → ingress-nginx 컨트롤러 앞에 붙는다 (호스트명으로 들어와야 Harbor 로 간다)
+#   harbor_expose=loadBalancer → Harbor 자체 nginx 앞에 붙는다
 apiVersion: v1
 kind: Service
 metadata:
+{% if harbor_expose == 'ingress' %}
+  name: ingress-nginx-bgp
+  namespace: ingress-nginx
+{% else %}
   name: harbor-bgp
   namespace: harbor
+{% endif %}
   labels:
     lab.io/bgp: "true"
   annotations:
@@ -1052,6 +1528,15 @@ metadata:
 spec:
   type: LoadBalancer
   externalTrafficPolicy: Cluster     # 모든 BGP 노드가 경로 광고 → ToR 가 ECMP. Local 이면 파드 있는 노드만 광고
+{% if harbor_expose == 'ingress' %}
+  selector:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/instance: ingress-nginx
+    app.kubernetes.io/component: controller
+  ports:
+    - {name: http, port: 80, targetPort: http}
+    - {name: https, port: 443, targetPort: https}
+{% else %}
   selector:
     app: harbor
     component: nginx
@@ -1059,10 +1544,11 @@ spec:
     - name: http
       port: 80
       targetPort: 8080
+{% endif %}
 __KS_EOF__
 ```
 
-## 20. templates/harbor-pg.yaml.j2
+## 28. templates/harbor-pg.yaml.j2
 
 ```bash
 mkdir -p 'templates'
@@ -1095,22 +1581,37 @@ spec:
       shared_buffers: "128MB"
   storage:
     storageClass: "{{ cnpg_storage_class }}"
-    size: 2Gi
+    size: {{ cnpg_storage_size | default('2Gi') }}
   resources:
     requests: {cpu: 100m, memory: 256Mi}
     limits:   {memory: 512Mi}
 __KS_EOF__
 ```
 
-## 21. templates/harbor-values.yaml.j2
+## 29. templates/harbor-values.yaml.j2
 
 ```bash
 mkdir -p 'templates'
 cat > 'templates/harbor-values.yaml.j2' <<'__KS_EOF__'
 # Harbor chart 1.18.0 (Harbor 2.14.0) on Kubespray 클러스터
 #   저장소 = Longhorn(3벌 복제, 노드 장애 시 다른 노드로 재부착), DB = CNPG(harbor-pg, 3 인스턴스)
-#   노출 = LoadBalancer(Cilium LB IPAM {{ harbor_vip }} + L2 공지). 랩은 http, TLS 는 k8s-core 랩의 Gateway 구성 참고
+#   노출 = harbor_expose 로 고른다
+#     ingress      : ingress-nginx 의 VIP({{ ingress_vip }}) 뒤에 호스트명 {{ harbor_host }} 로 붙는다. TLS 는 ingress-nginx 에서 끝난다. Harbor 자체 nginx 파드는 생기지 않는다
+#     loadBalancer : Harbor 전용 VIP({{ harbor_vip }}, Cilium LB IPAM + L2 공지), http
 #   이미지: amd64 = 차트 기본(goharbor/*), arm64 노드일 때만 ghcr.io/octohelm/harbor/* 로 대체 (goharbor 는 arm64 이미지 없음)
+{% if harbor_expose == 'ingress' %}
+expose:
+  type: ingress
+  tls:
+    enabled: true
+    certSource: auto          # 차트가 자체 서명 인증서를 만든다(랩). 실서버는 certSource: secret + 사내 인증서 Secret
+  ingress:
+    className: nginx
+    hosts:
+      core: "{{ harbor_host }}"
+    # annotations 는 차트 기본값을 그대로 쓴다: nginx.ingress.kubernetes.io/proxy-body-size "0" (레이어 업로드 크기 제한 없음), ssl-redirect "true"
+externalURL: https://{{ harbor_host }}
+{% else %}
 expose:
   type: loadBalancer
   tls:
@@ -1122,6 +1623,12 @@ expose:
     annotations:
       lbipam.cilium.io/ips: "{{ harbor_vip }}"
 externalURL: http://{{ harbor_vip }}
+{% endif %}
+
+# registry·jobservice 볼륨이 RWO(Longhorn) 라 한 번에 한 노드에만 붙는다. 기본값 RollingUpdate 는 새 파드를 먼저 띄우는데,
+# 새 파드가 다른 노드에 잡히면 볼륨을 못 붙여 멈춘다(TROUBLESHOOTING 23절). 옛 파드를 먼저 내리게 한다.
+updateStrategy:
+  type: Recreate
 
 existingSecretAdminPassword: harbor-admin
 existingSecretAdminPasswordKey: HARBOR_ADMIN_PASSWORD
@@ -1130,7 +1637,7 @@ persistence:
   enabled: true
   resourcePolicy: "keep"
   persistentVolumeClaim:
-    registry:   {storageClass: "{{ harbor_storage_class }}", size: 5Gi}
+    registry:   {storageClass: "{{ harbor_storage_class }}", size: {{ harbor_registry_size | default('5Gi') }}}
     jobservice:
       jobLog:   {storageClass: "{{ harbor_storage_class }}", size: 1Gi}
     redis:      {storageClass: "{{ harbor_storage_class }}", size: 1Gi}
@@ -1174,7 +1681,37 @@ exporter:
 __KS_EOF__
 ```
 
-## 22. templates/longhorn-sc-single.yaml.j2
+## 30. templates/ingress-nginx-values.yaml.j2
+
+```bash
+mkdir -p 'templates'
+cat > 'templates/ingress-nginx-values.yaml.j2' <<'__KS_EOF__'
+# ingress-nginx chart {{ ingress_nginx_chart_version }}: 밖에서 들어오는 HTTP(S) 를 VIP 하나({{ ingress_vip }})로 받아 호스트명(Ingress 규칙)으로 서비스에 나눈다.
+#   VIP 는 Cilium LB IPAM 이 주고 L2 공지(ARP)로 알린다. 컨트롤러는 워커에 {{ ingress_replicas }}개, 노드마다 하나씩.
+#   워커 → apiserver 사이의 nginx-proxy(Kubespray) 와는 다른 것이다.
+controller:
+  replicaCount: {{ ingress_replicas }}
+  ingressClassResource:
+    name: nginx
+    default: true
+  service:
+    type: LoadBalancer
+    annotations:
+      lbipam.cilium.io/ips: "{{ ingress_vip }}"
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - topologyKey: kubernetes.io/hostname
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: ingress-nginx
+              app.kubernetes.io/component: controller
+  resources:
+    requests: {cpu: 50m, memory: 128Mi}
+__KS_EOF__
+```
+
+## 31. templates/longhorn-sc-single.yaml.j2
 
 ```bash
 mkdir -p 'templates'
@@ -1196,7 +1733,7 @@ parameters:
 __KS_EOF__
 ```
 
-## 23. templates/longhorn-values.yaml.j2
+## 32. templates/longhorn-values.yaml.j2
 
 ```bash
 mkdir -p 'templates'
@@ -1213,18 +1750,18 @@ defaultSettings:
   storageOverProvisioningPercentage: 200
   nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod   # 노드 다운 시 파드를 지워 다른 노드에서 볼륨 재부착
   replicaReplenishmentWaitInterval: 60
-# 랩 메모리 절약 (워커 2.25GB). 운영은 기본값(3)
+# 랩은 메모리 절약으로 2 (longhorn_csi_replicas). 차트 기본값은 3
 csi:
-  attacherReplicaCount: 2
-  provisionerReplicaCount: 2
-  resizerReplicaCount: 2
-  snapshotterReplicaCount: 2
+  attacherReplicaCount: {{ longhorn_csi_replicas | default(2) }}
+  provisionerReplicaCount: {{ longhorn_csi_replicas | default(2) }}
+  resizerReplicaCount: {{ longhorn_csi_replicas | default(2) }}
+  snapshotterReplicaCount: {{ longhorn_csi_replicas | default(2) }}
 longhornUI:
   replicas: 1
 __KS_EOF__
 ```
 
-## 24. inventory/lab/inventory.ini
+## 33. inventory/lab/inventory.ini
 
 ```bash
 mkdir -p 'inventory/lab'
@@ -1244,8 +1781,6 @@ ks-w2 ip=172.16.141.42
 ks-w3 ip=172.16.141.43
 ks-w4 ip=172.16.141.44
 ks-w5 ip=172.16.141.45
-ks-w6 ip=172.16.141.46
-ks-w7 ip=172.16.141.47
 
 [k8s_cluster:children]
 kube_control_plane
@@ -1257,12 +1792,12 @@ ks-tor ip=172.16.141.29
 __KS_EOF__
 ```
 
-## 25. inventory/prod-sample/inventory.ini
+## 34. inventory/prod-sample/inventory.ini
 
 ```bash
 mkdir -p 'inventory/prod-sample'
 cat > 'inventory/prod-sample/inventory.ini' <<'__KS_EOF__'
-# 실서버 견본. 주소는 전부 자리표시자(10.0.10.x = 노드 서브넷 예시). 실제 값으로 바꾼 뒤 inventory/prod 로 복사해 쓴다.
+# 실서버 견본 (CP 3 + 워커 5, 노드는 VM). 주소는 전부 자리표시자(10.0.10.x = 노드 서브넷 예시). 실제 값으로 바꾼 뒤 inventory/prod 로 복사해 쓴다.
 #   ip = 클러스터 통신 NIC(node_iface) 의 주소. ansible_host 는 SSH 로 닿는 주소(같으면 생략)
 [kube_control_plane]
 cp1 ansible_host=10.0.10.11 ip=10.0.10.11 etcd_member_name=etcd1
@@ -1278,18 +1813,16 @@ w2 ansible_host=10.0.10.22 ip=10.0.10.22
 w3 ansible_host=10.0.10.23 ip=10.0.10.23
 w4 ansible_host=10.0.10.24 ip=10.0.10.24
 w5 ansible_host=10.0.10.25 ip=10.0.10.25
-w6 ansible_host=10.0.10.26 ip=10.0.10.26
-w7 ansible_host=10.0.10.27 ip=10.0.10.27
 
 [k8s_cluster:children]
 kube_control_plane
 kube_node
 
-# [tor] 그룹 없음: 실서버는 네트워크팀이 ToR 스위치에 BGP 를 설정한다 (INFRA.md 4절)
+# [tor] 그룹 없음: 랩의 ToR(FRR) 역할은 실서버에서 네트워크팀 스위치가 한다 (INFRA.md 4절). VM 이면 BGP 없이 L2 만 쓰는 경우가 많다 (INFRA.md 6절)
 __KS_EOF__
 ```
 
-## 26. inventory/lab/group_vars/all/lab.yml
+## 35. inventory/lab/group_vars/all/lab.yml
 
 ```bash
 mkdir -p 'inventory/lab/group_vars/all'
@@ -1299,11 +1832,14 @@ cat > 'inventory/lab/group_vars/all/lab.yml' <<'__KS_EOF__'
 ansible_user: vagrant
 ansible_ssh_common_args: "-F {{ inventory_dir }}/ssh.cfg"   # 랩 전용(vagrant ssh-config)
 
-node_iface: eth1                       # 클러스터 통신 NIC (실서버 예: bond1). kube-vip ARP, Cilium L2 공지가 이 NIC 에서 나간다
-cilium_node_devices: [eth0, eth1]      # Cilium 이 NodePort/LB 를 처리할 NIC 목록 (실서버 예: [bond0, bond1])
+node_iface: eth1                       # 클러스터 통신 NIC (VM 예: ens192, 물리 서버 예: bond1). kube-vip ARP, Cilium L2 공지가 이 NIC 에서 나간다
+cilium_node_devices: [eth0, eth1]      # Cilium 이 NodePort/LB 를 처리할 NIC 목록 (실서버는 실제 NIC 이름으로)
 
 apiserver_vip: 172.16.141.30           # API VIP (kube-vip, ARP). 노드 서브넷 안, DHCP 범위 밖
-harbor_vip: 172.16.141.210             # Harbor LB VIP (L2 풀 안)
+ingress_vip: 172.16.141.211            # ingress-nginx VIP (L2 풀 안). 밖에서 들어오는 HTTP(S) 는 전부 이 주소 하나로 받는다
+harbor_expose: ingress                 # ingress = ingress-nginx 뒤에 호스트명으로 / loadBalancer = Harbor 전용 VIP(harbor_vip)
+harbor_host: "harbor.{{ ingress_vip }}.sslip.io"   # Harbor 호스트명. 랩 전용: Mac 에 /etc/hosts 권한이 없어 IP 가 들어간 이름을 공개 DNS(sslip.io)로 푼다. 실서버는 사내 DNS 레코드
+harbor_vip: 172.16.141.210             # Harbor 전용 LB VIP (harbor_expose=loadBalancer 일 때만)
 l2_pool_start: 172.16.141.210
 l2_pool_stop: 172.16.141.219
 
@@ -1325,6 +1861,8 @@ cilium_l2_enabled: true                # L2 공지 정책. BGP 만 쓰는 환경
 longhorn_enabled: true                 # 회사 CSI(NFS/Ceph/벤더)가 있으면 false 로 두고 아래 SC 이름을 바꾼다
 cnpg_enabled: true                     # 외부 PostgreSQL 을 쓰면 false (harbor_db_* 값을 외부 DB 로)
 harbor_enabled: true
+ingress_nginx_enabled: true            # 이미 ingress 컨트롤러가 있으면 false (그때 Harbor Ingress 의 className 은 templates/harbor-values.yaml.j2 에서 맞춘다)
+ingress_replicas: 3                    # 컨트롤러 파드 수. 워커마다 하나씩만 뜬다
 harbor_storage_class: longhorn         # Harbor registry/redis/jobservice PVC
 cnpg_storage_class: longhorn-single    # CNPG PVC (DB 가 자체 복제하므로 스토리지 복제 1벌)
 cnpg_smart_shutdown_timeout: 15         # primary 계획 종료 시 접속 종료 대기(초). CNPG 기본 180 → 승격이 3분 늦어짐
@@ -1338,7 +1876,7 @@ loadbalancer_apiserver_localhost: false
 __KS_EOF__
 ```
 
-## 27. inventory/lab/group_vars/k8s_cluster/lab.yml
+## 36. inventory/lab/group_vars/k8s_cluster/lab.yml
 
 ```bash
 mkdir -p 'inventory/lab/group_vars/k8s_cluster'
@@ -1372,7 +1910,7 @@ cilium_loadbalancer_ip_pools:
     serviceSelector:
       matchLabels: {lab.io/bgp: "true"}
 
-# --- BGP Control Plane (bgpv2 API): 워커 7대 ↔ ToR(ks-tor, FRR) eBGP ---
+# --- BGP Control Plane (bgpv2 API): 워커 전체 ↔ ToR(ks-tor, FRR) eBGP ---
 cilium_enable_bgp_control_plane: "{{ bgp_enabled }}"
 cilium_bgp_cluster_configs: "{{ _bgp_cluster_configs if bgp_enabled else [] }}"
 cilium_bgp_peer_configs: "{{ _bgp_peer_configs if bgp_enabled else [] }}"
@@ -1412,7 +1950,7 @@ _bgp_advertisements:
           selector:
             matchLabels: {lab.io/bgp: "true"}
 cilium_extra_values:
-  # NodePort/LB 를 처리할 NIC. eth0 = Vagrant NAT(인터넷), eth1 = 클러스터망
+  # NodePort/LB 를 처리할 NIC 목록 (env 의 cilium_node_devices). 랩: eth0 = Vagrant NAT(인터넷), eth1 = 클러스터망
   devices: "{{ cilium_node_devices }}"
   # L2 공지는 서비스마다 Lease 를 갱신 → API 호출이 늘어 기본 레이트리밋을 올린다 (Cilium 문서 권장)
   k8sClientRateLimit:
@@ -1438,7 +1976,7 @@ kubectl_localhost: false
 __KS_EOF__
 ```
 
-## 28. inventory/prod-sample/group_vars/all/env.yml
+## 37. inventory/prod-sample/group_vars/all/env.yml
 
 ```bash
 mkdir -p 'inventory/prod-sample/group_vars/all'
@@ -1448,15 +1986,21 @@ cat > 'inventory/prod-sample/group_vars/all/env.yml' <<'__KS_EOF__'
 ansible_user: deploy                   # sudo 권한 있는 배포 계정 (SSH 키 인증)
 # ansible_ssh_private_key_file: ~/.ssh/k8s_deploy
 
-node_iface: bond1                       # 클러스터 통신 NIC (실서버 예: bond1). kube-vip ARP, Cilium L2 공지가 이 NIC 에서 나간다
-cilium_node_devices: [bond1]      # Cilium 이 NodePort/LB 를 처리할 NIC 목록 (실서버 예: [bond0, bond1])
+# 클러스터 통신 NIC. 노드에서 `ip -br addr` 로 확인한 실제 이름을 넣는다 (preflight.yml 이 이름·주소를 검사한다)
+#   VM      : 보통 NIC 하나 (예: ens192, eth0). 이중화는 하이퍼바이저가 하므로 게스트 안에서 bond 를 묶지 않는다
+#   물리 서버: bond 이름 (예: bond1)
+node_iface: ens192                     # kube-vip ARP, Cilium L2 공지가 이 NIC 에서 나간다
+cilium_node_devices: [ens192]          # Cilium 이 NodePort/LB 를 처리할 NIC 목록. NIC 가 여럿이면 전부 적는다
 
 apiserver_vip: 10.0.10.100           # API VIP (kube-vip, ARP). 노드 서브넷 안, DHCP 범위 밖
-harbor_vip: 10.0.10.210             # Harbor LB VIP (L2 풀 안)
+ingress_vip: 10.0.10.211            # ingress-nginx VIP (L2 풀 안). 밖에서 들어오는 HTTP(S) 는 전부 이 주소 하나로 받는다
+harbor_expose: ingress                 # ingress = ingress-nginx 뒤에 호스트명으로 / loadBalancer = Harbor 전용 VIP(harbor_vip)
+harbor_host: harbor.example.internal   # Harbor 호스트명. 사내 DNS 에 이 이름 → ingress_vip 레코드를 신청한다
+harbor_vip: 10.0.10.210             # Harbor 전용 LB VIP (harbor_expose=loadBalancer 일 때만)
 l2_pool_start: 10.0.10.210
 l2_pool_stop: 10.0.10.219
 
-bgp_enabled: false                     # ToR 스위치와 BGP 를 할지. 네트워크팀이 피어링을 열어 주면 true
+bgp_enabled: false                     # ToR 스위치와 BGP 를 할지. 네트워크팀이 피어링을 열어 주면 true. VM 은 물리 스위치와 직접 피어링이 안 되는 경우가 많다 (INFRA.md 6절)
 bgp_local_asn: 65010                   # 노드(Cilium) 쪽 ASN — 네트워크팀이 할당
 bgp_peer_asn: 65000                    # ToR 스위치 ASN
 bgp_peer_address: 10.0.10.1        # ToR 스위치 피어 IP (노드 서브넷의 게이트웨이/SVI)
@@ -1468,11 +2012,19 @@ cilium_l2_enabled: true                # L2 공지 정책. BGP 만 쓰는 환경
 longhorn_enabled: true                 # 회사 CSI(NFS/Ceph/벤더)가 있으면 false 로 두고 아래 SC 이름을 바꾼다
 cnpg_enabled: true                     # 외부 PostgreSQL 을 쓰면 false (harbor_db_* 값을 외부 DB 로)
 harbor_enabled: true
+ingress_nginx_enabled: true            # 이미 ingress 컨트롤러가 있으면 false (그때 Harbor Ingress 의 className 은 templates/harbor-values.yaml.j2 에서 맞춘다)
+ingress_replicas: 3                    # 컨트롤러 파드 수. 워커마다 하나씩만 뜬다
 harbor_storage_class: longhorn         # Harbor registry/redis/jobservice PVC
 cnpg_storage_class: longhorn-single    # CNPG PVC (DB 가 자체 복제하므로 스토리지 복제 1벌)
 cnpg_smart_shutdown_timeout: 15         # primary 계획 종료 시 접속 종료 대기(초). CNPG 기본 180 → 승격이 3분 늦어짐
 harbor_db_host: harbor-pg-rw.harbor.svc
 harbor_db_secret: harbor-pg-app        # 키 'password' 를 가진 Secret (CNPG 가 생성)
+
+# ===== 크기 (안 적으면 랩 값: registry 5Gi, DB 2Gi, CSI 사이드카 2벌) =====
+# 아래 숫자는 자리표시자다. registry 는 Nexus 의 실제 사용량을 보고 정한다. Longhorn 은 여기에 복제 수(3)를 곱한 만큼 노드 디스크를 쓴다
+harbor_registry_size: 200Gi            # Harbor 이미지 저장 PVC
+cnpg_storage_size: 20Gi                # Harbor DB PVC (인스턴스마다 하나씩, 3개)
+longhorn_csi_replicas: 3               # Longhorn CSI 사이드카 수 (차트 기본 3)
 
 loadbalancer_apiserver:
   address: "{{ apiserver_vip }}"
@@ -1490,7 +2042,7 @@ loadbalancer_apiserver_localhost: false
 __KS_EOF__
 ```
 
-## 29. inventory/prod-sample/group_vars/k8s_cluster/k8s.yml
+## 38. inventory/prod-sample/group_vars/k8s_cluster/k8s.yml
 
 ```bash
 mkdir -p 'inventory/prod-sample/group_vars/k8s_cluster'
@@ -1524,7 +2076,7 @@ cilium_loadbalancer_ip_pools:
     serviceSelector:
       matchLabels: {lab.io/bgp: "true"}
 
-# --- BGP Control Plane (bgpv2 API): 워커 7대 ↔ ToR(ks-tor, FRR) eBGP ---
+# --- BGP Control Plane (bgpv2 API): 워커 전체 ↔ ToR 스위치 eBGP. env 의 bgp_enabled 가 false 면 전부 꺼진다 ---
 cilium_enable_bgp_control_plane: "{{ bgp_enabled }}"
 cilium_bgp_cluster_configs: "{{ _bgp_cluster_configs if bgp_enabled else [] }}"
 cilium_bgp_peer_configs: "{{ _bgp_peer_configs if bgp_enabled else [] }}"
@@ -1564,7 +2116,7 @@ _bgp_advertisements:
           selector:
             matchLabels: {lab.io/bgp: "true"}
 cilium_extra_values:
-  # NodePort/LB 를 처리할 NIC. eth0 = Vagrant NAT(인터넷), eth1 = 클러스터망
+  # NodePort/LB 를 처리할 NIC 목록 (env 의 cilium_node_devices)
   devices: "{{ cilium_node_devices }}"
   # L2 공지는 서비스마다 Lease 를 갱신 → API 호출이 늘어 기본 레이트리밋을 올린다 (Cilium 문서 권장)
   k8sClientRateLimit:
@@ -1601,33 +2153,42 @@ __KS_EOF__
 ```bash
 sha256sum -c <<'__KS_EOF__'
 623a8f30fcb6163cfa9027eca241b45fc852498d3a8f10c3bc1eec6b93619c81  .gitignore
-bb641dbad05f83bf412caaf7b18128490fc497a5251a2b3f7fa4dba7e58898f4  Vagrantfile
-1d0119e39341e0def9e7430149607564a0c545c77bffdfd6f8a398317a073821  addons.yml
-beb44d66da7ce31ff441bac104aca9cf87733c9792fcf78a6df429e2236f32fc  install.sh
-27cd0134d51c3522ad45bea2feeb5cbc85e35bef5c46ef5f0d7907d8190243bf  preflight.yml
-91f07a7d3c76ff373091e0bd321200b5d8cd002181b07d69f7eea206a7aab01b  reset.sh
+810deb9db15679d38a555096ec0dfbe12fe6cdbcc6ac413ba67d0d3dfa03fe03  Vagrantfile
+389fdd8a54ea5d36af59948219aa5be453f51e581e1ba066ae223ccf6e987601  addons.yml
+051604e43cf1b970e446c7d368f17e3a03fdb467740d3cba7271a08559939fc2  install.sh
+78bdd3882e7b0b4f85aa81f8fbdacf52369051a238c879ee99efffc771aca9c2  preflight.yml
+aa52952a1d6f86a7e8be5b62898eb542420df11d0b89ee00e171ed4cceb1ce04  render.yml
+a0d42e1d9be9cab375fb85be6623d8fb0a5ac220effec01439a531b38fc94df0  reset.sh
 77ad03136b46c6499062d382d8a93801bc701deb3a3275bde3154f7c5882a2e8  tor.yml
+8173dbc99c184048da66a9d7fa7c50eb99aec081897ee1807c8616d2a14e1b3d  versions.yml
 720767d711a816362b700997c963c5c8b2ede739defe86e369830073dd7e0a19  scripts/00-inventory.sh
 52078dc353409d1a79f98e8d7af67f59eed40e6d60e99dcdd6c2d732aa04abb4  scripts/10-cluster.sh
-09843bbf6cb10d7626a2b92588bb6ba2e612232b0b81d2fe90e165d8e6cebb65  scripts/20-addons.sh
-80c4f3ee254d08cadb995fbb796aa6f388a836ce9e50ee4d6537a8cb07c50275  scripts/30-verify.sh
-65423f11286244ead902b1dd16952fb0ee4441f30edb82b3e6d7608e1fddc347  scripts/40-failover.sh
-d772ec246ebe13fed12ff4e635e5ac613c5f73500e5def443dd6ba9ea216278e  scripts/50-more-tests.sh
-2e7811a852cc6548f119cd9cf1c3547c8feaab1572e833ccf9266dc9d144245f  scripts/addon.sh
+a0ff4735531a6a1b4e325033aa6e17d0e02ec8c1a35b56b7399c82d4245f2688  scripts/20-addons.sh
+2e7dbe54d4ccdd2858b0d58ae16879bc0f97702f679f1abe07a7d9e0918ead17  scripts/30-verify.sh
+29804d5a040fec863c6228e6071ea8694a0a7874f4cdb0fe4f7845797b97d360  scripts/40-failover.sh
+c26f80eb45e853d00807ecebd43c553b588527afd408f1460b34cb1e211c37c4  scripts/50-more-tests.sh
+e912cb73f6101229c524b015aa28c5bfc121b5e97a442fe7b402a070440da108  scripts/60-db-node-loss.sh
+5dce9b595098b09cdef3026911a7793c7ce4d7a8137d9f57fde7ae56c793ef45  scripts/61-db-move-instance.sh
+cdca41d681a59baa9ca319160c94af6f2ef057d68236bfab8d4d4efe1d242cbc  scripts/62-ingress-failover.sh
+ce112cab4a558263867755ebd82e67db2a411eb52293298fb2732fb058b4bb60  scripts/addon.sh
+51f6b22520eb71b03f100ab577ad42da1b534f00e97665aa1eb0c0a9269b8890  scripts/harbor-env.sh
 39d2a850852c28b4f7d71c4a6c14a4db6cb5c39286c0460a1399196e382ece15  scripts/lab-proxy.sh
-21f926f45b4e4c3e959fa2c855ba35bc37bba0687592ef351d18a1e440425156  scripts/make-bundle.sh
-202c5a87fa9c536f751cd1f19ee3b3a43aa98b9186b6056844aed9f885b7fd2c  scripts/rolling-reload.sh
+f78408a72931a389badb5cc04931cf47c93a7cbfce8835bc6b9d8bfb458304aa  scripts/make-bundle.sh
+aa6ff9680a3433e09db4e03b87af2413a4b8a6a8e94f7eb3fa74cc77514b3269  scripts/render-values.sh
+cd5596bf6489464abeffc7778930316f05798e71ea4f47ef745c9b22dca6e7a6  scripts/rolling-reload.sh
+c645819848ed423513975c527308e3f59c4b0e937dc3f419c7de13ef527824e3  templates/apply-order.md.j2
 384ba5bf0faf6c94a2a4aa522151272b3cff8fb50b36ad107ff2c93cfcb4e332  templates/cilium-l2.yaml.j2
-5a8c0609d5c3dd2ff0e9b287df8072024d87e3137f23aa706da5146e13eae05e  templates/harbor-bgp-svc.yaml.j2
-51b5b332600134a5c948261fac1bb17809890cd1f037369fa6d75144b4a2cdfe  templates/harbor-pg.yaml.j2
-e5deb6ec2fe6b05b73800223d8666e4f25fbde0f7143cd4061e70c9b5995127e  templates/harbor-values.yaml.j2
+e397a55c1b334d6db9c4d0fccc0b5c2a816d1a52d82bd4cdedbe74fc95179ff5  templates/harbor-bgp-svc.yaml.j2
+bde082f8b7260d41c892e6848fe595a2f938c1c770ffff55b9f195b38c14166c  templates/harbor-pg.yaml.j2
+701f51fafd950494082de3b2234f9192ded2e70b2ccc22a0905eeb645622a0b5  templates/harbor-values.yaml.j2
+b257ac488dedf44ca3bb25e77a9fb72961f4b5bcc68faa712392ce654c16a77f  templates/ingress-nginx-values.yaml.j2
 487c6cf992e888f9ff9b794fbff50b5c2bfa86fd56a2c96cc2d9769b77888b04  templates/longhorn-sc-single.yaml.j2
-d28df29dc81fbc6997937ddcfb3159a1358123d28700a97e84052e568af38971  templates/longhorn-values.yaml.j2
-934473b75c881f7af5f6edd00da245e4b6a5377627c3d23a86a44a604bfe9ae5  inventory/lab/inventory.ini
-913d134be9201a6476b48d4a4569aac72f460293878692d3426ad8425d88d9c2  inventory/prod-sample/inventory.ini
-028e1b6d8adec662e1d84585eaeaef7ebb42e52e28a1c400067b63b921ca149d  inventory/lab/group_vars/all/lab.yml
-d5ce53af4e260f974ee4a6b26ccf43e5c215cad602a90792f33c5254dcad9ee4  inventory/lab/group_vars/k8s_cluster/lab.yml
-7269550830c48fb9c3079c925877037bfa3f314c0bacd8919ca876599d249744  inventory/prod-sample/group_vars/all/env.yml
-557b6bf9b6400ce204b649656fb0fd01970f0d2d134241025cbb1bbc3fa30a2d  inventory/prod-sample/group_vars/k8s_cluster/k8s.yml
+75bc29bbc174c86e1bacc713c6a39ffb59b5f525d7bd772576305af5445ef69b  templates/longhorn-values.yaml.j2
+61158d2c2ce45bb49405d69c95308801fe0ef8057d2c7be1385969a94c236884  inventory/lab/inventory.ini
+b34386cc08dbbce883f5b26328e654408c369de3ea7d4a89fb2ee3400853cce9  inventory/prod-sample/inventory.ini
+1e1c3444e3d9da28662ad225426d3c0bffed10e2e4c7799ac898b0d43f18c388  inventory/lab/group_vars/all/lab.yml
+68941e5fe54d16b645fe221d3ce8a2628a73c993ddeda97964cfa001fd618f9b  inventory/lab/group_vars/k8s_cluster/lab.yml
+47c063e621fa311ccaf666ceb7dad13ae3b1adac20ffa9e257a132d7e5e7c1b8  inventory/prod-sample/group_vars/all/env.yml
+aca163db8544309beac8eaf6a4c2a8f24376a54db64991b962604c94e93f2dfe  inventory/prod-sample/group_vars/k8s_cluster/k8s.yml
 __KS_EOF__
 ```

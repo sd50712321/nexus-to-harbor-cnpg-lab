@@ -1,0 +1,15 @@
+# Cilium L2 공지: LB 풀(l2-pool, Kubespray 가 생성)의 IP 를 ens192 에서 ARP 로 광고. 서비스마다 노드 한 대가 리더(Lease)로 응답.
+apiVersion: cilium.io/v2alpha1
+kind: CiliumL2AnnouncementPolicy
+metadata:
+  name: lab-l2
+spec:
+  interfaces: ["^ens192$"]
+  loadBalancerIPs: true
+  externalIPs: false
+  serviceSelector:                     # BGP 로 광고하는 서비스는 ARP 대상에서 뺀다
+    matchExpressions:
+      - {key: lab.io/bgp, operator: DoesNotExist}
+  nodeSelector:
+    matchExpressions:
+      - {key: node-role.kubernetes.io/control-plane, operator: DoesNotExist}

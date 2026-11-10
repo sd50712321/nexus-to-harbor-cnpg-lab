@@ -1,0 +1,20 @@
+# Longhorn v1.13.0 — 노드 로컬 디스크(/var/lib/longhorn)를 블록 단위로 노드 간 동기 복제
+persistence:
+  defaultClass: true
+  defaultClassReplicaCount: 3        # 볼륨마다 서로 다른 노드 3곳에 복제본
+  defaultDataLocality: disabled
+  reclaimPolicy: Retain
+defaultSettings:
+  replicaSoftAntiAffinity: false     # 같은 노드에 복제본 2개 금지
+  storageMinimalAvailablePercentage: 15
+  storageOverProvisioningPercentage: 200
+  nodeDownPodDeletionPolicy: delete-both-statefulset-and-deployment-pod   # 노드 다운 시 파드를 지워 다른 노드에서 볼륨 재부착
+  replicaReplenishmentWaitInterval: 60
+# 랩은 메모리 절약으로 2 (longhorn_csi_replicas). 차트 기본값은 3
+csi:
+  attacherReplicaCount: 3
+  provisionerReplicaCount: 3
+  resizerReplicaCount: 3
+  snapshotterReplicaCount: 3
+longhornUI:
+  replicas: 1
