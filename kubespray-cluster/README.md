@@ -10,6 +10,7 @@ Harbor 의 DB 는 CloudNativePG(CNPG) 3개 인스턴스, 이미지 저장소는 
 |---|---|
 | [INFRA.md](INFRA.md) | 네트워크·보안팀·가상화 담당자에게 요청할 것: 주소 계획, 스위치(L2), BGP, 방화벽 포트 표, 주의점, **노드가 VM 일 때**(6절) |
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | 구축 중 막힌 지점과 원인을 좁힌 과정 (실서버에도 해당하는 것 표시) |
+| [LONGHORN-V2-DISK.md](LONGHORN-V2-DISK.md) | Longhorn V2 에서 노드 재부팅 뒤 디스크가 다시 안 붙을 때: 원인(`/dev/sdX` 이름 밀림)과 고정 경로 등록법. 랩 미재현, 공식 문서·이슈 근거 |
 | [rendered/](rendered/) | 템플릿을 인벤토리 값으로 풀어 놓은 Helm values·매니페스트와 적용 순서 (아래 '설정 파일') |
 | [BUNDLE.md](BUNDLE.md) | **다운로드가 안 될 때**: 모든 코드 파일을 붙여넣기용 블럭으로 모은 것 (아래 '파일 옮기기') |
 
@@ -218,7 +219,7 @@ A~E, G~J 는 Harbor 를 전용 VIP(`harbor_expose: loadBalancer`)로 노출하�
 - **ToR.** `ks-tor` VM 이 FRR 로 스위치 역할을 한다(`tor.yml`). 실서버에서는 인벤토리에 `[tor]` 그룹을 두지 않는다.
 - **arm64 이미지.** Harbor 공식 이미지는 arm64 가 없어, 노드가 arm64 일 때만 대체 이미지를 쓴다(`templates/harbor-values.yaml.j2`). amd64 실서버는 공식 이미지 그대로다.
 - **그 밖의 랩 스크립트.** `scripts/rolling-reload.sh` 는 VM 을 한 대씩 재기동해 메모리 변경을 반영한다. `WAIT_DB=1` 을 주면 다음 노드로 넘어가기 전에 DB 3/3 과 붙어 있는 Longhorn 볼륨 healthy 를 기다린다.
-- **꺼 둔 VM.** worker 를 7대에서 5대로 줄일 때 `ks-w6`·`ks-w7` 은 클러스터에서 빼고 끄기만 했다. 7대로 되돌리는 방법은 `Vagrantfile` 머리말에 있다.
+- **지운 VM.** worker 를 7대에서 5대로 줄일 때 `ks-w6`·`ks-w7` 은 클러스터에서 빼고 꺼 두었다가, 2026-11-13 에 호스트 디스크 확보를 위해 지웠다. 7대로 되돌리는 방법은 `Vagrantfile` 머리말에 있다.
 
 ## 파일 옮기기 (다운로드·git clone 이 안 될 때)
 

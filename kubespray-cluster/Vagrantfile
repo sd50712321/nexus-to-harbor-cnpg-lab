@@ -9,7 +9,7 @@
 # 메모리 합계 = 3 × CP_MEM + W_COUNT × W_MEM + TOR (기본 3×2560 + 5×2688 + 512 MB = 약 21 GB). CP 1792MB 는 etcd+apiserver 로 메모리 150% → kube-vip 리스 실패(VIP 이동)를 겪어 2560 으로 올림. 32 GB Mac 에서 다른 VM/podman 을 끄고 돌린다.
 # 워커는 처음에 7대 × 1920MB 였다. kubelet 이 노드마다 868Mi 를 떼어 두고(kubeReserved 256 + systemReserved 512 + eviction 100) Cilium·Longhorn 데몬이 또 깔려서,
 # DB 복구처럼 I/O 가 몰리면 memory.available < 100Mi → Longhorn 파드 퇴거 → 그 노드 볼륨 정지가 반복됐다(TROUBLESHOOTING 16절). 같은 합계로 5대 × 2688MB 로 바꿨다.
-# 7대로 되돌리려면 W_COUNT=7 W_MEM=1920 을 주고 scale.yml 로 ks-w6·ks-w7 을 다시 넣는다(두 VM 은 지우지 않고 꺼 두었다).
+# 7대로 되돌리려면 W_COUNT=7 W_MEM=1920 을 주고 vagrant up 으로 ks-w6·ks-w7 을 새로 만든 뒤 scale.yml 로 넣는다(두 VM 은 2026-11-13 에 디스크 확보를 위해 지웠다).
 
 CP_COUNT = Integer(ENV.fetch("CP_COUNT", 3))      # 3 = etcd 쿼럼 2. 2 는 쓰지 않는다(한 대만 죽어도 쿼럼 상실)
 W_COUNT  = Integer(ENV.fetch("W_COUNT", 5))
@@ -27,7 +27,7 @@ NET = File.read(FUSION_NET_CONF)[/VNET_1_HOSTONLY_SUBNET (\d+\.\d+\.\d+)\.\d+/, 
 #   .29        ks-tor   — ToR(상단) 스위치/라우터 역할. FRR 로 BGP(AS 65000), 노드들(AS 65010)과 피어링
 #   .30        API VIP (kube-vip, ARP)
 #   .31~.33    ks-cp1~3
-#   .41~.45    ks-w1~5 (.46·.47 = 꺼 둔 ks-w6·7)
+#   .41~.45    ks-w1~5 (.46·.47 = ks-w6·7 자리, VM 은 지움)
 #   .210~.219  Cilium LB 풀 "L2" — 노드 서브넷 안 VIP, ARP 로 광고 (Harbor = .210)
 #   10.250.0.0/24  Cilium LB 풀 "BGP" — 노드 서브넷 밖 VIP 대역, BGP 로 ToR 에 경로 광고 (ECMP)
 NODES = [{ name: "ks-tor", ip: "#{NET}.29", mem: TOR_MEM }] +
