@@ -1,0 +1,9 @@
+data check: 1|t
+### A3 19:21:30 ks-w3: by-id 로 등록된 상태에서 dummy 를 다시 붙여 재부팅 (sdb → sdc 로 다시 밀림)
+up 19:22:40 sda    64G sdb     1G sdc    10G 
++0s 19:22:41 node=Ready disk=False//dev/disk/by-id/wwn-0x5000c2944851f80e uuid=1d0ae6f0 | vol: attached/healthy detached/faulted attached/healthy | pg 2/3 primary=pg-v2-1 | pg-v2-1=Running(1/1) pg-v2-2=Pending(0/1) pg-v2-3=Running(1/1) 
++22s 19:23:03 node=Ready disk=False//dev/disk/by-id/wwn-0x5000c2944851f80e uuid=1d0ae6f0 | vol: attached/healthy detached/faulted attached/healthy | pg 2/3 primary=pg-v2-1 | pg-v2-1=Running(1/1) pg-v2-2=Init:0/1(0/1) pg-v2-3=Running(1/1) 
++92s 19:24:13 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c2944851f80e uuid=1d0ae6f0 | vol: attached/healthy attaching/unknown attached/healthy | pg 2/3 primary=pg-v2-1 | pg-v2-1=Running(1/1) pg-v2-2=Init:0/1(0/1) pg-v2-3=Running(1/1) 
++97s 19:24:18 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c2944851f80e uuid=1d0ae6f0 | vol: attached/healthy attached/healthy attached/healthy | pg 2/3 primary=pg-v2-1 | pg-v2-1=Running(1/1) pg-v2-2=Init:0/1(0/1) pg-v2-3=Running(1/1) 
++114s 19:24:35 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c2944851f80e uuid=1d0ae6f0 | vol: attached/healthy attached/healthy attached/healthy | pg 2/3 primary=pg-v2-1 | pg-v2-1=Running(1/1) pg-v2-2=Running(0/1) pg-v2-3=Running(1/1) 
++119s 19:24:40 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c2944851f80e uuid=1d0ae6f0 | vol: attached/healthy attached/healthy attached/healthy | pg 3/3 primary=pg-v2-1 | pg-v2-1=Running(1/1) pg-v2-2=Running(1/1) pg-v2-3=Running(1/1) 

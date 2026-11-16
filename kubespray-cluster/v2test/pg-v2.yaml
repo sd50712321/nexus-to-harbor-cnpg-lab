@@ -1,0 +1,12 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata: {name: pg-v2, namespace: v2test}
+spec:
+  instances: 3
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.15-minimal-bookworm
+  smartShutdownTimeout: 15
+  affinity: {enablePodAntiAffinity: true, topologyKey: kubernetes.io/hostname, podAntiAffinityType: required}
+  postgresql:
+    synchronous: {method: any, number: 1}
+  storage: {storageClass: longhorn-v2-single, size: 2Gi}
+  resources: {requests: {cpu: 50m, memory: 192Mi}, limits: {memory: 384Mi}}

@@ -1,0 +1,36 @@
+### B1 19:39:57 ks-w2(primary) 강제 정지 → 7분 뒤 기동
+killed 19:40:01
++1s 19:40:02 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: attached/healthy attached/healthy attached/healthy | pg 3/3 primary=pg-v2-1 | pg-v2-1=Running(1/1) pg-v2-2=Running(1/1) pg-v2-3=Running(1/1) 
++48s 19:40:49 node=NotReady disk=False//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: attached/unknown attached/healthy attached/healthy | pg 2/3 primary=pg-v2-1 | pg-v2-1=Running(1/1) pg-v2-2=Running(1/1) pg-v2-3=Running(1/1) 
++70s 19:41:11 node=NotReady disk=False//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: attached/unknown attached/healthy attached/healthy | pg 2/3 primary=pg-v2-2 | pg-v2-1=Running(1/1) pg-v2-2=Running(1/1) pg-v2-3=Running(1/1) 
++351s 19:45:52 node=NotReady disk=False//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: detached/faulted attached/healthy attached/healthy | pg 2/3 primary=pg-v2-2 | pg-v2-1=Terminating(1/1) pg-v2-2=Running(1/1) pg-v2-3=Running(1/1) 
+--- down 상태 스냅샷
+  pg-v2-1 1/1 Terminating ks-w2
+  pg-v2-2 1/1 Running ks-w3
+  pg-v2-3 1/1 Running ks-w1
+  pvc-116ef239-12c4-4685-a7df-b1a1ec7949dc ks-w2 true
+  pvc-aa8851f4-11fb-412b-9573-813db66c3895 ks-w1 true
+  pvc-848440d6-5c32-483b-836d-e4b57e4e3cc2 ks-w3 true
+### 기동 19:47:01
+up 19:47:30
++0s 19:47:30 node=Ready disk=False//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: detached/faulted attached/healthy attached/healthy | pg 2/3 primary=pg-v2-2 | pg-v2-1=Terminating(0/1) pg-v2-2=Running(1/1) pg-v2-3=Running(1/1) 
++11s 19:47:41 node=Ready disk=False//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: detached/faulted attached/healthy attached/healthy | pg 2/3 primary=pg-v2-2 | pg-v2-1=Unknown(0/1) pg-v2-2=Running(1/1) pg-v2-3=Running(1/1) 
++27s 19:47:57 node=Ready disk=False//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: detached/faulted attached/healthy attached/healthy | pg 2/3 primary=pg-v2-2 | pg-v2-1=Init:0/1(0/1) pg-v2-2=Running(1/1) pg-v2-3=Running(1/1) 
++81s 19:48:51 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: attaching/unknown attached/healthy attached/healthy | pg 2/3 primary=pg-v2-2 | pg-v2-1=Init:0/1(0/1) pg-v2-2=Running(1/1) pg-v2-3=Running(1/1) 
++87s 19:48:57 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: attached/healthy attached/healthy attached/healthy | pg 2/3 primary=pg-v2-2 | pg-v2-1=Init:0/1(0/1) pg-v2-2=Running(1/1) pg-v2-3=Running(1/1) 
++92s 19:49:02 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: attached/healthy attached/healthy attached/healthy | pg 2/3 primary=pg-v2-2 | pg-v2-1=Terminating(0/1) pg-v2-2=Running(1/1) pg-v2-3=Running(1/1) 
++98s 19:49:08 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: attached/healthy attached/healthy attached/healthy | pg 2/3 primary=pg-v2-2 | pg-v2-1=Init:0/1(0/1) pg-v2-2=Running(1/1) pg-v2-3=Running(1/1) 
++103s 19:49:13 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: attached/healthy attached/healthy attached/healthy | pg 2/3 primary=pg-v2-2 | pg-v2-1=Running(0/1) pg-v2-2=Running(1/1) pg-v2-3=Running(1/1) 
++114s 19:49:24 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: attached/healthy attached/healthy attached/healthy | pg 3/3 primary=pg-v2-2 | pg-v2-1=Running(1/1) pg-v2-2=Running(1/1) pg-v2-3=Running(1/1) 
+35m         Warning   FailedScheduling              pod/pg-v2-2                         0/8 nodes are available: 2 node(s) didn't match PersistentVolume's node affinity, 6 node(s) had untolerated taint(s). no new claims to deallocate, preemption: 0/8 nodes are
+35m         Warning   FailedMount                   pod/pg-v2-2                         MountVolume.MountDevice failed for volume "pvc-848440d6-5c32-483b-836d-e4b57e4e3cc2" : kubernetes.io/csi: attacher.MountDevice failed to create newCsiDriverClient: driver n
+28m         Warning   FailedMount                   pod/pg-v2-2                         MountVolume.MountDevice failed for volume "pvc-848440d6-5c32-483b-836d-e4b57e4e3cc2" : rpc error: code = InvalidArgument desc = volume pvc-848440d6-5c32-483b-836d-e4b57e4e3
+26m         Warning   FailedScheduling              pod/pg-v2-2                         0/8 nodes are available: 2 node(s) didn't match PersistentVolume's node affinity, 6 node(s) had untolerated taint(s). no new claims to deallocate, preemption: 0/8 nodes are
+26m         Warning   FailedMount                   pod/pg-v2-2                         MountVolume.MountDevice failed for volume "pvc-848440d6-5c32-483b-836d-e4b57e4e3cc2" : kubernetes.io/csi: attacher.MountDevice failed to create newCsiDriverClient: driver n
+23m         Warning   FailedScheduling              pod/pg-v2-3                         0/8 nodes are available: 2 node(s) didn't match PersistentVolume's node affinity, 6 node(s) had untolerated taint(s). no new claims to deallocate, preemption: 0/8 nodes are
+22m         Warning   FailedMount                   pod/pg-v2-3                         MountVolume.MountDevice failed for volume "pvc-aa8851f4-11fb-412b-9573-813db66c3895" : kubernetes.io/csi: attacher.MountDevice failed to create newCsiDriverClient: driver n
+12m         Warning   FailedMount                   pod/pg-v2-3                         MountVolume.MountDevice failed for volume "pvc-aa8851f4-11fb-412b-9573-813db66c3895" : rpc error: code = InvalidArgument desc = volume pvc-aa8851f4-11fb-412b-9573-813db66c3
+8m35s       Warning   NodeNotReady                  pod/pg-v2-1                         Node is not ready
+110s        Warning   FailedMount                   pod/pg-v2-1                         MountVolume.MountDevice failed for volume "pvc-116ef239-12c4-4685-a7df-b1a1ec7949dc" : kubernetes.io/csi: attacher.MountDevice failed to create newCsiDriverClient: driver n
+110s        Warning   FailedMount                   pod/pg-v2-1                         MountVolume.SetUp failed for volume "kube-api-access-blgfs" : object "v2test"/"kube-root-ca.crt" not registered
+55s         Warning   FailedMount                   pod/pg-v2-1                         MountVolume.MountDevice failed for volume "pvc-116ef239-12c4-4685-a7df-b1a1ec7949dc" : rpc error: code = InvalidArgument desc = volume pvc-116ef239-12c4-4685-a7df-b1a1ec794

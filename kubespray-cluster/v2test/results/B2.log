@@ -1,0 +1,39 @@
+### B2 19:53:58 ks-w2(pg-r3-2, 3벌 복제 볼륨) 강제 정지 — 아무것도 안 하고 13분 관찰
+killed 19:54:02
++1s 19:54:03 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: attached/healthy attached/healthy | pg 2/2 primary=pg-r3-1 | pg-r3-1=Running(1/1)@ks-w1 pg-r3-2=Running(1/1)@ks-w2 
++27s 19:54:29 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: attached/degraded attached/healthy | pg 2/2 primary=pg-r3-1 | pg-r3-1=Running(1/1)@ks-w1 pg-r3-2=Running(1/1)@ks-w2 
++38s 19:54:40 node=NotReady disk=False//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: attached/degraded attached/healthy | pg 2/2 primary=pg-r3-1 | pg-r3-1=Running(1/1)@ks-w1 pg-r3-2=Running(1/1)@ks-w2 
++43s 19:54:45 node=NotReady disk=False//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: attached/degraded attached/unknown | pg 1/2 primary=pg-r3-1 | pg-r3-1=Running(1/1)@ks-w1 pg-r3-2=Running(1/1)@ks-w2 
++340s 19:59:42 node=NotReady disk=False//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: attached/degraded attaching/unknown | pg 1/2 primary=pg-r3-1 | pg-r3-1=Running(1/1)@ks-w1 pg-r3-2=Terminating(1/1)@ks-w2 
+--- 13분 시점
+  pg-r3-1 1/1 Running ks-w1
+  pg-r3-2 1/1 Terminating ks-w2
+  pvc-92489207-301c-4de1-a69e-3e5c159e941d ks-w1 true
+  pvc-cf1fad2c-1633-4f07-9a96-8cab3b95ed21 ks-w2 true
+16m         Warning   FailedScheduling              pod/pg-r3-2-join-4hhqg              0/8 nodes are available: persistentvolumeclaim "pg-r3-2" not found. not found
+14m         Warning   FailedMount                   pod/pg-r3-2                         MountVolume.MountDevice failed for volume "pvc-cf1fad2c-1633-4f07-9a96-8cab3b95ed21" : kubernetes.io/csi: attacher.MountDevice failed to create newCsiDriverClient: driver name driver.longhorn.
+14m         Warning   FailedMount                   pod/pg-r3-2                         MountVolume.MountDevice failed for volume "pvc-cf1fad2c-1633-4f07-9a96-8cab3b95ed21" : rpc error: code = InvalidArgument desc = volume pvc-cf1fad2c-1633-4f07-9a96-8cab3b95ed21 hasn't been atta
+12m         Warning   NodeNotReady                  pod/pg-r3-2                         Node is not ready
+### B3 20:07:03 out-of-service taint 적용
+node/ks-w2 tainted
++0s 20:07:03 node=NotReady disk=False//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: attached/degraded attaching/unknown | pg 1/2 primary=pg-r3-1 | pg-r3-1=Running(1/1)@ks-w1 pg-r3-2=Terminating(1/1)@ks-w2 
++5s 20:07:08 node=NotReady disk=False//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: attached/degraded detaching/unknown | pg 1/2 primary=pg-r3-1 | pg-r3-1=Running(1/1)@ks-w1 pg-r3-2=Init:0/1(0/1)@ks-w3 
++11s 20:07:14 node=NotReady disk=False//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: attached/degraded attaching/healthy | pg 1/2 primary=pg-r3-1 | pg-r3-1=Running(1/1)@ks-w1 pg-r3-2=Init:0/1(0/1)@ks-w3 
++16s 20:07:19 node=NotReady disk=False//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: attached/degraded attached/degraded | pg 1/2 primary=pg-r3-1 | pg-r3-1=Running(1/1)@ks-w1 pg-r3-2=Running(0/1)@ks-w3 
++27s 20:07:30 node=NotReady disk=False//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: attached/degraded attached/degraded | pg 2/2 primary=pg-r3-1 | pg-r3-1=Running(1/1)@ks-w1 pg-r3-2=Running(1/1)@ks-w3 
+  pg-r3-1 1/1 Running ks-w1
+  pg-r3-2 1/1 Running ks-w3
+### 기동 20:07:30
+node/ks-w2 untainted
+up 20:08:04
++0s 20:08:04 node=Ready disk=False//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: detached/faulted attached/healthy attached/degraded attached/healthy attached/degraded | pg 2/3 primary=pg-v2-2 | pg-v2-1=Pending(0/1)@<none> pg-v2-2=Running(1/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++27s 20:08:31 node=Ready disk=False//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: detached/faulted attached/healthy attached/degraded attached/healthy attached/degraded | pg 2/3 primary=pg-v2-2 | pg-v2-1=Init:0/1(0/1)@ks-w2 pg-v2-2=Running(1/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++98s 20:09:42 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: detached/unknown attached/healthy attached/degraded attached/healthy attached/degraded | pg 2/3 primary=pg-v2-2 | pg-v2-1=Init:0/1(0/1)@ks-w2 pg-v2-2=Running(1/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++125s 20:10:09 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: detached/unknown attached/healthy attached/healthy attached/healthy attached/healthy | pg 2/3 primary=pg-v2-2 | pg-v2-1=Terminating(0/1)@ks-w2 pg-v2-2=Running(1/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++130s 20:10:14 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: detached/unknown attached/healthy attached/healthy attached/healthy attached/healthy | pg 2/3 primary=pg-v2-2 | pg-v2-1=Init:0/1(0/1)@ks-w2 pg-v2-2=Running(1/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++141s 20:10:25 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: attaching/unknown attached/healthy attached/healthy attached/healthy attached/healthy | pg 2/3 primary=pg-v2-2 | pg-v2-1=Init:0/1(0/1)@ks-w2 pg-v2-2=Running(1/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++146s 20:10:30 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: attached/unknown attached/healthy attached/healthy attached/healthy attached/healthy | pg 2/3 primary=pg-v2-2 | pg-v2-1=Init:0/1(0/1)@ks-w2 pg-v2-2=Running(1/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++152s 20:10:36 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: attached/healthy attached/healthy attached/healthy attached/healthy attached/healthy | pg 2/3 primary=pg-v2-2 | pg-v2-1=Init:0/1(0/1)@ks-w2 pg-v2-2=Running(1/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++163s 20:10:47 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: attached/healthy attached/healthy attached/healthy attached/healthy attached/healthy | pg 2/3 primary=pg-v2-2 | pg-v2-1=Running(0/1)@ks-w2 pg-v2-2=Running(1/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++169s 20:10:53 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: attached/healthy attached/healthy attached/healthy attached/healthy attached/healthy | pg 3/3 primary=pg-v2-2 | pg-v2-1=Running(1/1)@ks-w2 pg-v2-2=Running(1/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
+DONE

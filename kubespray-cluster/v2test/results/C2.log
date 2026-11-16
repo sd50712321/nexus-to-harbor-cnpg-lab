@@ -1,0 +1,20 @@
+### 20:22:18 (UTC 11:22:18) pg-r3 primary=pg-r3-1 @ ks-w1 강제 정지. operator: ks-w3 ks-w2  leader=cnpg-cloudnative-pg-75c894985d-vqpb
+killed 20:22:22 (UTC 11:22:22)
++1s 20:22:23 Ready | pg 2/2 primary=pg-r3-1 | pg-r3-1=Running(1/1)@ks-w1 pg-r3-2=Running(1/1)@ks-w3 
++22s 20:22:44 Ready | pg 2/2 primary=pg-r3-1 | pg-r3-1=Running(1/1)@ks-w1 pg-r3-2=Running(1/1)@ks-w3 
++48s 20:23:10 NotReady | pg 1/2 primary=pg-r3-1 | pg-r3-1=Running(1/1)@ks-w1 pg-r3-2=Running(1/1)@ks-w3 
++85s 20:23:47 NotReady | pg 1/2 primary=pg-r3-2 | pg-r3-1=Running(1/1)@ks-w1 pg-r3-2=Running(1/1)@ks-w3 
+### 기동 20:26:26
+up 20:26:53
++0s 20:26:54 Ready | pg 1/2 primary=pg-r3-2 | pg-r3-1=Unknown(0/1)@ks-w1 pg-r3-2=Running(1/1)@ks-w3 
++32s 20:27:26 Ready | pg 1/2 primary=pg-r3-2 | pg-r3-1=Unknown(0/1)@ks-w1 pg-r3-2=Running(1/1)@ks-w3 
++48s 20:27:42 Ready | pg 1/2 primary=pg-r3-2 | pg-r3-1=Unknown(0/1)@ks-w1 pg-r3-2=Running(1/1)@ks-w3 
++54s 20:27:48 Ready | pg 1/2 primary=pg-r3-2 | pg-r3-1=Unknown(0/1)@ks-w1 pg-r3-2=Running(1/1)@ks-w3 
++64s 20:27:58 Ready | pg 1/2 primary=pg-r3-2 | pg-r3-1=Init:0/1(0/1)@ks-w1 pg-r3-2=Running(1/1)@ks-w3 
++70s 20:28:04 Ready | pg 1/2 primary=pg-r3-2 | pg-r3-1=Running(0/1)@ks-w1 pg-r3-2=Running(1/1)@ks-w3 
++80s 20:28:14 Ready | pg 2/2 primary=pg-r3-2 | pg-r3-1=Running(1/1)@ks-w1 pg-r3-2=Running(1/1)@ks-w3 
++91s 20:28:25 Ready | pg 2/2 primary=pg-r3-2 | pg-r3-1=Running(1/1)@ks-w1 pg-r3-2=Running(1/1)@ks-w3 
+samples 346 11:21:48 ~ 11:28:25
+write fail runs: ['11:22:25~11:23:51 (56 samples)']
+read fail runs: ['11:23:52~11:28:11 (245 samples)']
+DONE

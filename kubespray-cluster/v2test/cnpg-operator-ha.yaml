@@ -1,0 +1,7 @@
+# CNPG operator 를 2개로 — 한 노드에 몰리지 않게. operator 가 죽은 노드에 있으면 그 파드가 다시 뜰 때까지(기본 300초 축출 대기) 승격이 시작되지 않는다
+replicaCount: 2
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+    - topologyKey: kubernetes.io/hostname
+      labelSelector: {matchLabels: {app.kubernetes.io/name: cloudnative-pg}}

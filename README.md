@@ -310,6 +310,7 @@ Harbor 어댑터 목록에 Nexus 전용은 없고 범용 `docker-registry` 어�
 - **설정 파일.** 템플릿을 인벤토리 값으로 풀어 놓은 Helm values·매니페스트와 적용 순서가 [kubespray-cluster/rendered/](kubespray-cluster/rendered/) 에 있다(랩 값, 견본 값). 어느 설정이 어느 파일에 있는지는 kubespray-cluster README 의 '설정 파일'.
 - **인프라 요청서.** 스위치·BGP·방화벽 포트·주소 계획, 그리고 **노드가 VM 일 때** 가상화 담당자에게 확인할 것(6절)은 [kubespray-cluster/INFRA.md](kubespray-cluster/INFRA.md).
 - **실서버에 영향이 있는 발견.** CNPG `smartShutdownTimeout` 기본 180초가 계획된 승격을 3분 늦춘다. Harbor 차트 기본값은 파드 분산 규칙이 없어, 워커 1대 정지로 Harbor 전체가 최대 10분 멈출 수 있다. 진단 과정은 [kubespray-cluster/TROUBLESHOOTING.md](kubespray-cluster/TROUBLESHOOTING.md).
+- **Longhorn V2 + CNPG 시험 (2026-11-16).** V2 디스크를 `/dev/sdX` 로 등록하면 재부팅 뒤 이름이 밀려 붙지 않는다. `path` 만 `/dev/disk/by-id/wwn-…` 로 바꾸면 데이터를 유지한 채 돌아온다([LONGHORN-V2-DISK.md](kubespray-cluster/LONGHORN-V2-DISK.md)). primary 노드가 갑자기 죽으면 인스턴스 3개 기준 쓰기가 operator 1개일 때 최대 6분 26초, operator 2개면 1분 안팎 끊기고, 계획된 전환은 4~6초다. 죽은 노드의 인스턴스는 `out-of-service` taint 없이는 옮겨 가지 않는다([V2-CNPG-FAILOVER.md](kubespray-cluster/V2-CNPG-FAILOVER.md)). 재현 순서와 설정, 로그 원문은 [kubespray-cluster/v2test/](kubespray-cluster/v2test/README.md).
 
 # 부록 A. 실측 기록 (랩 로그 원문)
 

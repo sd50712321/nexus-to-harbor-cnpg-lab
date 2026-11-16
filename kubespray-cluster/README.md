@@ -10,7 +10,8 @@ Harbor 의 DB 는 CloudNativePG(CNPG) 3개 인스턴스, 이미지 저장소는 
 |---|---|
 | [INFRA.md](INFRA.md) | 네트워크·보안팀·가상화 담당자에게 요청할 것: 주소 계획, 스위치(L2), BGP, 방화벽 포트 표, 주의점, **노드가 VM 일 때**(6절) |
 | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) | 구축 중 막힌 지점과 원인을 좁힌 과정 (실서버에도 해당하는 것 표시) |
-| [LONGHORN-V2-DISK.md](LONGHORN-V2-DISK.md) | Longhorn V2 에서 노드 재부팅 뒤 디스크가 다시 안 붙을 때: 원인(`/dev/sdX` 이름 밀림)과 고정 경로 등록법. 랩 미재현, 공식 문서·이슈 근거 |
+| [LONGHORN-V2-DISK.md](LONGHORN-V2-DISK.md) | Longhorn V2 에서 노드 재부팅 뒤 디스크가 다시 안 붙을 때: 원인(`/dev/sdX` 이름 밀림)과 고정 경로 등록법, 이미 깨진 노드 고치는 법. 랩 워커 3대에서 재현(7절) |
+| [V2-CNPG-FAILOVER.md](V2-CNPG-FAILOVER.md) | V2 볼륨 위의 CNPG 에서 노드가 죽었을 때: 승격까지 걸리는 시간, 쓰기 중단, 파드가 안 옮겨 가는 이유와 줄이는 법 (랩 실측) |
 | [rendered/](rendered/) | 템플릿을 인벤토리 값으로 풀어 놓은 Helm values·매니페스트와 적용 순서 (아래 '설정 파일') |
 | [BUNDLE.md](BUNDLE.md) | **다운로드가 안 될 때**: 모든 코드 파일을 붙여넣기용 블럭으로 모은 것 (아래 '파일 옮기기') |
 

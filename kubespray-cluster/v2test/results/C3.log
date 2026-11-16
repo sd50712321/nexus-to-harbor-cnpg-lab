@@ -1,0 +1,22 @@
+### 20:28:56 (UTC 11:28:56) pg-v2 primary=pg-v2-1 @ ks-w2 강제 정지. operator: ks-w3 ks-w2  leader=cnpg-cloudnative-pg-75c894985d-vqpb
+killed 20:29:00 (UTC 11:29:00)
++1s 20:29:01 Ready | pg 3/3 primary=pg-v2-1 | pg-v2-1=Running(1/1)@ks-w2 pg-v2-2=Running(1/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++32s 20:29:32 Ready | pg 3/3 primary=pg-v2-1 | pg-v2-1=Running(1/1)@ks-w2 pg-v2-2=Running(1/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++38s 20:29:38 NotReady | pg 2/3 primary=pg-v2-1 | pg-v2-1=Running(1/1)@ks-w2 pg-v2-2=Running(1/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++43s 20:29:43 NotReady | pg 2/3 primary=pg-v2-1 | pg-v2-1=Running(1/1)@ks-w2 pg-v2-2=Running(1/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++59s 20:29:59 NotReady | pg 2/3 primary=pg-v2-2 | pg-v2-1=Running(1/1)@ks-w2 pg-v2-2=Running(1/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
+### 기동 20:33:04
+up 20:33:32
++0s 20:33:32 Ready | pg 2/3 primary=pg-v2-2 | pg-v2-1=Unknown(0/1)@ks-w2 pg-v2-2=Running(1/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++43s 20:34:15 Ready | pg 2/3 primary=pg-v2-2 | pg-v2-1=Unknown(0/1)@ks-w2 pg-v2-2=Running(1/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++49s 20:34:21 Ready | pg 2/3 primary=pg-v2-2 | pg-v2-1=Unknown(0/1)@ks-w2 pg-v2-2=Running(1/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++102s 20:35:14 Ready | pg 2/3 primary=pg-v2-2 | pg-v2-1=Unknown(0/1)@ks-w2 pg-v2-2=Running(1/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++108s 20:35:20 Ready | pg 2/3 primary=pg-v2-2 | pg-v2-1=Unknown(0/1)@ks-w2 pg-v2-2=Running(1/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++129s 20:35:41 Ready | pg 2/3 primary=pg-v2-2 | pg-v2-1=Unknown(0/1)@ks-w2 pg-v2-2=Running(1/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++135s 20:35:47 Ready | pg 2/3 primary=pg-v2-2 | pg-v2-1=Init:0/1(0/1)@ks-w2 pg-v2-2=Running(1/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++140s 20:35:52 Ready | pg 2/3 primary=pg-v2-2 | pg-v2-1=Running(0/1)@ks-w2 pg-v2-2=Running(1/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++162s 20:36:14 Ready | pg 3/3 primary=pg-v2-2 | pg-v2-1=Running(1/1)@ks-w2 pg-v2-2=Running(1/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
+samples 470 11:27:11 ~ 11:36:14
+write fail runs: ['11:29:02~11:30:00 (33 samples)']
+read fail runs: none
+DONE

@@ -12,12 +12,12 @@ mkdir -p ~/kubespray-cluster && cd ~/kubespray-cluster
 
 3. 맨 아래 sha256 대조 블럭을 붙여넣어 모든 줄이 `OK` 인지 확인한다.
 
-파일 38개. 문서(README·INFRA·TROUBLESHOOTING)는 GitHub 화면에서 바로 읽으면 되므로 넣지 않았다.
+파일 51개. 문서(README·INFRA·TROUBLESHOOTING)는 GitHub 화면에서 바로 읽으면 되므로 넣지 않았다.
 
 | # | 파일 | 줄 수 |
 |---|---|---|
-| 1 | [.gitignore](#1-gitignore) | 12 |
-| 2 | [Vagrantfile](#2-vagrantfile) | 62 |
+| 1 | [.gitignore](#1-gitignore) | 13 |
+| 2 | [Vagrantfile](#2-vagrantfile) | 80 |
 | 3 | [addons.yml](#3-addonsyml) | 154 |
 | 4 | [install.sh](#4-installsh) | 85 |
 | 5 | [preflight.yml](#5-preflightyml) | 69 |
@@ -40,20 +40,33 @@ mkdir -p ~/kubespray-cluster && cd ~/kubespray-cluster
 | 22 | [scripts/make-bundle.sh](#22-scriptsmake-bundlesh) | 79 |
 | 23 | [scripts/render-values.sh](#23-scriptsrender-valuessh) | 13 |
 | 24 | [scripts/rolling-reload.sh](#24-scriptsrolling-reloadsh) | 29 |
-| 25 | [templates/apply-order.md.j2](#25-templatesapply-ordermdj2) | 71 |
-| 26 | [templates/cilium-l2.yaml.j2](#26-templatescilium-l2yamlj2) | 15 |
-| 27 | [templates/harbor-bgp-svc.yaml.j2](#27-templatesharbor-bgp-svcyamlj2) | 38 |
-| 28 | [templates/harbor-pg.yaml.j2](#28-templatesharbor-pgyamlj2) | 32 |
-| 29 | [templates/harbor-values.yaml.j2](#29-templatesharbor-valuesyamlj2) | 85 |
-| 30 | [templates/ingress-nginx-values.yaml.j2](#30-templatesingress-nginx-valuesyamlj2) | 22 |
-| 31 | [templates/longhorn-sc-single.yaml.j2](#31-templateslonghorn-sc-singleyamlj2) | 14 |
-| 32 | [templates/longhorn-values.yaml.j2](#32-templateslonghorn-valuesyamlj2) | 20 |
-| 33 | [inventory/lab/inventory.ini](#33-inventorylabinventoryini) | 23 |
-| 34 | [inventory/prod-sample/inventory.ini](#34-inventoryprod-sampleinventoryini) | 22 |
-| 35 | [inventory/lab/group_vars/all/lab.yml](#35-inventorylabgroup_varsalllabyml) | 46 |
-| 36 | [inventory/lab/group_vars/k8s_cluster/lab.yml](#36-inventorylabgroup_varsk8s_clusterlabyml) | 92 |
-| 37 | [inventory/prod-sample/group_vars/all/env.yml](#37-inventoryprod-samplegroup_varsallenvyml) | 58 |
-| 38 | [inventory/prod-sample/group_vars/k8s_cluster/k8s.yml](#38-inventoryprod-samplegroup_varsk8s_clusterk8syml) | 96 |
+| 25 | [scripts/v2-disks.sh](#25-scriptsv2-diskssh) | 11 |
+| 26 | [scripts/v2-node-prep.sh](#26-scriptsv2-node-prepsh) | 19 |
+| 27 | [templates/apply-order.md.j2](#27-templatesapply-ordermdj2) | 71 |
+| 28 | [templates/cilium-l2.yaml.j2](#28-templatescilium-l2yamlj2) | 15 |
+| 29 | [templates/harbor-bgp-svc.yaml.j2](#29-templatesharbor-bgp-svcyamlj2) | 38 |
+| 30 | [templates/harbor-pg.yaml.j2](#30-templatesharbor-pgyamlj2) | 32 |
+| 31 | [templates/harbor-values.yaml.j2](#31-templatesharbor-valuesyamlj2) | 85 |
+| 32 | [templates/ingress-nginx-values.yaml.j2](#32-templatesingress-nginx-valuesyamlj2) | 22 |
+| 33 | [templates/longhorn-sc-single.yaml.j2](#33-templateslonghorn-sc-singleyamlj2) | 14 |
+| 34 | [templates/longhorn-values.yaml.j2](#34-templateslonghorn-valuesyamlj2) | 20 |
+| 35 | [v2test/b2.sh](#35-v2testb2sh) | 17 |
+| 36 | [v2test/c1.sh](#36-v2testc1sh) | 12 |
+| 37 | [v2test/c2.sh](#37-v2testc2sh) | 11 |
+| 38 | [v2test/cnpg-operator-ha.yaml](#38-v2testcnpg-operator-hayaml) | 7 |
+| 39 | [v2test/pg-r3.yaml](#39-v2testpg-r3yaml) | 11 |
+| 40 | [v2test/pg-v2.yaml](#40-v2testpg-v2yaml) | 12 |
+| 41 | [v2test/probe-report.sh](#41-v2testprobe-reportsh) | 17 |
+| 42 | [v2test/probe.yaml](#42-v2testprobeyaml) | 24 |
+| 43 | [v2test/sc-v2.yaml](#43-v2testsc-v2yaml) | 20 |
+| 44 | [v2test/state.sh](#44-v2teststatesh) | 11 |
+| 45 | [v2test/watch.sh](#45-v2testwatchsh) | 9 |
+| 46 | [inventory/lab/inventory.ini](#46-inventorylabinventoryini) | 23 |
+| 47 | [inventory/prod-sample/inventory.ini](#47-inventoryprod-sampleinventoryini) | 22 |
+| 48 | [inventory/lab/group_vars/all/lab.yml](#48-inventorylabgroup_varsalllabyml) | 46 |
+| 49 | [inventory/lab/group_vars/k8s_cluster/lab.yml](#49-inventorylabgroup_varsk8s_clusterlabyml) | 92 |
+| 50 | [inventory/prod-sample/group_vars/all/env.yml](#50-inventoryprod-samplegroup_varsallenvyml) | 58 |
+| 51 | [inventory/prod-sample/group_vars/k8s_cluster/k8s.yml](#51-inventoryprod-samplegroup_varsk8s_clusterk8syml) | 96 |
 
 ## 1. .gitignore
 
@@ -71,6 +84,7 @@ inventory/*/ssh.cfg
 # 실행 기록·개인 메모
 logs/
 notes/
+v2disks/
 __KS_EOF__
 ```
 
@@ -89,13 +103,22 @@ cat > 'Vagrantfile' <<'__KS_EOF__'
 # 메모리 합계 = 3 × CP_MEM + W_COUNT × W_MEM + TOR (기본 3×2560 + 5×2688 + 512 MB = 약 21 GB). CP 1792MB 는 etcd+apiserver 로 메모리 150% → kube-vip 리스 실패(VIP 이동)를 겪어 2560 으로 올림. 32 GB Mac 에서 다른 VM/podman 을 끄고 돌린다.
 # 워커는 처음에 7대 × 1920MB 였다. kubelet 이 노드마다 868Mi 를 떼어 두고(kubeReserved 256 + systemReserved 512 + eviction 100) Cilium·Longhorn 데몬이 또 깔려서,
 # DB 복구처럼 I/O 가 몰리면 memory.available < 100Mi → Longhorn 파드 퇴거 → 그 노드 볼륨 정지가 반복됐다(TROUBLESHOOTING 16절). 같은 합계로 5대 × 2688MB 로 바꿨다.
-# 7대로 되돌리려면 W_COUNT=7 W_MEM=1920 을 주고 scale.yml 로 ks-w6·ks-w7 을 다시 넣는다(두 VM 은 지우지 않고 꺼 두었다).
+# 7대로 되돌리려면 W_COUNT=7 W_MEM=1920 을 주고 vagrant up 으로 ks-w6·ks-w7 을 새로 만든 뒤 scale.yml 로 넣는다(두 VM 은 2026-11-13 에 디스크 확보를 위해 지웠다).
 
 CP_COUNT = Integer(ENV.fetch("CP_COUNT", 3))      # 3 = etcd 쿼럼 2. 2 는 쓰지 않는다(한 대만 죽어도 쿼럼 상실)
 W_COUNT  = Integer(ENV.fetch("W_COUNT", 5))
 CP_MEM   = Integer(ENV.fetch("CP_MEM", 2560))
 W_MEM    = Integer(ENV.fetch("W_MEM", 2688))
 TOR_MEM  = Integer(ENV.fetch("TOR_MEM", 512))
+# Longhorn V2(SPDK) 시험용 — 기본은 꺼짐. V2_NODES 에 적은 워커만 메모리를 V2_MEM 으로 올리고 빈 SATA 디스크를 붙인다(LONGHORN-V2-DISK.md 8절).
+#   V2_NODES=ks-w1,ks-w2,ks-w3 vagrant up ks-w1 ks-w2 ks-w3
+#   게스트에서 sda=OS, sdb=dummy(1GB, 이름을 밀어내는 용), sdc=V2 디스크(10GB). V2_NO_DUMMY 에 적은 노드는 dummy 를 떼어 V2 디스크가 sdb 로 당겨진다.
+#   디스크 파일은 v2disks/<노드>-{dummy,data}.vmdk (scripts/v2-disks.sh 가 만든다)
+V2_NODES    = ENV.fetch("V2_NODES", "").split(",")
+V2_NO_DUMMY = ENV.fetch("V2_NO_DUMMY", "").split(",")
+V2_SWAP     = ENV.fetch("V2_SWAP", "").split(",")     # 적은 노드는 dummy 와 V2 디스크의 포트를 맞바꾼다 → /dev/sdc 가 엉뚱한(빈) 디스크를 가리킨다
+V2_MEM      = Integer(ENV.fetch("V2_MEM", 5120))
+V2_DISK_DIR = File.expand_path("v2disks", __dir__)
 BOX          = "bento/ubuntu-24.04"
 BOX_VERSION  = "202510.26.0"
 
@@ -107,7 +130,7 @@ NET = File.read(FUSION_NET_CONF)[/VNET_1_HOSTONLY_SUBNET (\d+\.\d+\.\d+)\.\d+/, 
 #   .29        ks-tor   — ToR(상단) 스위치/라우터 역할. FRR 로 BGP(AS 65000), 노드들(AS 65010)과 피어링
 #   .30        API VIP (kube-vip, ARP)
 #   .31~.33    ks-cp1~3
-#   .41~.45    ks-w1~5 (.46·.47 = 꺼 둔 ks-w6·7)
+#   .41~.45    ks-w1~5 (.46·.47 = ks-w6·7 자리, VM 은 지움)
 #   .210~.219  Cilium LB 풀 "L2" — 노드 서브넷 안 VIP, ARP 로 광고 (Harbor = .210)
 #   10.250.0.0/24  Cilium LB 풀 "BGP" — 노드 서브넷 밖 VIP 대역, BGP 로 ToR 에 경로 광고 (ECMP)
 NODES = [{ name: "ks-tor", ip: "#{NET}.29", mem: TOR_MEM }] +
@@ -136,6 +159,15 @@ Vagrant.configure("2") do |config|
            time.synchronize.shrink time.synchronize.tools.startup time.synchronize.tools.enable].each { |k| v.vmx[k] = "FALSE" }
         # Fusion 무료화 이후 라이선스 오인식으로 private_network 가 무시되는 문제 회피
         v.force_vmware_license = "professional"
+        if V2_NODES.include?(n[:name])
+          v.memory = V2_MEM
+          dummy = !V2_NO_DUMMY.include?(n[:name])
+          v.vmx["sata0:2.present"]  = dummy ? "TRUE" : "FALSE"
+          first, second = V2_SWAP.include?(n[:name]) ? %w[data dummy] : %w[dummy data]
+          v.vmx["sata0:2.filename"] = "#{V2_DISK_DIR}/#{n[:name]}-#{first}.vmdk"
+          v.vmx["sata0:3.present"]  = "TRUE"
+          v.vmx["sata0:3.filename"] = "#{V2_DISK_DIR}/#{n[:name]}-#{second}.vmdk"
+        end
       end
     end
   end
@@ -1267,7 +1299,7 @@ cd "$(dirname "$0")/.."
 python3 -I - "${1:-}" <<'PY'
 import os, sys, hashlib, subprocess, tempfile, filecmp
 D = '__KS_' + 'EOF__'          # heredoc 구분자 (이 파일 안에 그 줄이 그대로 나오지 않게 나눠 씀)
-SKIP_DIRS = {'kubespray', '.venv', '.vagrant', 'secrets', 'logs', 'notes', '.git', 'artifacts', 'credentials', 'rendered'}
+SKIP_DIRS = {'kubespray', '.venv', '.vagrant', 'secrets', 'logs', 'notes', '.git', 'artifacts', 'credentials', 'rendered', 'v2disks', 'results'}
 SKIP_FILES = {'ssh.cfg', 'BUNDLE.md'}
 files = []
 for root, dirs, names in os.walk('.'):
@@ -1400,7 +1432,55 @@ __KS_EOF__
 chmod +x 'scripts/rolling-reload.sh'
 ```
 
-## 25. templates/apply-order.md.j2
+## 25. scripts/v2-disks.sh
+
+```bash
+mkdir -p 'scripts'
+cat > 'scripts/v2-disks.sh' <<'__KS_EOF__'
+#!/bin/bash
+# (랩) Longhorn V2 시험용 빈 디스크 만들기: v2disks/<노드>-dummy.vmdk(1GB), <노드>-data.vmdk(10GB). 이미 있으면 건너뛴다.
+#   ./scripts/v2-disks.sh ks-w1 ks-w2 ks-w3
+set -euo pipefail
+cd "$(dirname "$0")/.."; mkdir -p v2disks
+VDM="/Applications/VMware Fusion.app/Contents/Library/vmware-vdiskmanager"
+for n in "$@"; do
+  [ -f v2disks/$n-dummy.vmdk ] || "$VDM" -c -s 1GB  -a lsilogic -t 0 v2disks/$n-dummy.vmdk
+  [ -f v2disks/$n-data.vmdk ]  || "$VDM" -c -s 10GB -a lsilogic -t 0 v2disks/$n-data.vmdk
+done
+ls -lh v2disks
+__KS_EOF__
+chmod +x 'scripts/v2-disks.sh'
+```
+
+## 26. scripts/v2-node-prep.sh
+
+```bash
+mkdir -p 'scripts'
+cat > 'scripts/v2-node-prep.sh' <<'__KS_EOF__'
+#!/bin/bash
+# Longhorn V2 를 쓸 노드 준비 (Longhorn 1.13 문서 "V2 Data Engine Requirements"): 커널 모듈 3개 + hugepage 2GiB + kubelet 재시작
+#   ./scripts/v2-node-prep.sh ks-w1 ks-w2 ks-w3
+set -uo pipefail
+cd "$(dirname "$0")/.."
+for n in "$@"; do
+  echo "== $n"
+  ssh -F inventory/lab/ssh.cfg $n 'sudo bash -s' <<'REMOTE'
+set -e
+export DEBIAN_FRONTEND=noninteractive
+dpkg -s linux-modules-extra-$(uname -r) >/dev/null 2>&1 || apt-get install -y -q linux-modules-extra-$(uname -r) >/dev/null
+printf 'vfio_pci\nuio_pci_generic\nnvme_tcp\n' > /etc/modules-load.d/longhorn-v2.conf
+for m in vfio_pci uio_pci_generic nvme_tcp; do modprobe $m; done
+echo 'vm.nr_hugepages = 1024' > /etc/sysctl.d/90-longhorn-v2-hugepages.conf
+sysctl -q -p /etc/sysctl.d/90-longhorn-v2-hugepages.conf
+systemctl restart kubelet
+echo "modules: $(lsmod | grep -cE '^(vfio_pci|uio_pci_generic|nvme_tcp) ')/3  hugepages: $(grep HugePages_Total /proc/meminfo | awk '{print $2}')"
+REMOTE
+done
+__KS_EOF__
+chmod +x 'scripts/v2-node-prep.sh'
+```
+
+## 27. templates/apply-order.md.j2
 
 ```bash
 mkdir -p 'templates'
@@ -1479,7 +1559,7 @@ cat > 'templates/apply-order.md.j2' <<'__KS_EOF__'
 __KS_EOF__
 ```
 
-## 26. templates/cilium-l2.yaml.j2
+## 28. templates/cilium-l2.yaml.j2
 
 ```bash
 mkdir -p 'templates'
@@ -1502,7 +1582,7 @@ spec:
 __KS_EOF__
 ```
 
-## 27. templates/harbor-bgp-svc.yaml.j2
+## 29. templates/harbor-bgp-svc.yaml.j2
 
 ```bash
 mkdir -p 'templates'
@@ -1548,7 +1628,7 @@ spec:
 __KS_EOF__
 ```
 
-## 28. templates/harbor-pg.yaml.j2
+## 30. templates/harbor-pg.yaml.j2
 
 ```bash
 mkdir -p 'templates'
@@ -1588,7 +1668,7 @@ spec:
 __KS_EOF__
 ```
 
-## 29. templates/harbor-values.yaml.j2
+## 31. templates/harbor-values.yaml.j2
 
 ```bash
 mkdir -p 'templates'
@@ -1681,7 +1761,7 @@ exporter:
 __KS_EOF__
 ```
 
-## 30. templates/ingress-nginx-values.yaml.j2
+## 32. templates/ingress-nginx-values.yaml.j2
 
 ```bash
 mkdir -p 'templates'
@@ -1711,7 +1791,7 @@ controller:
 __KS_EOF__
 ```
 
-## 31. templates/longhorn-sc-single.yaml.j2
+## 33. templates/longhorn-sc-single.yaml.j2
 
 ```bash
 mkdir -p 'templates'
@@ -1733,7 +1813,7 @@ parameters:
 __KS_EOF__
 ```
 
-## 32. templates/longhorn-values.yaml.j2
+## 34. templates/longhorn-values.yaml.j2
 
 ```bash
 mkdir -p 'templates'
@@ -1761,7 +1841,252 @@ longhornUI:
 __KS_EOF__
 ```
 
-## 33. inventory/lab/inventory.ini
+## 35. v2test/b2.sh
+
+```bash
+mkdir -p 'v2test'
+cat > 'v2test/b2.sh' <<'__KS_EOF__'
+#!/bin/bash
+cd "$(dirname "$0")/.."; export KUBECONFIG=$PWD/inventory/lab/artifacts/admin.conf CL=pg-r3 VOLF='pvc-(9248|cf1f)'
+N=$(kubectl -n v2test get pod pg-r3-2 -o jsonpath='{.spec.nodeName}')
+echo "### B2 $(date +%H:%M:%S) $N(pg-r3-2, 3벌 복제 볼륨) 강제 정지 — 아무것도 안 하고 13분 관찰"
+V2_NODES=ks-w1,ks-w2,ks-w3 vagrant halt $N --force >/dev/null 2>&1; echo "killed $(date +%H:%M:%S)"
+./v2test/watch.sh $N 780
+echo "--- 13분 시점"; kubectl -n v2test get pods -l cnpg.io/cluster=pg-r3 -o wide --no-headers | awk '{print " ",$1,$2,$3,$7}'
+kubectl get volumeattachment --no-headers | grep -E "9248|cf1f" | awk '{print " ",$3,$4,$5}'
+kubectl -n v2test get events --sort-by=.lastTimestamp | grep pg-r3 | grep -i warn | tail -4 | cut -c1-280
+if [ "$(kubectl -n v2test get cluster pg-r3 -o jsonpath='{.status.readyInstances}')" != 2 ]; then
+  echo "### B3 $(date +%H:%M:%S) out-of-service taint 적용"; kubectl taint node $N node.kubernetes.io/out-of-service=nodeshutdown:NoExecute | tail -1
+  ./v2test/watch.sh $N 420 'pg 2/2'
+  kubectl -n v2test get pods -l cnpg.io/cluster=pg-r3 -o wide --no-headers | awk '{print " ",$1,$2,$3,$7}'
+fi
+echo "### 기동 $(date +%H:%M:%S)"; V2_NODES=ks-w1,ks-w2,ks-w3 vagrant up $N >/dev/null 2>&1; kubectl taint node $N node.kubernetes.io/out-of-service- 2>&1 | tail -1; echo "up $(date +%H:%M:%S)"
+VOLF=. CL=pg-v2 ./v2test/watch.sh $N 480 'pg 3/3'
+echo DONE
+__KS_EOF__
+chmod +x 'v2test/b2.sh'
+```
+
+## 36. v2test/c1.sh
+
+```bash
+mkdir -p 'v2test'
+cat > 'v2test/c1.sh' <<'__KS_EOF__'
+#!/bin/bash
+cd "$(dirname "$0")/.."; export KUBECONFIG=$PWD/inventory/lab/artifacts/admin.conf CL=pg-v2 VOLF=.
+P=$(kubectl -n v2test get cluster pg-v2 -o jsonpath='{.status.currentPrimary}'); N=$(kubectl -n v2test get pod $P -o jsonpath='{.spec.nodeName}')
+echo "### C1 $(date +%H:%M:%S) (UTC $(date -u +%H:%M:%S)) primary=$P 가 있는 $N 강제 정지 — 파드는 건드리지 않음, 7분 관찰"
+V2_NODES=ks-w1,ks-w2,ks-w3 vagrant halt $N --force >/dev/null 2>&1; echo "killed $(date +%H:%M:%S) (UTC $(date -u +%H:%M:%S))"
+./v2test/watch.sh $N 420
+kubectl -n v2test get pods -l cnpg.io/cluster=pg-v2 -L cnpg.io/instanceRole -o wide --no-headers | awk '{print " ",$1,$3,$7,$NF}'
+echo "### 기동 $(date +%H:%M:%S)"; V2_NODES=ks-w1,ks-w2,ks-w3 vagrant up $N >/dev/null 2>&1; echo "up $(date +%H:%M:%S)"
+./v2test/watch.sh $N 480 'pg 3/3'
+kubectl -n v2test get pods -l cnpg.io/cluster=pg-v2 -L cnpg.io/instanceRole -o wide --no-headers | awk '{print " ",$1,$3,$7,$NF}'
+./v2test/probe-report.sh 20m
+echo DONE
+__KS_EOF__
+chmod +x 'v2test/c1.sh'
+```
+
+## 37. v2test/c2.sh
+
+```bash
+mkdir -p 'v2test'
+cat > 'v2test/c2.sh' <<'__KS_EOF__'
+#!/bin/bash
+# 인자: 클러스터 이름, 관찰 초.  primary 가 있는 노드를 강제 정지하고 건드리지 않는다
+cd "$(dirname "$0")/.."; export KUBECONFIG=$PWD/inventory/lab/artifacts/admin.conf CL=$1 VOLF=.
+P=$(kubectl -n v2test get cluster $CL -o jsonpath='{.status.currentPrimary}'); N=$(kubectl -n v2test get pod $P -o jsonpath='{.spec.nodeName}')
+echo "### $(date +%H:%M:%S) (UTC $(date -u +%H:%M:%S)) $CL primary=$P @ $N 강제 정지. operator: $(kubectl -n cnpg-system get pods -o wide --no-headers | awk '$3=="Running"{printf "%s ",$7}') leader=$(kubectl -n cnpg-system get lease db9c8771.cnpg.io -o jsonpath='{.spec.holderIdentity}' | cut -c1-35)"
+V2_NODES=ks-w1,ks-w2,ks-w3 vagrant halt $N --force >/dev/null 2>&1; echo "killed $(date +%H:%M:%S) (UTC $(date -u +%H:%M:%S))"
+./v2test/watch.sh $N ${2:-300} | sed -E 's/disk=[^|]*\| vol: [^|]*//; s/node=//'
+echo "### 기동 $(date +%H:%M:%S)"; V2_NODES=ks-w1,ks-w2,ks-w3 vagrant up $N >/dev/null 2>&1; echo "up $(date +%H:%M:%S)"
+./v2test/watch.sh $N 480 "pg $(kubectl -n v2test get cluster $CL -o jsonpath='{.spec.instances}')/" | sed -E 's/disk=[^|]*\| vol: [^|]*//; s/node=//'
+PROBE=${PROBE:-probe} ./v2test/probe-report.sh 15m
+echo DONE
+__KS_EOF__
+chmod +x 'v2test/c2.sh'
+```
+
+## 38. v2test/cnpg-operator-ha.yaml
+
+```bash
+mkdir -p 'v2test'
+cat > 'v2test/cnpg-operator-ha.yaml' <<'__KS_EOF__'
+# CNPG operator 를 2개로 — 한 노드에 몰리지 않게. operator 가 죽은 노드에 있으면 그 파드가 다시 뜰 때까지(기본 300초 축출 대기) 승격이 시작되지 않는다
+replicaCount: 2
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+    - topologyKey: kubernetes.io/hostname
+      labelSelector: {matchLabels: {app.kubernetes.io/name: cloudnative-pg}}
+__KS_EOF__
+```
+
+## 39. v2test/pg-r3.yaml
+
+```bash
+mkdir -p 'v2test'
+cat > 'v2test/pg-r3.yaml' <<'__KS_EOF__'
+# 3벌 복제 V2 볼륨 위의 CNPG 2 인스턴스 — 워커 3대 중 한 대가 비어 있어 파드가 옮겨 갈 자리가 있다
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata: {name: pg-r3, namespace: v2test}
+spec:
+  instances: 2
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.15-minimal-bookworm
+  smartShutdownTimeout: 15
+  affinity: {enablePodAntiAffinity: true, topologyKey: kubernetes.io/hostname, podAntiAffinityType: required}
+  storage: {storageClass: longhorn-v2, size: 2Gi}
+  resources: {requests: {cpu: 50m, memory: 192Mi}, limits: {memory: 384Mi}}
+__KS_EOF__
+```
+
+## 40. v2test/pg-v2.yaml
+
+```bash
+mkdir -p 'v2test'
+cat > 'v2test/pg-v2.yaml' <<'__KS_EOF__'
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata: {name: pg-v2, namespace: v2test}
+spec:
+  instances: 3
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.15-minimal-bookworm
+  smartShutdownTimeout: 15
+  affinity: {enablePodAntiAffinity: true, topologyKey: kubernetes.io/hostname, podAntiAffinityType: required}
+  postgresql:
+    synchronous: {method: any, number: 1}
+  storage: {storageClass: longhorn-v2-single, size: 2Gi}
+  resources: {requests: {cpu: 50m, memory: 192Mi}, limits: {memory: 384Mi}}
+__KS_EOF__
+```
+
+## 41. v2test/probe-report.sh
+
+```bash
+mkdir -p 'v2test'
+cat > 'v2test/probe-report.sh' <<'__KS_EOF__'
+#!/bin/bash
+# 프로브 로그에서 쓰기/읽기 실패 구간을 뽑는다 (시각은 UTC)
+export KUBECONFIG=$(dirname "$0")/../inventory/lab/artifacts/admin.conf
+kubectl -n v2test logs ${PROBE:-probe} --since=${1:-30m} | python3 -c "
+import sys
+L=[l.split() for l in sys.stdin if ' W=' in l]
+print('samples',len(L),L[0][0],'~',L[-1][0])
+for k,name in ((1,'write'),(2,'read')):
+    run=None;out=[]
+    for t,w,r in L:
+        bad=(w,r)[k-1].endswith('X')
+        if bad and run is None: run=[t,t,1]
+        elif bad: run[1]=t;run[2]+=1
+        elif run: out.append(run);run=None
+    if run: out.append(run)
+    print(name,'fail runs:',[f'{a}~{b} ({n} samples)' for a,b,n in out] or 'none')
+"
+__KS_EOF__
+chmod +x 'v2test/probe-report.sh'
+```
+
+## 42. v2test/probe.yaml
+
+```bash
+mkdir -p 'v2test'
+cat > 'v2test/probe.yaml' <<'__KS_EOF__'
+# 1초마다 pg-v2 에 쓰기(-rw 서비스)와 읽기(-ro 서비스)를 한 번씩 해 보고 성공/실패를 찍는다. 죽이지 않을 노드에 고정
+apiVersion: v1
+kind: Pod
+metadata: {name: probe, namespace: v2test}
+spec:
+  nodeName: ks-w1
+  restartPolicy: Always
+  terminationGracePeriodSeconds: 1
+  containers:
+  - name: probe
+    image: ghcr.io/cloudnative-pg/postgresql:16.15-minimal-bookworm
+    env:
+    - {name: PGPASSWORD, valueFrom: {secretKeyRef: {name: pg-v2-app, key: password}}}
+    - {name: PGCONNECT_TIMEOUT, value: "2"}
+    command: ["bash","-c"]
+    args:
+    - |
+      psql -h pg-v2-rw -U app -d app -qc "create table if not exists p(id bigserial primary key, at timestamptz default now())" 
+      while true; do
+        w=$(timeout 3 psql -h pg-v2-rw -U app -d app -qAtc "insert into p default values returning 1" 2>/dev/null | head -1)
+        r=$(timeout 3 psql -h pg-v2-ro -U app -d app -qAtc "select 1" 2>/dev/null | head -1)
+        echo "$(date +%H:%M:%S) W=${w:-X} R=${r:-X}"
+        sleep 1
+      done
+__KS_EOF__
+```
+
+## 43. v2test/sc-v2.yaml
+
+```bash
+mkdir -p 'v2test'
+cat > 'v2test/sc-v2.yaml' <<'__KS_EOF__'
+# Longhorn V2 시험용 StorageClass 두 개
+#   longhorn-v2-single: CNPG 용. DB 가 스스로 3벌 복제하므로 스토리지는 1벌
+#   longhorn-v2       : 3벌 복제 (노드가 죽어도 볼륨이 살아 있는 경우를 보는 용)
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata: {name: longhorn-v2-single}
+provisioner: driver.longhorn.io
+allowVolumeExpansion: true
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+parameters: {dataEngine: v2, numberOfReplicas: "1", dataLocality: strict-local, staleReplicaTimeout: "30"}
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata: {name: longhorn-v2}
+provisioner: driver.longhorn.io
+allowVolumeExpansion: true
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+parameters: {dataEngine: v2, numberOfReplicas: "3", staleReplicaTimeout: "30"}
+__KS_EOF__
+```
+
+## 44. v2test/state.sh
+
+```bash
+mkdir -p 'v2test'
+cat > 'v2test/state.sh' <<'__KS_EOF__'
+#!/bin/bash
+# 한 줄 상태: 노드 / Longhorn 디스크 / 볼륨 / CNPG  (인자: 노드 이름)
+N=$1; export KUBECONFIG=$(dirname "$0")/../inventory/lab/artifacts/admin.conf
+nd=$(kubectl get node $N --no-headers 2>/dev/null | awk '{print $2}')
+dk=$(kubectl -n longhorn-system get nodes.longhorn.io $N -o json 2>/dev/null | python3 -c "
+import sys,json;s=json.load(sys.stdin)['status']['diskStatus'].get('v2-disk',{})
+c={x['type']:x['status'] for x in s.get('conditions',[])};print('disk=%s/%s uuid=%s'%(c.get('Ready'),s.get('diskPath'),(s.get('diskUUID') or '-')[:8]))" 2>/dev/null)
+vol=$(kubectl -n longhorn-system get volumes.longhorn.io --no-headers 2>/dev/null | awk -v f="${VOLF:-.}" '$2=="v2" && $0 ~ f{printf "%s/%s ",$3,$4}')
+pg=$(kubectl -n v2test get cluster ${CL:-pg-v2} -o jsonpath='{.status.readyInstances}/{.status.instances} primary={.status.currentPrimary}' 2>/dev/null)
+pods=$(kubectl -n v2test get pods -l cnpg.io/cluster=${CL:-pg-v2} -o wide --no-headers 2>/dev/null | awk '{printf "%s=%s(%s)@%s ",$1,$3,$2,$7}')
+echo "$(date +%H:%M:%S) node=$nd $dk | vol: $vol| pg $pg | $pods"
+__KS_EOF__
+chmod +x 'v2test/state.sh'
+```
+
+## 45. v2test/watch.sh
+
+```bash
+mkdir -p 'v2test'
+cat > 'v2test/watch.sh' <<'__KS_EOF__'
+#!/bin/bash
+# 상태가 바뀔 때만 한 줄 출력. 인자: 노드, 최대 초, [끝 조건 grep 식]
+cd "$(dirname "$0")/.."; N=$1; MAX=${2:-300}; END=${3:-}; S=$(date +%s); last=
+while [ $(( $(date +%s)-S )) -lt $MAX ]; do
+  o=$(./v2test/state.sh $N); b=${o#* }
+  [ "$b" != "$last" ] && { echo "+$(( $(date +%s)-S ))s $o"; last=$b; }
+  [ -n "$END" ] && echo "$b" | grep -qE "$END" && ! echo "$b" | grep -q faulted && break
+  /bin/sleep 5
+done
+__KS_EOF__
+chmod +x 'v2test/watch.sh'
+```
+
+## 46. inventory/lab/inventory.ini
 
 ```bash
 mkdir -p 'inventory/lab'
@@ -1792,7 +2117,7 @@ ks-tor ip=172.16.141.29
 __KS_EOF__
 ```
 
-## 34. inventory/prod-sample/inventory.ini
+## 47. inventory/prod-sample/inventory.ini
 
 ```bash
 mkdir -p 'inventory/prod-sample'
@@ -1822,7 +2147,7 @@ kube_node
 __KS_EOF__
 ```
 
-## 35. inventory/lab/group_vars/all/lab.yml
+## 48. inventory/lab/group_vars/all/lab.yml
 
 ```bash
 mkdir -p 'inventory/lab/group_vars/all'
@@ -1876,7 +2201,7 @@ loadbalancer_apiserver_localhost: false
 __KS_EOF__
 ```
 
-## 36. inventory/lab/group_vars/k8s_cluster/lab.yml
+## 49. inventory/lab/group_vars/k8s_cluster/lab.yml
 
 ```bash
 mkdir -p 'inventory/lab/group_vars/k8s_cluster'
@@ -1976,7 +2301,7 @@ kubectl_localhost: false
 __KS_EOF__
 ```
 
-## 37. inventory/prod-sample/group_vars/all/env.yml
+## 50. inventory/prod-sample/group_vars/all/env.yml
 
 ```bash
 mkdir -p 'inventory/prod-sample/group_vars/all'
@@ -2042,7 +2367,7 @@ loadbalancer_apiserver_localhost: false
 __KS_EOF__
 ```
 
-## 38. inventory/prod-sample/group_vars/k8s_cluster/k8s.yml
+## 51. inventory/prod-sample/group_vars/k8s_cluster/k8s.yml
 
 ```bash
 mkdir -p 'inventory/prod-sample/group_vars/k8s_cluster'
@@ -2152,8 +2477,8 @@ __KS_EOF__
 
 ```bash
 sha256sum -c <<'__KS_EOF__'
-623a8f30fcb6163cfa9027eca241b45fc852498d3a8f10c3bc1eec6b93619c81  .gitignore
-810deb9db15679d38a555096ec0dfbe12fe6cdbcc6ac413ba67d0d3dfa03fe03  Vagrantfile
+3deff4d01443376b8ba1500c5d520848eb0f45a6ff48954fcf84608dbc489ad0  .gitignore
+d82e3cfedb357d0db179e0d11ef72f1890abb65aee037738c89dc3afe9e496e5  Vagrantfile
 389fdd8a54ea5d36af59948219aa5be453f51e581e1ba066ae223ccf6e987601  addons.yml
 051604e43cf1b970e446c7d368f17e3a03fdb467740d3cba7271a08559939fc2  install.sh
 78bdd3882e7b0b4f85aa81f8fbdacf52369051a238c879ee99efffc771aca9c2  preflight.yml
@@ -2173,9 +2498,11 @@ cdca41d681a59baa9ca319160c94af6f2ef057d68236bfab8d4d4efe1d242cbc  scripts/62-ing
 ce112cab4a558263867755ebd82e67db2a411eb52293298fb2732fb058b4bb60  scripts/addon.sh
 51f6b22520eb71b03f100ab577ad42da1b534f00e97665aa1eb0c0a9269b8890  scripts/harbor-env.sh
 39d2a850852c28b4f7d71c4a6c14a4db6cb5c39286c0460a1399196e382ece15  scripts/lab-proxy.sh
-f78408a72931a389badb5cc04931cf47c93a7cbfce8835bc6b9d8bfb458304aa  scripts/make-bundle.sh
+d57950d513f1d8105e25c9cc40504f208abc4c5644254ad2c22c691799e62ca5  scripts/make-bundle.sh
 aa6ff9680a3433e09db4e03b87af2413a4b8a6a8e94f7eb3fa74cc77514b3269  scripts/render-values.sh
 cd5596bf6489464abeffc7778930316f05798e71ea4f47ef745c9b22dca6e7a6  scripts/rolling-reload.sh
+b204d9385e1096a26e4c4976441ffc07030a90b004c1b1c63bb7b6284957a3b3  scripts/v2-disks.sh
+304f59a09508a20f1ed5cb80f5d9e58d428b0cfe64d6d1e6f48362ac231dac36  scripts/v2-node-prep.sh
 c645819848ed423513975c527308e3f59c4b0e937dc3f419c7de13ef527824e3  templates/apply-order.md.j2
 384ba5bf0faf6c94a2a4aa522151272b3cff8fb50b36ad107ff2c93cfcb4e332  templates/cilium-l2.yaml.j2
 e397a55c1b334d6db9c4d0fccc0b5c2a816d1a52d82bd4cdedbe74fc95179ff5  templates/harbor-bgp-svc.yaml.j2
@@ -2184,6 +2511,17 @@ bde082f8b7260d41c892e6848fe595a2f938c1c770ffff55b9f195b38c14166c  templates/harb
 b257ac488dedf44ca3bb25e77a9fb72961f4b5bcc68faa712392ce654c16a77f  templates/ingress-nginx-values.yaml.j2
 487c6cf992e888f9ff9b794fbff50b5c2bfa86fd56a2c96cc2d9769b77888b04  templates/longhorn-sc-single.yaml.j2
 75bc29bbc174c86e1bacc713c6a39ffb59b5f525d7bd772576305af5445ef69b  templates/longhorn-values.yaml.j2
+6677c9485b9c129991872dd131853d013e7754bb6da4eb3b4874b497ae2c7af6  v2test/b2.sh
+cbf943118ea685722cde979b192422279f7307481f016eea05e9ab30bafcccdc  v2test/c1.sh
+1beabfcf19b762a2501259b7610f1d95324ba123259f5f44fb5a56a89ab52dac  v2test/c2.sh
+b55ecf5f4868ef8cbbd30ce5c6585abc935c46637507b16e26b98de98927d49b  v2test/cnpg-operator-ha.yaml
+988f16bad51eec1dd6c0533e8cbb3c9605a10d891d5ab5f6f02194df8ff70f53  v2test/pg-r3.yaml
+e35b1e6870ba20b3e0b602ba8599be1951de3933d820707688c77c3f86d753b9  v2test/pg-v2.yaml
+88f82d6d557f97d3b178b5380d3f87feb7dd3397f3bb8987f568e1b00d2f6755  v2test/probe-report.sh
+a533b83c482eaec085f316c511cf263fe7ec5e0b82ad588584b70d1a5262dac5  v2test/probe.yaml
+91410acdccf827d0cb9ea6b937cb789a4e045cfd03bfb0315770819ca703e4e5  v2test/sc-v2.yaml
+023dd30ca67162f7a59be35a41a6b58da4c45bc31add7ccc4cbb2976910cce7a  v2test/state.sh
+56ff1a3bd5b4495a22fbba490e934c7e8e2a1ad669eade888c999c28ea70c37b  v2test/watch.sh
 61158d2c2ce45bb49405d69c95308801fe0ef8057d2c7be1385969a94c236884  inventory/lab/inventory.ini
 b34386cc08dbbce883f5b26328e654408c369de3ea7d4a89fb2ee3400853cce9  inventory/prod-sample/inventory.ini
 1e1c3444e3d9da28662ad225426d3c0bffed10e2e4c7799ac898b0d43f18c388  inventory/lab/group_vars/all/lab.yml

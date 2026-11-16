@@ -16,6 +16,15 @@ W_COUNT  = Integer(ENV.fetch("W_COUNT", 5))
 CP_MEM   = Integer(ENV.fetch("CP_MEM", 2560))
 W_MEM    = Integer(ENV.fetch("W_MEM", 2688))
 TOR_MEM  = Integer(ENV.fetch("TOR_MEM", 512))
+# Longhorn V2(SPDK) 시험용 — 기본은 꺼짐. V2_NODES 에 적은 워커만 메모리를 V2_MEM 으로 올리고 빈 SATA 디스크를 붙인다(LONGHORN-V2-DISK.md 8절).
+#   V2_NODES=ks-w1,ks-w2,ks-w3 vagrant up ks-w1 ks-w2 ks-w3
+#   게스트에서 sda=OS, sdb=dummy(1GB, 이름을 밀어내는 용), sdc=V2 디스크(10GB). V2_NO_DUMMY 에 적은 노드는 dummy 를 떼어 V2 디스크가 sdb 로 당겨진다.
+#   디스크 파일은 v2disks/<노드>-{dummy,data}.vmdk (scripts/v2-disks.sh 가 만든다)
+V2_NODES    = ENV.fetch("V2_NODES", "").split(",")
+V2_NO_DUMMY = ENV.fetch("V2_NO_DUMMY", "").split(",")
+V2_SWAP     = ENV.fetch("V2_SWAP", "").split(",")     # 적은 노드는 dummy 와 V2 디스크의 포트를 맞바꾼다 → /dev/sdc 가 엉뚱한(빈) 디스크를 가리킨다
+V2_MEM      = Integer(ENV.fetch("V2_MEM", 5120))
+V2_DISK_DIR = File.expand_path("v2disks", __dir__)
 BOX          = "bento/ubuntu-24.04"
 BOX_VERSION  = "202510.26.0"
 
@@ -56,6 +65,15 @@ Vagrant.configure("2") do |config|
            time.synchronize.shrink time.synchronize.tools.startup time.synchronize.tools.enable].each { |k| v.vmx[k] = "FALSE" }
         # Fusion 무료화 이후 라이선스 오인식으로 private_network 가 무시되는 문제 회피
         v.force_vmware_license = "professional"
+        if V2_NODES.include?(n[:name])
+          v.memory = V2_MEM
+          dummy = !V2_NO_DUMMY.include?(n[:name])
+          v.vmx["sata0:2.present"]  = dummy ? "TRUE" : "FALSE"
+          first, second = V2_SWAP.include?(n[:name]) ? %w[data dummy] : %w[dummy data]
+          v.vmx["sata0:2.filename"] = "#{V2_DISK_DIR}/#{n[:name]}-#{first}.vmdk"
+          v.vmx["sata0:3.present"]  = "TRUE"
+          v.vmx["sata0:3.filename"] = "#{V2_DISK_DIR}/#{n[:name]}-#{second}.vmdk"
+        end
       end
     end
   end

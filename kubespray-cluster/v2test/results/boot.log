@@ -1,0 +1,19 @@
+Mon Nov 16 18:54:05 KST 2026
+==> ks-tor: Machine booted and ready!
+==> ks-tor: Machine already provisioned. Run `vagrant provision` or use the `--provision`
+==> ks-cp1: Machine booted and ready!
+==> ks-cp1: Machine already provisioned. Run `vagrant provision` or use the `--provision`
+==> ks-cp2: Machine booted and ready!
+==> ks-cp2: Machine already provisioned. Run `vagrant provision` or use the `--provision`
+==> ks-cp3: Machine booted and ready!
+==> ks-cp3: Machine already provisioned. Run `vagrant provision` or use the `--provision`
+Mon Nov 16 18:56:06 KST 2026
+==> ks-w1: Machine booted and ready!
+==> ks-w1: Machine already provisioned. Run `vagrant provision` or use the `--provision`
+==> ks-w2: Machine booted and ready!
+==> ks-w2: Machine already provisioned. Run `vagrant provision` or use the `--provision`
+==> ks-w3: Machine booted and ready!
+==> ks-w3: Machine already provisioned. Run `vagrant provision` or use the `--provision`
+Mon Nov 16 18:57:19 KST 2026
+프록시 시작: http://172.16.141.1:3128
+vm.swapusage: total = 5120.00M  used = 3854.00M  free = 1266.00M  (encrypted)

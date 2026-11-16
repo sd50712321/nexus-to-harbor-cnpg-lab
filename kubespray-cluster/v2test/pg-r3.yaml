@@ -1,0 +1,11 @@
+# 3벌 복제 V2 볼륨 위의 CNPG 2 인스턴스 — 워커 3대 중 한 대가 비어 있어 파드가 옮겨 갈 자리가 있다
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata: {name: pg-r3, namespace: v2test}
+spec:
+  instances: 2
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.15-minimal-bookworm
+  smartShutdownTimeout: 15
+  affinity: {enablePodAntiAffinity: true, topologyKey: kubernetes.io/hostname, podAntiAffinityType: required}
+  storage: {storageClass: longhorn-v2, size: 2Gi}
+  resources: {requests: {cpu: 50m, memory: 192Mi}, limits: {memory: 384Mi}}

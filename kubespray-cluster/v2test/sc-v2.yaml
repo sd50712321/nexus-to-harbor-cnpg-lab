@@ -1,0 +1,20 @@
+# Longhorn V2 시험용 StorageClass 두 개
+#   longhorn-v2-single: CNPG 용. DB 가 스스로 3벌 복제하므로 스토리지는 1벌
+#   longhorn-v2       : 3벌 복제 (노드가 죽어도 볼륨이 살아 있는 경우를 보는 용)
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata: {name: longhorn-v2-single}
+provisioner: driver.longhorn.io
+allowVolumeExpansion: true
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+parameters: {dataEngine: v2, numberOfReplicas: "1", dataLocality: strict-local, staleReplicaTimeout: "30"}
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata: {name: longhorn-v2}
+provisioner: driver.longhorn.io
+allowVolumeExpansion: true
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+parameters: {dataEngine: v2, numberOfReplicas: "3", staleReplicaTimeout: "30"}

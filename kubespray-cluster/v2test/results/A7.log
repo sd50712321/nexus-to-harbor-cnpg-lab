@@ -1,0 +1,9 @@
+### A7 19:38:08 ks-w2(정상, primary 보유, 볼륨 attached) 경로만 교체 → /dev/disk/by-id/wwn-0x5000c29037894912
+node.longhorn.io/ks-w2 patched
+.+1s 19:38:09 node=Ready disk=True//dev/sdc uuid=4eda0d98 | vol: attached/healthy attached/healthy attached/healthy | pg 3/3 primary=pg-v2-1 | pg-v2-1=Running(1/1) pg-v2-2=Running(1/1) pg-v2-3=Running(1/1) 
+.+6s 19:38:14 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c29037894912 uuid=4eda0d98 | vol: attached/healthy attached/healthy attached/healthy | pg 3/3 primary=pg-v2-1 | pg-v2-1=Running(1/1) pg-v2-2=Running(1/1) pg-v2-3=Running(1/1) 
+............................
+ spec path /dev/disk/by-id/wwn-0x5000c29037894912
+ status path /dev/disk/by-id/wwn-0x5000c29037894912
+  Ready True Disk v2-disk(/dev/disk/by-id/wwn-0x5000c29037894912) on node ks-w2 is ready
+  Schedulable True Disk v2-disk(/dev/disk/by-id/wwn-0x5000c29037894912) on node ks-w2 is schedulable

@@ -1,0 +1,8 @@
+### A6 19:36:27 ks-w1 의 V2 instance-manager 파드 삭제(재기동)
+pod "instance-manager-3e4a4190fdbc93758009d451933bdde8" deleted from longhorn-system namespace
++1s 19:36:28 node=Ready disk=False//dev/sdc uuid=0fbf007f | vol: attached/healthy attached/healthy detached/faulted | pg 2/3 primary=pg-v2-1 | pg-v2-1=Running(1/1) pg-v2-2=Running(1/1) pg-v2-3=Init:0/1(0/1) 
++66s 19:37:33 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c295b2303f66 uuid=0fbf007f | vol: attached/healthy attached/healthy attaching/unknown | pg 2/3 primary=pg-v2-1 | pg-v2-1=Running(1/1) pg-v2-2=Running(1/1) pg-v2-3=Init:0/1(0/1) 
++71s 19:37:38 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c295b2303f66 uuid=0fbf007f | vol: attached/healthy attached/healthy attached/healthy | pg 2/3 primary=pg-v2-1 | pg-v2-1=Running(1/1) pg-v2-2=Running(1/1) pg-v2-3=Init:0/1(0/1) 
++77s 19:37:44 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c295b2303f66 uuid=0fbf007f | vol: attached/healthy attached/healthy attached/healthy | pg 2/3 primary=pg-v2-1 | pg-v2-1=Running(1/1) pg-v2-2=Running(1/1) pg-v2-3=Running(0/1) 
++87s 19:37:54 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c295b2303f66 uuid=0fbf007f | vol: attached/healthy attached/healthy attached/healthy | pg 3/3 primary=pg-v2-1 | pg-v2-1=Running(1/1) pg-v2-2=Running(1/1) pg-v2-3=Running(1/1) 
+rows on pg-v2-3: 1

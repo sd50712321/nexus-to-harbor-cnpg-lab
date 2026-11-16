@@ -357,3 +357,30 @@ kubectl -n longhorn-system get settings.longhorn.io auto-delete-pod-when-volume-
 
 **교훈**: 장애가 없다고 설정이 맞는 것은 아니다. "복제해도 되는 값인가" 는 값마다 따로 봐야 하고, 문서가 적어 둔 목록(MAC, product_uuid)이 전부가 아니다.
 
+
+## 27. V2 엔진을 켰는데 instance-manager 가 뜨자마자 죽는다: 2 vCPU 노드와 기본 CPU 마스크 [실서버 영향: vCPU 가 적은 노드]
+
+- 증상: `v2-data-engine=true` 로 바꾼 뒤 V2 `instancemanagers.longhorn.io` 가 6분 넘게 `error`. 파드는 만들어졌다 사라지기를 반복했다.
+- 좁히기: 이벤트에는 `Created`·`Started` 만 있고 실패 이유가 없었다. 파드가 금방 지워져 로그도 안 남아서, 2초 간격으로 `kubectl logs` 를 반복해 떠 있는 순간의 로그를 잡았다. 마지막 줄이 `SPDK cpu mask 0x3 covers every online CPU (online_mask=0x3)` → `Aborting spdk_tgt start`.
+- 원인: 기본 `data-engine-cpu-mask` 가 `{"v2":"0x3"}`(코어 0·1). 워커가 2 vCPU 라 SPDK 가 코어를 전부 가져가게 되고, Longhorn 이 그 상태로는 기동을 거부한다. hugepage(2Gi)와 커널 모듈은 정상이었다.
+- 조치: 마스크를 `0x1` 로. 2분 뒤 세 노드 모두 `running`.
+
+```bash
+kubectl -n longhorn-system patch settings.longhorn.io data-engine-cpu-mask --type merge -p '{"value":"{\"v2\":\"0x1\"}"}'
+kubectl -n longhorn-system get instancemanagers.longhorn.io | awk '$2=="v2"'
+```
+
+## 28. V2 디스크 경로를 고쳤는데도 `cannot find lvstore with UUID`: instance-manager 가 잘못 잡은 디스크를 기억한다 [실서버 영향]
+
+- 증상: `/dev/sdc` 로 등록한 노드에서 재부팅 뒤 `/dev/sdc` 가 다른(빈) 디스크를 가리켰다. 경로를 `by-id` 로 고쳤는데 5분이 지나도 디스크 `Ready=False`.
+- 좁히기: 같은 조치가 다른 노드에서는 60초 만에 됐다(그 노드는 `/dev/sdc` 가 아예 없어진 경우). 차이는 오류 메시지였다. 없어진 경우는 `failed to detect disk device /host/dev/sdc`, 이번에는 처음에 `cannot find lvstore with UUID …` 한 번, 그 뒤로 `disk /dev/sdc is already used by disk bdev v2-disk`. 즉 instance-manager 안(SPDK)에 `/dev/sdc` 를 가리키는 `v2-disk` 가 이미 만들어져 있었다. 경로를 고친 뒤 메시지는 다시 `cannot find lvstore` 였다. 실제 디스크(`sdb`) 앞머리에는 `SPDKBLOB` 표식이 그대로 있었으므로 데이터 문제는 아니었다.
+- 원인(추정): 같은 이름의 디스크 항목이 SPDK 에 남아 있어, 경로를 바꿔도 옛 장치를 다시 본다. 소스로 확인하지는 않았다.
+- 조치: 그 노드의 V2 instance-manager 파드 삭제. 다시 뜬 뒤 66초에 디스크 Ready, 87초에 CNPG 3/3. 데이터 유지.
+- 빈 디스크 쪽은 앞 4MB 가 전부 0 이었다. Longhorn 은 UUID 가 안 맞는 디스크에 쓰지 않았다.
+
+## 29. primary 노드가 죽었는데 승격이 6분 넘게 안 됨: operator 가 같은 노드에 있었다 [실서버 영향]
+
+- 증상: primary 가 있는 워커를 껐더니 쓰기가 6분 26초 실패. 같은 시험을 앞서 했을 때는 70초 만에 새 primary 였다.
+- 좁히기: 두 번의 차이를 찾았다. 느렸던 쪽은 Cluster 상태가 370초까지 `3/3` 그대로였다. 상태를 고치는 주체가 일을 안 했다는 뜻이라 operator 를 봤다. operator 파드가 3분 53초 전에 새로 떠 있었고, 로그는 `Successfully acquired lease` 바로 다음 줄이 `Current primary isn't healthy, initiating a failover` 였다. 죽은 노드에 operator 가 같이 있었던 것이다.
+- 원인: operator 는 1개였고, 죽은 노드의 파드는 300초 축출 대기 뒤에야 다른 노드에 다시 만들어진다. 그동안 승격을 지시할 주체가 없다.
+- 조치: operator 2개 + 서로 다른 노드(`v2test/cnpg-operator-ha.yaml`). 리더가 죽은 노드에 있던 경우도 58초, 다른 노드에 있던 경우 86초. 자세한 수치는 [V2-CNPG-FAILOVER.md](V2-CNPG-FAILOVER.md).

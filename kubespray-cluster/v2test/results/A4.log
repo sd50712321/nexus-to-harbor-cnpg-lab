@@ -1,0 +1,7 @@
+### A4 19:24:49 ks-w1: /dev/sdc 로 등록된 채 디스크 포트를 맞바꿔 재부팅 (/dev/sdc = 빈 1GB 디스크)
+up 19:25:59 sda    64G sdb    10G sdc     1G 
++0s 19:25:59 node=Ready disk=False//dev/sdc uuid=0fbf007f | vol: attached/healthy attached/healthy detached/faulted | pg 2/3 primary=pg-v2-1 | pg-v2-1=Running(1/1) pg-v2-2=Running(1/1) pg-v2-3=Pending(0/1) 
++27s 19:26:26 node=Ready disk=False//dev/sdc uuid=0fbf007f | vol: attached/healthy attached/healthy detached/faulted | pg 2/3 primary=pg-v2-1 | pg-v2-1=Running(1/1) pg-v2-2=Running(1/1) pg-v2-3=Init:0/1(0/1) 
+ uuid 0fbf007f-9a0c-4ecf-b108-7989725f2125 max 0
+  Ready False Disk v2-disk(/dev/sdc) on node ks-w1 is not ready: errors: disk is not in ready state, current state: creating, message: rpc error: code = Internal desc = failed to add disk block device: failed to validate disk creation: disk /dev/sdc is already used by disk bdev v2-disk
+  Schedulable False Disk v2-disk (/dev/sdc) on the node ks-w1 is not ready

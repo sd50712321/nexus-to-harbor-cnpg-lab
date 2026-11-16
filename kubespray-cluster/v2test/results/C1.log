@@ -1,0 +1,33 @@
+### C1 20:11:15 (UTC 11:11:15) primary=pg-v2-2 가 있는 ks-w3 강제 정지 — 파드는 건드리지 않음, 7분 관찰
+killed 20:11:20 (UTC 11:11:20)
++0s 20:11:20 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c2944851f80e uuid=1d0ae6f0 | vol: attached/healthy attached/healthy attached/healthy attached/healthy attached/healthy | pg 3/3 primary=pg-v2-2 | pg-v2-1=Running(1/1)@ks-w2 pg-v2-2=Running(1/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++42s 20:12:02 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c2944851f80e uuid=1d0ae6f0 | vol: attached/healthy attached/healthy attached/degraded attached/healthy attached/healthy | pg 3/3 primary=pg-v2-2 | pg-v2-1=Running(1/1)@ks-w2 pg-v2-2=Running(1/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++47s 20:12:07 node=NotReady disk=False//dev/disk/by-id/wwn-0x5000c2944851f80e uuid=1d0ae6f0 | vol: attached/healthy attached/unknown attached/degraded attached/healthy attached/unknown | pg 3/3 primary=pg-v2-2 | pg-v2-1=Running(1/1)@ks-w2 pg-v2-2=Running(1/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++349s 20:17:09 node=NotReady disk=False//dev/disk/by-id/wwn-0x5000c2944851f80e uuid=1d0ae6f0 | vol: attached/healthy detached/faulted attached/degraded attached/healthy attaching/unknown | pg 3/3 primary=pg-v2-2 | pg-v2-1=Running(1/1)@ks-w2 pg-v2-2=Terminating(1/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++370s 20:17:30 node=NotReady disk=False//dev/disk/by-id/wwn-0x5000c2944851f80e uuid=1d0ae6f0 | vol: attached/healthy detached/faulted attached/degraded attached/healthy attaching/unknown | pg 2/3 primary=pg-v2-2 | pg-v2-1=Running(1/1)@ks-w2 pg-v2-2=Terminating(1/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++386s 20:17:46 node=NotReady disk=False//dev/disk/by-id/wwn-0x5000c2944851f80e uuid=1d0ae6f0 | vol: attached/healthy detached/faulted attached/degraded attached/healthy attaching/unknown | pg 2/3 primary=pg-v2-1 | pg-v2-1=Running(1/1)@ks-w2 pg-v2-2=Terminating(1/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
+  pg-v2-1 Running ks-w2 primary
+  pg-v2-2 Terminating ks-w3 unhealthy
+  pg-v2-3 Running ks-w1 replica
+### 기동 20:18:23
+up 20:18:54
++0s 20:18:54 node=Ready disk=False//dev/disk/by-id/wwn-0x5000c2944851f80e uuid=1d0ae6f0 | vol: attached/healthy detached/faulted attached/degraded attached/healthy attaching/unknown | pg 2/3 primary=pg-v2-1 | pg-v2-1=Running(1/1)@ks-w2 pg-v2-2=Terminating(0/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++11s 20:19:05 node=Ready disk=False//dev/disk/by-id/wwn-0x5000c2944851f80e uuid=1d0ae6f0 | vol: attached/healthy detached/faulted attached/degraded attached/healthy attaching/unknown | pg 2/3 primary=pg-v2-1 | pg-v2-1=Running(1/1)@ks-w2 pg-v2-2=Unknown(0/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++27s 20:19:21 node=Ready disk=False//dev/disk/by-id/wwn-0x5000c2944851f80e uuid=1d0ae6f0 | vol: attached/healthy detached/faulted attached/degraded attached/healthy attaching/unknown | pg 2/3 primary=pg-v2-1 | pg-v2-1=Running(1/1)@ks-w2 pg-v2-2=Init:0/1(0/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++38s 20:19:32 node=Ready disk=False//dev/disk/by-id/wwn-0x5000c2944851f80e uuid=1d0ae6f0 | vol: attached/healthy detached/faulted attached/degraded attached/healthy detaching/faulted | pg 2/3 primary=pg-v2-1 | pg-v2-1=Running(1/1)@ks-w2 pg-v2-2=Init:0/1(0/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++44s 20:19:38 node=Ready disk=False//dev/disk/by-id/wwn-0x5000c2944851f80e uuid=1d0ae6f0 | vol: attached/healthy detached/faulted attached/degraded attached/healthy detaching/unknown | pg 2/3 primary=pg-v2-1 | pg-v2-1=Running(1/1)@ks-w2 pg-v2-2=Init:0/1(0/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++49s 20:19:43 node=Ready disk=False//dev/disk/by-id/wwn-0x5000c2944851f80e uuid=1d0ae6f0 | vol: attached/healthy detached/faulted attached/degraded attached/healthy attached/unknown | pg 2/3 primary=pg-v2-1 | pg-v2-1=Running(1/1)@ks-w2 pg-v2-2=Init:0/1(0/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++55s 20:19:49 node=Ready disk=False//dev/disk/by-id/wwn-0x5000c2944851f80e uuid=1d0ae6f0 | vol: attached/healthy detached/faulted attached/degraded attached/healthy attached/degraded | pg 2/3 primary=pg-v2-1 | pg-v2-1=Running(1/1)@ks-w2 pg-v2-2=Init:0/1(0/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++82s 20:20:16 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c2944851f80e uuid=1d0ae6f0 | vol: attached/healthy detached/unknown attached/degraded attached/healthy attached/degraded | pg 2/3 primary=pg-v2-1 | pg-v2-1=Running(1/1)@ks-w2 pg-v2-2=Init:0/1(0/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++87s 20:20:21 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c2944851f80e uuid=1d0ae6f0 | vol: attached/healthy attached/unknown attached/degraded attached/healthy attached/degraded | pg 2/3 primary=pg-v2-1 | pg-v2-1=Running(1/1)@ks-w2 pg-v2-2=Init:0/1(0/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++92s 20:20:26 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c2944851f80e uuid=1d0ae6f0 | vol: attached/healthy attached/healthy attached/degraded attached/healthy attached/degraded | pg 2/3 primary=pg-v2-1 | pg-v2-1=Running(1/1)@ks-w2 pg-v2-2=Init:0/1(0/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++103s 20:20:37 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c2944851f80e uuid=1d0ae6f0 | vol: attached/healthy attached/healthy attached/degraded attached/healthy attached/degraded | pg 2/3 primary=pg-v2-1 | pg-v2-1=Running(1/1)@ks-w2 pg-v2-2=Running(0/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++109s 20:20:43 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c2944851f80e uuid=1d0ae6f0 | vol: attached/healthy attached/healthy attached/healthy attached/healthy attached/healthy | pg 2/3 primary=pg-v2-1 | pg-v2-1=Running(1/1)@ks-w2 pg-v2-2=Running(0/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
++114s 20:20:48 node=Ready disk=True//dev/disk/by-id/wwn-0x5000c2944851f80e uuid=1d0ae6f0 | vol: attached/healthy attached/healthy attached/healthy attached/healthy attached/healthy | pg 3/3 primary=pg-v2-1 | pg-v2-1=Running(1/1)@ks-w2 pg-v2-2=Running(1/1)@ks-w3 pg-v2-3=Running(1/1)@ks-w1 
+  pg-v2-1 Running ks-w2 primary
+  pg-v2-2 Running ks-w3 replica
+  pg-v2-3 Running ks-w1 replica
+samples 996 11:00:49 ~ 11:20:48
+write fail runs: ['11:11:22~11:17:48 (336 samples)']
+read fail runs: none
+DONE

@@ -1,0 +1,12 @@
+### S1 11:36:47UTC switchover pg-v2-2 → pg-v2-1
+cluster.postgresql.cnpg.io/pg-v2 patched
+Cluster in healthy state 3 primary=pg-v2-1
+### S2 11:37:47UTC switchover pg-v2-1 → pg-v2-2
+cluster.postgresql.cnpg.io/pg-v2 patched
+Cluster in healthy state 3 primary=pg-v2-2
+### S3 11:38:48UTC switchover pg-v2-2 → pg-v2-1
+cluster.postgresql.cnpg.io/pg-v2 patched
+Cluster in healthy state 3 primary=pg-v2-1
+samples 213 11:35:49 ~ 11:39:47
+write fail runs: ['11:36:48~11:36:53 (6 samples)', '11:37:48~11:37:53 (6 samples)', '11:38:49~11:38:53 (4 samples)']
+read fail runs: none
