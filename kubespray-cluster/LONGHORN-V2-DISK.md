@@ -122,7 +122,7 @@ ls -l /dev/disk/by-id/ | grep -v -- '-part'                      # 노드에서:
 
 ## 7. 랩 실측 (2026-11-16)
 
-구성: 워커 3대(5GB, 2 vCPU)에 빈 SATA 디스크 2개(1GB dummy, 10GB V2 용)를 붙였다. 게스트에서 `sda`=OS, `sdb`=dummy, `sdc`=V2. V2 볼륨 위에 CNPG 3 인스턴스(`v2test/pg-v2.yaml`, 스토리지 1벌 strict-local)를 올렸다. dummy 를 떼거나 포트를 맞바꿔 재부팅하면 이름이 밀린다(`Vagrantfile` 의 `V2_NO_DUMMY`, `V2_SWAP`). 기록은 `logs/v2/`.
+구성: 워커 3대(5GB, 2 vCPU)에 빈 SATA 디스크 2개(1GB dummy, 10GB V2 용)를 붙였다. 게스트에서 `sda`=OS, `sdb`=dummy, `sdc`=V2. V2 볼륨 위에 CNPG 3 인스턴스(`v2test/pg-v2.yaml`, 스토리지 1벌 strict-local)를 올렸다. dummy 를 떼거나 포트를 맞바꿔 재부팅하면 이름이 밀린다(`Vagrantfile` 의 `V2_NO_DUMMY`, `V2_SWAP`). 기록 원문은 `v2test/results/`, 재현 순서는 [v2test/README.md](v2test/README.md).
 
 | 시험 | 한 일 | 결과 |
 |---|---|---|

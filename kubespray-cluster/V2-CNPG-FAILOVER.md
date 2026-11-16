@@ -2,7 +2,7 @@
 
 노드가 갑자기 죽었을 때 세 가지를 쟀다. 쓰기가 얼마나 끊기는지, 새 primary 가 뜨려면 파드를 죽여 줘야 하는지, 죽은 노드의 인스턴스가 다시 붙는 데 왜 오래 걸리는지.
 
-> **근거 수준.** 2026-11-16 랩 실측이다. 워커 3대(5GB, 2 vCPU), Longhorn 1.13.0 V2 엔진, CNPG operator 1.30.1, PostgreSQL 16. 각 시험은 1번씩만 했다(switchover 만 3번). 실서버는 노드 수·디스크·네트워크가 달라 숫자가 그대로 나오지 않는다. 기록은 `logs/v2/`, 시험에 쓴 파일은 `v2test/`.
+> **근거 수준.** 2026-11-16 랩 실측이다. 워커 3대(5GB, 2 vCPU), Longhorn 1.13.0 V2 엔진, CNPG operator 1.30.1, PostgreSQL 16. 각 시험은 1번씩만 했다(switchover 만 3번). 실서버는 노드 수·디스크·네트워크가 달라 숫자가 그대로 나오지 않는다. 기록 원문은 `v2test/results/`, 시험에 쓴 파일과 재현 순서는 [v2test/](v2test/README.md).
 
 ## 1. 결론
 
@@ -32,7 +32,7 @@
 
 ### 3.1 노드가 돌아오는 경우
 
-노드 Ready 뒤 인스턴스가 다시 Ready 가 되기까지 114~169초였다(6번). 그중 80~100초는 V2 디스크가 `Ready` 가 되는 시간이다(V2 instance-manager 가 뜨고 디스크를 다시 읽는다). 그 뒤 볼륨 attach 약 6초, PostgreSQL 기동과 복제 재개 20~30초.
+노드 Ready 뒤 인스턴스가 다시 Ready 가 되기까지 80~169초였다(7번, 80초는 인스턴스 2개·3벌 볼륨인 C2). 디스크 상태까지 기록한 4번(A3·B1·B2·C1)을 나누면, V2 디스크가 `Ready` 가 되기까지 81~98초(V2 instance-manager 가 뜨고 디스크를 다시 읽는다), 그 뒤 볼륨 attach 와 PostgreSQL 기동·복제 재개까지 27~71초였다(71초는 파드가 `Terminating` 을 한 번 오간 B2).
 
 디스크를 `/dev/sdX` 로 등록했고 이름이 밀렸다면 여기서 영영 안 돌아온다([LONGHORN-V2-DISK.md](LONGHORN-V2-DISK.md)).
 
@@ -98,7 +98,7 @@ operator 는 한 번에 하나만 일한다(리더 선출, lease 15초). 리더�
 kubectl cnpg promote <클러스터> <새 primary 인스턴스> -n <네임스페이스>     # kubectl-cnpg 플러그인
 ```
 
-랩에서는 플러그인 없이 같은 동작을 하는 status 패치로 쟀다(`logs/v2/S1.log`). 실서버에서는 플러그인 명령을 쓴다.
+랩에서는 플러그인 없이 같은 동작을 하는 status 패치로 쟀다(`v2test/results/S1.log`). 실서버에서는 플러그인 명령을 쓴다.
 
 ### 4.3 노드 죽음 판정 시간 줄이기 (86초 → 34초)
 
