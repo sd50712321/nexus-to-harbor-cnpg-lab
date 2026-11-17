@@ -1,0 +1,22 @@
+### K11b 20:41:33 ks-w2 강제 종료 → 시계 '+9 hours' 로 부팅, 480초 방치
+killed 20:41:40
+up 20:42:55 node-clock=11-17T20:42:56 real=11-17T11:42:55 hp=1024
++1s 20:42:56 node=Ready im=running | pg-v2-2:att/unknown[w2] pg-v2-1:att/ok[w1] pg-v2-3:att/ok[w3] pg-r3-2:att/unknown[w1,w2,w3] pg-r3-1:att/degr[w1,w3,w2] | pg-r3-1=Running(1/1,r0)@w1 pg-r3-2=Unknown(0/1,r0)@w2 pg-v2-1=Running(1/1,r0)@w1 pg-v2-2=Unknown(0/1,r0)@w2 pg-v2-3=Running(1/1,r0)@w3 
++27s 20:43:22 node=Ready im=starting | pg-v2-2:detaching/faulted[w2!] pg-v2-1:att/ok[w1] pg-v2-3:att/ok[w3] pg-r3-2:detaching/faulted[w1,w2!,w3] pg-r3-1:att/degr[w1,w3,w2!] | pg-r3-1=Running(1/1,r0)@w1 pg-r3-2=Unknown(0/1,r0)@w2 pg-v2-1=Running(1/1,r0)@w1 pg-v2-2=Unknown(0/1,r0)@w2 pg-v2-3=Running(1/1,r0)@w3 
++41s 20:43:36 node=Ready im=running | pg-v2-2:det/faulted[w2!] pg-v2-1:att/ok[w1] pg-v2-3:att/ok[w3] pg-r3-2:attaching/unknown[w1,w2!,w3] pg-r3-1:att/degr[w1,w3,w2!] | pg-r3-1=Running(1/1,r0)@w1 pg-r3-2=Unknown(0/1,r0)@w2 pg-v2-1=Running(1/1,r0)@w1 pg-v2-2=Unknown(0/1,r0)@w2 pg-v2-3=Running(1/1,r0)@w3 
++54s 20:43:49 node=Ready im=running | pg-v2-2:det/faulted[w2!] pg-v2-1:att/ok[w1] pg-v2-3:att/ok[w3] pg-r3-2:att/degr[w1,w2!,w3] pg-r3-1:att/degr[w1,w3,w2!] | pg-r3-1=Running(1/1,r0)@w1 pg-r3-2=Unknown(0/1,r0)@w2 pg-v2-1=Running(1/1,r0)@w1 pg-v2-2=Unknown(0/1,r0)@w2 pg-v2-3=Running(1/1,r0)@w3 
++67s 20:44:02 node=Ready im=running | pg-v2-2:det/faulted[w2!] pg-v2-1:att/ok[w1] pg-v2-3:att/ok[w3] pg-r3-2:att/degr[w1,w2!,w3] pg-r3-1:att/degr[w1,w3,w2!] | pg-r3-1=Running(1/1,r0)@w1 pg-r3-2=Running(0/1,r1)@ pg-v2-1=Running(1/1,r0)@w1 pg-v2-2=Unknown(0/1,r0)@w2 pg-v2-3=Running(1/1,r0)@w3 
++80s 20:44:15 node=Ready im=running | pg-v2-2:det/faulted[w2!] pg-v2-1:att/ok[w1] pg-v2-3:att/ok[w3] pg-r3-2:att/degr[w1,w2!,w3] pg-r3-1:att/degr[w1,w3,w2!] | pg-r3-1=Running(1/1,r0)@w1 pg-r3-2=Running(1/1,r1)@ pg-v2-1=Running(1/1,r0)@w1 pg-v2-2=Unknown(0/1,r0)@w2 pg-v2-3=Running(1/1,r0)@w3 
++93s 20:44:28 node=Ready im=running | pg-v2-2:att/ok[w2] pg-v2-1:att/ok[w1] pg-v2-3:att/ok[w3] pg-r3-2:att/degr[w1,w2,w3] pg-r3-1:att/degr[w1,w3,w2] | pg-r3-1=Running(1/1,r0)@w1 pg-r3-2=Running(1/1,r1)@ pg-v2-1=Running(1/1,r0)@w1 pg-v2-2=Unknown(0/1,r0)@w2 pg-v2-3=Running(1/1,r0)@w3 
++106s 20:44:41 node=Ready im=running | pg-v2-2:att/ok[w2] pg-v2-1:att/ok[w1] pg-v2-3:att/ok[w3] pg-r3-2:att/ok[w1,w2,w3] pg-r3-1:att/ok[w1,w3,w2] | pg-r3-1=Running(1/1,r0)@w1 pg-r3-2=Running(1/1,r1)@ pg-v2-1=Running(1/1,r0)@w1 pg-v2-2=Unknown(0/1,r0)@w2 pg-v2-3=Running(1/1,r0)@w3 
++132s 20:45:07 node=Ready im=running | pg-v2-2:att/ok[w2] pg-v2-1:att/ok[w1] pg-v2-3:att/ok[w3] pg-r3-2:att/ok[w1,w2,w3] pg-r3-1:att/ok[w1,w3,w2] | pg-r3-1=Running(1/1,r0)@w1 pg-r3-2=Running(1/1,r1)@ pg-v2-1=Running(1/1,r0)@w1 pg-v2-2=Running(0/1,r1)@ pg-v2-3=Running(1/1,r0)@w3 
++145s 20:45:20 node=Ready im=running | pg-v2-2:att/ok[w2] pg-v2-1:att/ok[w1] pg-v2-3:att/ok[w3] pg-r3-2:att/ok[w1,w2,w3] pg-r3-1:att/ok[w1,w3,w2] | pg-r3-1=Running(1/1,r0)@w1 pg-r3-2=Running(1/1,r1)@ pg-v2-1=Running(1/1,r0)@w1 pg-v2-2=Running(1/1,r1)@ pg-v2-3=Running(1/1,r0)@w3 
+--- 방치 끝 시점
+8m31s       Warning   Schedulable              node/ks-w2                                                                       Waiting for disk default-disk-a7531094fa8d6290 (/var/lib/longhorn/) on node ks-w2 to be sche
+8m30s       Warning   NodeNotReady             pod/instance-manager-232daedaaa5f584bea7d1584db330005                            Node is not ready
+<invalid>   Warning   FailedStopping           replica/pvc-cfdeee8d-8ca2-450e-b24f-07d591ff4be6-r-f2b0bff0                      Error stopping pvc-cfdeee8d-8ca2-450e-b24f-07d591ff4be6-r-f2b0bff0: failed to initialize ins
+### 20:50:59 시계 복구
+11-17T11:51:05
+System clock synchronized: yes
++1s 20:51:06 node=Ready im=running | pg-v2-2:att/ok[w2] pg-v2-1:att/ok[w1] pg-v2-3:att/ok[w3] pg-r3-2:att/ok[w1,w2,w3] pg-r3-1:att/ok[w1,w3,w2] | pg-r3-1=Running(1/1,r0)@w1 pg-r3-2=Running(1/1,r1)@ pg-v2-1=Running(1/1,r0)@w1 pg-v2-2=Running(1/1,r1)@ pg-v2-3=Running(1/1,r0)@w3 
+DONE

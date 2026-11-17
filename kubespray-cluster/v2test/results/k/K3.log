@@ -1,0 +1,13 @@
+### K3-fanotify-hang 18:41:07 big-0 @ ks-w1 pv=pvc-385a2311
++0s pod Terminating(1/1)@ks-w1 | vol attached/healthy@ks-w1
++6s pod ContainerCreating(0/1)@ks-w3 | vol attached/healthy@ks-w1
++10s pod ContainerCreating(0/1)@ks-w3 | vol detaching/unknown@ks-w1
++13s pod ContainerCreating(0/1)@ks-w3 | vol attaching/unknown@
++19s pod ContainerCreating(0/1)@ks-w3 | vol attaching/healthy@
++22s pod ContainerCreating(0/1)@ks-w3 | vol attached/healthy@ks-w3
++32s pod Running(1/1)@ks-w3 | vol attached/healthy@ks-w3
+  결과: 32s
+  옛 노드: mounts=0 umount= hung=0
+2026-11-17T09:41:13Z   FailedAttachVolume         Waiting for detach for volume "pvc-385a2311-8dda-4fd5-9fae-69099fd2233b" Volume is already exclusively attached to one node, waiting on detach before 
+2026-11-17T09:41:28Z   FailedAttachVolume         AttachVolume.Attach failed for volume "pvc-385a2311-8dda-4fd5-9fae-69099fd2233b" : rpc error: code = Aborted desc = volume pvc-385a2311-8dda-4fd5-9fae
+2026-11-17T09:41:36Z   SuccessfulAttachVolume     AttachVolume.Attach succeeded for volume "pvc-385a2311-8dda-4fd5-9fae-69099fd2233b" 

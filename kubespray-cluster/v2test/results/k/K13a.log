@@ -1,0 +1,44 @@
+### K13a 22:14:25 pg-r3-2 @ ks-w2 pv=pvc-8a44b69b hold=480s cordon=cordon
+State:             SUSPENDED
++1s pod Terminating(1/1)@142m | vol attached/healthy@ks-w2 | v2im  | hung 0
++44s pod Terminating(1/1)@143m | vol attached/healthy@ks-w2 | v2im  | hung 0
++104s pod Terminating(1/1)@144m | vol attached/healthy@ks-w2 | v2im  | hung 0
++153s pod Terminating(1/1)@144m | vol attached/healthy@ks-w2 | v2im  | hung 2
++164s pod Terminating(1/1)@145m | vol attached/healthy@ks-w2 | v2im  | hung 2
++223s pod Terminating(1/1)@146m | vol attached/healthy@ks-w2 | v2im  | hung 2
++277s pod Terminating(1/1)@146m | vol attached/healthy@ks-w2 | v2im  | hung 4
++283s pod Terminating(1/1)@147m | vol attached/healthy@ks-w2 | v2im  | hung 4
++342s pod Terminating(1/1)@148m | vol attached/healthy@ks-w2 | v2im  | hung 4
++402s pod Terminating(1/1)@149m | vol attached/healthy@ks-w2 | v2im  | hung 6
++467s pod Terminating(1/1)@150m | vol attached/healthy@ks-w2 | v2im  | hung 6
++483s --- resume ---
+State:             ACTIVE
++488s pod Init:0/1(0/1)@ks-w3 | vol attached/healthy@ks-w2 | v2im  | hung 6
++494s pod Init:0/1(0/1)@ks-w3 | vol attaching/unknown@ | v2im  | hung 6
++499s pod Init:0/1(0/1)@ks-w3 | vol attaching/healthy@ | v2im  | hung 6
++505s pod Running(0/1)@ks-w3 | vol attached/healthy@ks-w3 | v2im  | hung 6
++515s pod Running(1/1)@ks-w3 | vol attached/healthy@ks-w3 | v2im  | hung 6
+  결과: 총 516s, resume 뒤 33s
+  --- dmesg (멈춘 작업) ---
+[ 5653.399737] INFO: task manager:5794 blocked for more than 122 seconds.
+[ 5653.404122]  schedule+0x40/0x168
+[ 5653.404236] INFO: task postgres:5802 blocked for more than 122 seconds.
+[ 5653.408690]  schedule+0x40/0x168
+[ 5776.288200] INFO: task manager:5794 blocked for more than 245 seconds.
+[ 5776.289712]  schedule+0x40/0x168
+[ 5776.289770] INFO: task postgres:5802 blocked for more than 245 seconds.
+[ 5776.290374]  schedule+0x40/0x168
+[ 5899.172121] INFO: task manager:5794 blocked for more than 368 seconds.
+[ 5899.176391]  schedule+0x40/0x168
+[ 5899.176559] INFO: task postgres:5802 blocked for more than 368 seconds.
+[ 5899.178002]  schedule+0x40/0x168
+  --- 파드 이벤트 ---
+2026-11-17T13:22:30Z   Scheduled                Successfully assigned v2test/pg-r3-2 to ks-w3
+2026-11-17T13:22:30Z   FailedAttachVolume       Waiting for detach for volume "pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235" Volume is already exclusively attached to one node, waiting on detach before it can be attached to 
+2026-11-17T13:22:42Z   FailedAttachVolume       AttachVolume.Attach failed for volume "pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235" : rpc error: code = Aborted desc = volume pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235 is not r
+2026-11-17T13:22:46Z   SuccessfulAttachVolume   AttachVolume.Attach succeeded for volume "pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235" 
+  --- kubelet ---
+Nov 17 20:43:07 ks-w2 kubelet[1330]: E1117 20:43:07.200827    1330 nestedpendingoperations.go:348] Operation for "{volumeName:kubernetes.io/csi/driver.longhorn.io^pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235 podName: nodeName:}" failed. No retries permitted until 2026-11-17 20:43:23.200816968 +0000 UTC 
+Nov 17 20:43:23 ks-w2 kubelet[1330]: E1117 20:43:23.553149    1330 csi_attacher.go:401] kubernetes.io/csi: attacher.MountDevice failed: rpc error: code = InvalidArgument desc = volume pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235 hasn't been attached yet
+Nov 17 20:43:23 ks-w2 kubelet[1330]: I1117 20:43:23.554422    1330 operation_generator.go:681] "MountVolume.markDeviceErrorState leaving volume uncertain" volumeName="kubernetes.io/csi/driver.longhorn.io^pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235"
+Nov 17 20:43:23 ks-w2 kubelet[1330]: E1117 20:43:23.554529    1330 nestedpendingoperations.go:348] Operation for "{volumeName:kubernetes.io/csi/driver.longhorn.io^pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235 podName: nodeName:}" failed. No retries permitted until 2026-11-17 20:43:55.554515059 +0000 UTC 

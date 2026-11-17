@@ -1,0 +1,34 @@
+### K13b 22:24:55 pg-v2-2 @ ks-w2 pv=pvc-2308cb8c hold=300s cordon=no
+State:             SUSPENDED
++0s pod Terminating(1/1)@ks-w2 | vol attached/healthy@ks-w2 | v2im running | hung 0
++136s pod Terminating(1/1)@ks-w2 | vol attached/healthy@ks-w2 | v2im running | hung 2
++261s pod Terminating(1/1)@ks-w2 | vol attached/healthy@ks-w2 | v2im running | hung 4
++304s --- resume ---
+State:             ACTIVE
++310s pod Running(0/1)@ks-w2 | vol attached/healthy@ks-w2 | v2im running | hung 4
++320s pod Running(1/1)@ks-w2 | vol attached/healthy@ks-w2 | v2im running | hung 4
+  결과: 총 321s, resume 뒤 17s
+  --- dmesg (멈춘 작업) ---
+[ 6267.819965] INFO: task manager:24223 blocked for more than 122 seconds.
+[ 6267.821780]  schedule+0x40/0x168
+[ 6267.821781]  io_schedule+0x48/0x80
+[ 6267.821802]  ext4_sync_file+0x80/0x430
+[ 6267.821838] INFO: task postgres:24275 blocked for more than 122 seconds.
+[ 6267.822344]  schedule+0x40/0x168
+[ 6267.822345]  io_schedule+0x48/0x80
+[ 6267.822352]  ext4_sync_file+0x80/0x430
+[ 6390.703759] INFO: task jbd2/dm-2-8:24047 blocked for more than 122 seconds.
+[ 6390.706034]  schedule+0x40/0x168
+[ 6390.706035]  io_schedule+0x48/0x80
+[ 6390.706062]  jbd2_journal_commit_transaction+0xe3c/0x1720
+[ 6390.706092] INFO: task manager:24223 blocked for more than 245 seconds.
+[ 6390.706669]  schedule+0x40/0x168
+[ 6390.706670]  io_schedule+0x48/0x80
+[ 6390.706682]  ext4_sync_file+0x80/0x430
+  --- 파드 이벤트 ---
+2026-11-17T13:30:02Z   Scheduled                Successfully assigned v2test/pg-v2-2 to ks-w2
+  --- kubelet ---
+Nov 17 20:43:23 ks-w2 kubelet[1330]: E1117 20:43:23.347760    1330 nestedpendingoperations.go:348] Operation for "{volumeName:kubernetes.io/csi/driver.longhorn.io^pvc-2308cb8c-6dc7-45b0-b88f-5bfe69a743d5 podName: nodeName:}" failed. No retries permitted until 2026-11-17 20:43:55.347711351 +0000 UTC 
+Nov 17 20:43:55 ks-w2 kubelet[1330]: E1117 20:43:55.461377    1330 csi_attacher.go:401] kubernetes.io/csi: attacher.MountDevice failed: rpc error: code = InvalidArgument desc = volume pvc-2308cb8c-6dc7-45b0-b88f-5bfe69a743d5 hasn't been attached yet
+Nov 17 20:43:55 ks-w2 kubelet[1330]: I1117 20:43:55.461666    1330 operation_generator.go:681] "MountVolume.markDeviceErrorState leaving volume uncertain" volumeName="kubernetes.io/csi/driver.longhorn.io^pvc-2308cb8c-6dc7-45b0-b88f-5bfe69a743d5"
+Nov 17 20:43:55 ks-w2 kubelet[1330]: E1117 20:43:55.461749    1330 nestedpendingoperations.go:348] Operation for "{volumeName:kubernetes.io/csi/driver.longhorn.io^pvc-2308cb8c-6dc7-45b0-b88f-5bfe69a743d5 podName: nodeName:}" failed. No retries permitted until 2026-11-17 20:44:59.461737824 +0000 UTC 

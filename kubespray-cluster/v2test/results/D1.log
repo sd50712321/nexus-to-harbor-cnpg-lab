@@ -1,0 +1,19 @@
+### 15:07:28 big-0 @ ks-w1 강제 정지, 480초 관찰
+killed 15:07:32
++0s 15:07:33 ks-w1=Ready ks-w2=Ready ks-w3=Ready | vol attached/healthy@ks-w1 | rep ks-w2:running ks-w1:running ks-w3:running | pod Running(1/1,restarts=0)@ks-w1
++47s 15:08:20 ks-w1=NotReady ks-w2=Ready ks-w3=Ready | vol attached/unknown@ks-w1 | rep ks-w2:running ks-w1:unknown ks-w3:running | pod Running(1/1,restarts=0)@ks-w1
++351s 15:13:24 ks-w1=NotReady ks-w2=Ready ks-w3=Ready | vol attached/faulted@ks-w1 | rep ks-w2:running ks-w1:stopped(failed 06:13:22) ks-w3:running | pod Terminating(1/1,restarts=0)@ks-w1
++356s 15:13:29 ks-w1=NotReady ks-w2=Ready ks-w3=Ready | vol attaching/unknown@ | rep ks-w2:running ks-w1:stopped(failed 06:13:22) ks-w3:running | pod Terminating(1/1,restarts=0)@ks-w1
++377s 15:13:50 ks-w1=NotReady ks-w2=Ready ks-w3=Ready | vol detached/unknown@ | rep ks-w2:stopped ks-w1:stopped(failed 06:13:22) ks-w3:stopped | pod Terminating(1/1,restarts=0)@ks-w1
+### 기동 15:15:35
+up 15:16:05
++0s 15:16:06 ks-w1=Ready ks-w2=Ready ks-w3=Ready | vol attached/healthy@ks-w3 | rep ks-w2:running ks-w1:stopped(failed 06:13:22) ks-w3:running | pod ContainerCreating(0/1,restarts=0)@ks-w3
++5s 15:16:11 ks-w1=Ready ks-w2=Ready ks-w3=Ready | vol attached/degraded@ks-w3 | rep ks-w2:running ks-w1:stopped(failed 06:13:22) ks-w3:running | pod Running(1/1,restarts=0)@ks-w3
++86s 15:17:32 ks-w1=Ready ks-w2=Ready ks-w3=Ready | vol attached/degraded@ks-w3 | rep ks-w2:running ks-w1:running ks-w3:running | pod Running(1/1,restarts=0)@ks-w3
++230s 15:19:56 ks-w1=Ready ks-w2=Ready ks-w3=Ready | vol attached/healthy@ks-w3 | rep ks-w2:running ks-w1:running ks-w3:running | pod Running(1/1,restarts=0)@ks-w3
+0
+11m         Warning   NodeNotReady               pod/big-0                           Node is not ready
+6m38s       Normal    TaintManagerEviction       pod/big-0                           Marking for deletion Pod v2test/big-0
+5m9s        Warning   FailedAttachVolume         pod/big-0                           AttachVolume.Attach failed for volume "pvc-2e0ddb7d-72a2-43c3-a547-99448b0829ca" : rpc error: code = Internal desc = Bad response statusCode [500
+4m37s       Warning   FailedAttachVolume         pod/big-0                           AttachVolume.Attach failed for volume "pvc-2e0ddb7d-72a2-43c3-a547-99448b0829ca" : rpc error: code = Internal desc = Bad response statusCode [500
+DONE

@@ -23,6 +23,7 @@ TOR_MEM  = Integer(ENV.fetch("TOR_MEM", 512))
 V2_NODES    = ENV.fetch("V2_NODES", "").split(",")
 V2_NO_DUMMY = ENV.fetch("V2_NO_DUMMY", "").split(",")
 V2_SWAP     = ENV.fetch("V2_SWAP", "").split(",")     # 적은 노드는 dummy 와 V2 디스크의 포트를 맞바꾼다 → /dev/sdc 가 엉뚱한(빈) 디스크를 가리킨다
+V2_BIG      = ENV.fetch("V2_BIG", "").split(",")      # 적은 노드에는 큰 디스크 v2disks/<노드>-big.vmdk 를 포트 4 에 하나 더 붙인다 (디스크 크기와 준비 시간 비교용)
 V2_MEM      = Integer(ENV.fetch("V2_MEM", 5120))
 V2_DISK_DIR = File.expand_path("v2disks", __dir__)
 BOX          = "bento/ubuntu-24.04"
@@ -73,6 +74,8 @@ Vagrant.configure("2") do |config|
           v.vmx["sata0:2.filename"] = "#{V2_DISK_DIR}/#{n[:name]}-#{first}.vmdk"
           v.vmx["sata0:3.present"]  = "TRUE"
           v.vmx["sata0:3.filename"] = "#{V2_DISK_DIR}/#{n[:name]}-#{second}.vmdk"
+          v.vmx["sata0:4.present"]  = V2_BIG.include?(n[:name]) ? "TRUE" : "FALSE"
+          v.vmx["sata0:4.filename"] = "#{V2_DISK_DIR}/#{n[:name]}-big.vmdk"
         end
       end
     end

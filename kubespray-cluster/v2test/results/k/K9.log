@@ -1,0 +1,11 @@
+### K9a 19:30:07 ks-w1 정상 종료 후 기동
+up 19:31:47
++1s 19:31:48 node=Ready im-v2=starting v2-big=False v2-disk=False
++20s 19:32:07 node=Ready im-v2=running v2-big=False v2-disk=False
++78s 19:33:05 node=Ready im-v2=running v2-big=True v2-disk=True
+### K9b 19:33:05 ks-w1 강제 종료 후 기동
+up 19:33:37
++0s 19:33:37 node=Ready im-v2=running v2-big=False v2-disk=False
++20s 19:33:57 node=Ready im-v2=starting v2-big=False v2-disk=False
++36s 19:34:13 node=Ready im-v2=running v2-big=False v2-disk=False
++78s 19:34:55 node=Ready im-v2=running v2-big=True v2-disk=True

@@ -1,0 +1,5 @@
++0s 19:08:59 node-hp=2Gi os:hp=1024 mod=0/3 im-v2=error im-pods=0 v2disk=False | 
++32s 19:09:31 node-hp=2Gi os:hp=1024 mod=0/3 im-v2=starting im-pods=2 v2disk=False | 
++47s 19:09:46 node-hp=2Gi os:hp=1024 mod=0/3 im-v2=running im-pods=2 v2disk=False | 
++79s 19:10:18 node-hp=2Gi os:hp=1024 mod=0/3 im-v2=running im-pods=2 v2disk=True | 
+DONE

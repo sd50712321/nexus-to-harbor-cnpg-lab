@@ -384,3 +384,11 @@ kubectl -n longhorn-system get instancemanagers.longhorn.io | awk '$2=="v2"'
 - 좁히기: 두 번의 차이를 찾았다. 느렸던 쪽은 Cluster 상태가 370초까지 `3/3` 그대로였다. 상태를 고치는 주체가 일을 안 했다는 뜻이라 operator 를 봤다. operator 파드가 3분 53초 전에 새로 떠 있었고, 로그는 `Successfully acquired lease` 바로 다음 줄이 `Current primary isn't healthy, initiating a failover` 였다. 죽은 노드에 operator 가 같이 있었던 것이다.
 - 원인: operator 는 1개였고, 죽은 노드의 파드는 300초 축출 대기 뒤에야 다른 노드에 다시 만들어진다. 그동안 승격을 지시할 주체가 없다.
 - 조치: operator 2개 + 서로 다른 노드(`v2test/cnpg-operator-ha.yaml`). 리더가 죽은 노드에 있던 경우도 58초, 다른 노드에 있던 경우 86초. 자세한 수치는 [V2-CNPG-FAILOVER.md](V2-CNPG-FAILOVER.md).
+
+## 30. 파드가 `Init` 에서 몇 분씩 멈추는데 Longhorn 은 전부 정상으로 보인다: 볼륨 장치의 I/O 가 끝나지 않는다 [실서버 영향: 원인 미확정]
+
+- 증상(다른 클러스터에서 들음): 파드 재기동 때 볼륨이 6분~1시간 늦게 붙고 저절로 풀린다. 파드는 `Init`, Longhorn 파드는 전부 `Running`, 노드 `Ready`. `dmesg` 에 `blocked for more than 122 seconds`.
+- 좁히기: 고정 타이머부터 의심했다(6분 강제 detach, Longhorn 30분 복제본 정리). 하지만 6·18·31·60분이 한 타이머로 안 나온다. 그래서 "무엇이 다르면 이 모양이 되는가"를 하나씩 만들었다. 파일을 잡은 프로세스·fanotify·모듈·디스크 크기·시계는 이동 시간(32~38초)을 바꾸지 못했다. V2 instance-manager 가 못 뜨는 경우(hugepage 0)는 모양이 같았지만 40분이 지나도 안 풀렸고, 30분 정리는 동작했는데도 파드는 그대로였다. 디스크 I/O 를 늦추면 저절로 풀리지만 파드가 `CrashLoopBackOff` 였다. 마지막으로 볼륨의 device-mapper 장치를 멈추자(`dmsetup suspend`) 세 가지가 함께 맞았다: `Init:0/1`(또는 `Terminating`), 볼륨은 `attached/healthy`, 그리고 122·245·368초 멈춤 기록.
+- 랩에서 확인한 것: 장치가 멈춘 시간만큼 걸리고, 풀리면 16~33초 안에 회복한다. 이벤트는 2분마다 `FailedMount … DeadlineExceeded`, 노드에는 `D` 상태 `blkid` 가 쌓인다.
+- 남은 것: 실서버에서 무엇이 I/O 를 멈추는지는 모른다. Longhorn V2 가 스냅샷·복제본 추가·확장 때 스스로 장치를 멈춘다는 것은 소스에서 읽었지만 재개가 늦는 경로는 재현하지 못했다. 확인 명령과 판정표는 [V2-DELAY-INVESTIGATION.md](V2-DELAY-INVESTIGATION.md) 5·6절.
+

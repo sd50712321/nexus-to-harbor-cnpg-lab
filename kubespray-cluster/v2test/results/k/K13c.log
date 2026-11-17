@@ -1,0 +1,34 @@
+### K13c 22:31:44 pg-v2-2 @ ks-w2 pv=pvc-2308cb8c hold=420s
+Running as unit: k13c.service; invocation ID: 63c1f4aecea9415c8d820f83741d287a
++0s pod Terminating(1/1)@ks-w2 | vol attached/healthy@ks-w2 | dm=ACTIVE mnt=2 hung=0 trap=active
++5s pod Init:0/1(0/1)@ks-w2 | vol attaching/unknown@ | dm= mnt=0 hung=0 trap=active
++11s pod Init:0/1(0/1)@ks-w2 | vol attaching/unknown@ | dm=SUSPENDED mnt=0 hung=0 trap=active
++16s pod Init:0/1(0/1)@ks-w2 | vol attached/healthy@ks-w2 | dm=SUSPENDED mnt=0 hung=0 trap=active
++424s --- resume ---
+State:             ACTIVE
++429s pod Init:0/1(0/1)@ks-w2 | vol attached/healthy@ks-w2 | dm=ACTIVE mnt=2 hung=0 trap=inactive
++435s pod Running(0/1)@ks-w2 | vol attached/healthy@ks-w2 | dm=ACTIVE mnt=2 hung=0 trap=inactive
++440s pod Running(1/1)@ks-w2 | vol attached/healthy@ks-w2 | dm=ACTIVE mnt=2 hung=0 trap=inactive
+  결과: 총 440s, resume 뒤 16s
+  --- 함정 로그 ---
+gone-or-timeout 16
+suspended
+Stopping k13c.service - /usr/bin/bash -c "while findmnt -rn | grep -q pvc-2308cb8c-6dc7-45b0-b88f-5bfe69a743d5; do sleep 0.05; done; echo unmounted; i=0; while dmsetup info pvc-2308cb8c-6dc7-45b0-b88f-5bfe69a743d5 >/dev/null 2>&1 && [ \$i -lt 400 ]; do sleep 0.05; i=\$((i+1)); done; echo gone-or-timeout \$i; until dmsetup suspend --nolockfs pvc-2308cb8c-6dc7-45b0-b88f-5bfe69a743d5 2>/dev/null; do sleep 0.02; done; echo suspended; sleep 3600"...
+k13c.service: Deactivated successfully.
+Stopped k13c.service - /usr/bin/bash -c "while findmnt -rn | grep -q pvc-2308cb8c-6dc7-45b0-b88f-5bfe69a743d5; do sleep 0.05; done; echo unmounted; i=0; while dmsetup info pvc-2308cb8c-6dc7-45b0-b88f-5bfe69a743d5 >/dev/null 2>&1 && [ \$i -lt 400 ]; do sleep 0.05; i=\$((i+1)); done; echo gone-or-timeout \$i; until dmsetup suspend --nolockfs pvc-2308cb8c-6dc7-45b0-b88f-5bfe69a743d5 2>/dev/null; do sleep 0.02; done; echo suspended; sleep 3600".
+  --- dmesg (멈춘 작업) ---
+  --- 파드 이벤트 ---
+2026-11-17T13:30:02Z   Scheduled                Successfully assigned v2test/pg-v2-2 to ks-w2
+2026-11-17T13:31:45Z   Scheduled                Successfully assigned v2test/pg-v2-2 to ks-w2
+2026-11-17T13:31:58Z   FailedAttachVolume       AttachVolume.Attach failed for volume "pvc-2308cb8c-6dc7-45b0-b88f-5bfe69a743d5" : rpc error: code = Aborted desc = volume pvc-2308cb8c-6dc7-45b0-b88f-5bfe69a743d5 is not r
+2026-11-17T13:32:07Z   SuccessfulAttachVolume   AttachVolume.Attach succeeded for volume "pvc-2308cb8c-6dc7-45b0-b88f-5bfe69a743d5" 
+2026-11-17T13:38:08Z   FailedMount              MountVolume.MountDevice failed for volume "pvc-2308cb8c-6dc7-45b0-b88f-5bfe69a743d5" : rpc error: code = DeadlineExceeded desc = context deadline exceeded
+2026-11-17T13:38:48Z   FailedMount              MountVolume.MountDevice failed for volume "pvc-2308cb8c-6dc7-45b0-b88f-5bfe69a743d5" : rpc error: code = Internal desc = mount failed: exit status 32
+Mounting arguments: -t ext4 -o defaults /dev/longhorn/pvc-2308cb8c-6dc7-45b0-b88f-5bfe69a743d5 /var/lib/kubelet/plugins/kubernetes.io/csi/driver.longhorn.io/61429405b60a33cf6a3f9976c807dc82ced55699e3deb827665cca5c368da4b
+Output: mount: /var/lib/kubelet/plugins/kubernetes.io/csi/driver.longhorn.io/61429405b60a33cf6a3f9976c807dc82ced55699e3deb827665cca5c368da4b7/globalmount: /dev/longhorn/pvc-2308cb8c-6dc7-45b0-b88f-5bfe69a743d5 already mo
+  --- kubelet ---
+Nov 17 13:34:07 ks-w2 kubelet[1330]: E1117 13:34:07.318736    1330 nestedpendingoperations.go:348] Operation for "{volumeName:kubernetes.io/csi/driver.longhorn.io^pvc-2308cb8c-6dc7-45b0-b88f-5bfe69a743d5 podName: nodeName:}" failed. No retries permitted until 2026-11-17 13:34:07.818409875 +0000 UTC 
+Nov 17 13:36:07 ks-w2 kubelet[1330]: E1117 13:36:07.925975    1330 nestedpendingoperations.go:348] Operation for "{volumeName:kubernetes.io/csi/driver.longhorn.io^pvc-2308cb8c-6dc7-45b0-b88f-5bfe69a743d5 podName: nodeName:}" failed. No retries permitted until 2026-11-17 13:36:08.925945364 +0000 UTC 
+Nov 17 13:38:08 ks-w2 kubelet[1330]: E1117 13:38:08.968066    1330 nestedpendingoperations.go:348] Operation for "{volumeName:kubernetes.io/csi/driver.longhorn.io^pvc-2308cb8c-6dc7-45b0-b88f-5bfe69a743d5 podName: nodeName:}" failed. No retries permitted until 2026-11-17 13:38:10.968035755 +0000 UTC 
+Nov 17 13:38:48 ks-w2 kubelet[1330]: E1117 13:38:48.985795    1330 nestedpendingoperations.go:348] Operation for "{volumeName:kubernetes.io/csi/driver.longhorn.io^pvc-2308cb8c-6dc7-45b0-b88f-5bfe69a743d5 podName: nodeName:}" failed. No retries permitted until 2026-11-17 13:38:52.985036723 +0000 UTC 
+  --- longhorn csi plugin ---

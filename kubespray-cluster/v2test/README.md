@@ -30,6 +30,7 @@ V2_NODES=ks-w1,ks-w2,ks-w3 vagrant up ks-w1 ks-w2 ks-w3
 | 변수 | 하는 일 |
 |---|---|
 | `V2_NODES` | 적은 워커만 메모리를 `V2_MEM`(기본 5120)으로 올리고 디스크 2개를 SATA 포트 2·3 에 붙인다 |
+| `V2_BIG` | 적은 워커에 `v2disks/<노드>-big.vmdk` 를 SATA 포트 4 에 하나 더 붙인다 (K9 디스크 크기 비교용) |
 | `V2_NO_DUMMY` | 적은 노드는 dummy(포트 2)를 뗀다 → V2 디스크가 `sdc` 에서 `sdb` 로 당겨진다 |
 | `V2_SWAP` | 적은 노드는 포트 2·3 의 디스크를 맞바꾼다 → `/dev/sdc` 가 빈 dummy 를 가리킨다 |
 
@@ -192,6 +193,7 @@ kubectl -n v2test patch cluster pg-v2 --subresource=status --type merge -p "{\"s
 | `results/boot.log` | VM 기동 시각 |
 | `results/A1.log` ~ `A7.log` | 디스크 이름 밀림 시험. A1 에 오류 메시지 원문 |
 | `results/B1.log`, `B2.log` | primary 노드 정지(프로브 전), 3벌 볼륨 13분 관찰 + taint |
+| `results/k/K1.log` ~ `K13c.log`, `results/D1.log`, `E1.log` | 볼륨이 늦게 붙는 증상 케이스 시험. 설명은 [V2-DELAY-INVESTIGATION.md](../V2-DELAY-INVESTIGATION.md) |
 | `results/C1.log` ~ `C4.log` | 승격 시험. 끝에 프로브 실패 구간(UTC) |
 | `results/S1.log` | switchover 3번과 쓰기 실패 구간 |
 

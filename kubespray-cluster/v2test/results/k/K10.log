@@ -1,0 +1,21 @@
+### K10 19:49:40 ks-w2 강제 종료 → hugepage 0 으로 복귀, 2400초 방치
+im=running | pg-v2-2:att/ok[w2] pg-v2-1:att/ok[w1] pg-v2-3:att/ok[w3] pg-r3-2:att/ok[w1,w3,w2] pg-r3-1:att/ok[w1,w3,w2] | pg-r3-1=Running(1/1,r0)@w1 pg-r3-2=Running(1/1,r0)@w2 pg-v2-1=Running(1/1,r0)@w1 pg-v2-2=Running(1/1,r0)@w2 pg-v2-3=Running(1/1,r0)@w3 
+killed 19:49:47
+up 19:51:14 hp=0
++1s 19:51:15 im=unknown | pg-v2-2:att/unknown[w2] pg-v2-1:att/ok[w1] pg-v2-3:att/ok[w3] pg-r3-2:att/unknown[w1,w3,w2] pg-r3-1:att/degr[w1,w3,w2!] | pg-r3-1=Running(1/1,r0)@w1 pg-r3-2=Unknown(0/1,r0)@w2 pg-v2-1=Running(1/1,r0)@w1 pg-v2-2=Unknown(0/1,r0)@w2 pg-v2-3=Running(1/1,r0)@w3 
++33s 19:51:47 im=error | pg-v2-2:det/faulted[w2!] pg-v2-1:att/ok[w1] pg-v2-3:att/ok[w3] pg-r3-2:attaching/unknown[w1,w3,w2!] pg-r3-1:att/degr[w1,w3,w2!] | pg-r3-1=Running(1/1,r0)@w1 pg-r3-2=Unknown(0/1,r0)@w2 pg-v2-1=Running(1/1,r0)@w1 pg-v2-2=Unknown(0/1,r0)@w2 pg-v2-3=Running(1/1,r0)@w3 
++65s 19:52:19 im=error | pg-v2-2:det/faulted[w2!] pg-v2-1:att/ok[w1] pg-v2-3:att/ok[w3] pg-r3-2:attaching/unknown[w1,w3,w2!] pg-r3-1:att/degr[w1,w3,w2!] | pg-r3-1=Running(1/1,r0)@w1 pg-r3-2=Init:0/1(0/1,r0)@w2 pg-v2-1=Running(1/1,r0)@w1 pg-v2-2=Unknown(0/1,r0)@w2 pg-v2-3=Running(1/1,r0)@w3 
++1815s 20:21:29 im=error | pg-v2-2:det/faulted[w2!] pg-v2-1:att/ok[w1] pg-v2-3:att/ok[w3] pg-r3-2:attaching/unknown[w1,w3,w2!] pg-r3-1:att/degr[w1,w3] | pg-r3-1=Running(1/1,r0)@w1 pg-r3-2=Init:0/1(0/1,r0)@w2 pg-v2-1=Running(1/1,r0)@w1 pg-v2-2=Unknown(0/1,r0)@w2 pg-v2-3=Running(1/1,r0)@w3 
++1863s 20:22:17 im=error | pg-v2-2:det/faulted[w2!] pg-v2-1:att/ok[w1] pg-v2-3:att/ok[w3] pg-r3-2:attaching/unknown[w1,w3] pg-r3-1:att/degr[w1,w3] | pg-r3-1=Running(1/1,r0)@w1 pg-r3-2=Init:0/1(0/1,r0)@w2 pg-v2-1=Running(1/1,r0)@w1 pg-v2-2=Unknown(0/1,r0)@w2 pg-v2-3=Running(1/1,r0)@w3 
+### 20:31:22 hugepage 복구 + kubelet 재시작
++1s 20:31:25 im=error | pg-v2-2:det/faulted[w2!] pg-v2-1:att/ok[w1] pg-v2-3:att/ok[w3] pg-r3-2:attaching/unknown[w1,w3] pg-r3-1:att/degr[w1,w3] | pg-r3-1=Running(1/1,r0)@w1 pg-r3-2=Init:0/1(0/1,r0)@w2 pg-v2-1=Running(1/1,r0)@w1 pg-v2-2=Unknown(0/1,r0)@w2 pg-v2-3=Running(1/1,r0)@w3 
++33s 20:31:57 im=running | pg-v2-2:det/faulted[w2!] pg-v2-1:att/ok[w1] pg-v2-3:att/ok[w3] pg-r3-2:attaching/faulted[w1,w3] pg-r3-1:att/degr[w1,w3] | pg-r3-1=Running(1/1,r0)@w1 pg-r3-2=Init:0/1(0/1,r0)@w2 pg-v2-1=Running(1/1,r0)@w1 pg-v2-2=Unknown(0/1,r0)@w2 pg-v2-3=Running(1/1,r0)@w3 
++49s 20:32:13 im=running | pg-v2-2:det/faulted[w2!] pg-v2-1:att/ok[w1] pg-v2-3:att/ok[w3] pg-r3-2:att/degr[w1,w3] pg-r3-1:att/degr[w1,w3] | pg-r3-1=Running(1/1,r0)@w1 pg-r3-2=Running(0/1,r0)@w2 pg-v2-1=Running(1/1,r0)@w1 pg-v2-2=Unknown(0/1,r0)@w2 pg-v2-3=Running(1/1,r0)@w3 
++65s 20:32:29 im=running | pg-v2-2:det/faulted[w2!] pg-v2-1:att/ok[w1] pg-v2-3:att/ok[w3] pg-r3-2:att/degr[w1,w3] pg-r3-1:att/degr[w1,w3] | pg-r3-1=Running(1/1,r0)@w1 pg-r3-2=Running(1/1,r0)@w2 pg-v2-1=Running(1/1,r0)@w1 pg-v2-2=Unknown(0/1,r0)@w2 pg-v2-3=Running(1/1,r0)@w3 
++81s 20:32:45 im=running | pg-v2-2:att/ok[w2] pg-v2-1:att/ok[w1] pg-v2-3:att/ok[w3] pg-r3-2:att/degr[w1,w3] pg-r3-1:att/degr[w1,w3] | pg-r3-1=Running(1/1,r0)@w1 pg-r3-2=Running(1/1,r0)@w2 pg-v2-1=Running(1/1,r0)@w1 pg-v2-2=Init:0/1(0/1,r0)@w2 pg-v2-3=Running(1/1,r0)@w3 
++98s 20:33:02 im=running | pg-v2-2:att/ok[w2] pg-v2-1:att/ok[w1] pg-v2-3:att/ok[w3] pg-r3-2:att/degr[w1,w3] pg-r3-1:att/degr[w1,w3,w2] | pg-r3-1=Running(1/1,r0)@w1 pg-r3-2=Running(1/1,r0)@w2 pg-v2-1=Running(1/1,r0)@w1 pg-v2-2=Running(1/1,r0)@w2 pg-v2-3=Running(1/1,r0)@w3 
++114s 20:33:18 im=running | pg-v2-2:att/ok[w2] pg-v2-1:att/ok[w1] pg-v2-3:att/ok[w3] pg-r3-2:att/degr[w1,w2,w3] pg-r3-1:att/degr[w1,w3,w2] | pg-r3-1=Running(1/1,r0)@w1 pg-r3-2=Running(1/1,r0)@w2 pg-v2-1=Running(1/1,r0)@w1 pg-v2-2=Running(1/1,r0)@w2 pg-v2-3=Running(1/1,r0)@w3 
++130s 20:33:34 im=running | pg-v2-2:att/ok[w2] pg-v2-1:att/ok[w1] pg-v2-3:att/ok[w3] pg-r3-2:att/ok[w1,w2,w3] pg-r3-1:att/ok[w1,w3,w2] | pg-r3-1=Running(1/1,r0)@w1 pg-r3-2=Running(1/1,r0)@w2 pg-v2-1=Running(1/1,r0)@w1 pg-v2-2=Running(1/1,r0)@w2 pg-v2-3=Running(1/1,r0)@w3 
+2026-11-17T11:21:25.
+2026-11-17T11:22:02.
+DONE

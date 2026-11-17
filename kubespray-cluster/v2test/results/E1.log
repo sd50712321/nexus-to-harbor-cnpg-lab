@@ -1,0 +1,19 @@
+### 15:20:47 ks-w2 강제 정지 (big-0 은 ks-w3), 420초. staleReplicaTimeout=3분
+killed 15:20:51
++1s 15:20:52 ks-w1=Ready ks-w2=Ready ks-w3=Ready | vol attached/healthy@ks-w3 | rep ks-w2:running ks-w1:running ks-w3:running | pod Running(1/1,restarts=0)@ks-w3
++22s 15:21:13 ks-w1=Ready ks-w2=Ready ks-w3=Ready | vol attached/degraded@ks-w3 | rep ks-w2:running(failed 06:21:12) ks-w1:running ks-w3:running | pod Running(1/1,restarts=0)@ks-w3
++32s 15:21:23 ks-w1=Ready ks-w2=Ready ks-w3=Ready | vol attached/degraded@ks-w3 | rep ks-w2:running ks-w1:running ks-w3:running | pod Running(1/1,restarts=0)@ks-w3
++43s 15:21:34 ks-w1=Ready ks-w2=NotReady ks-w3=Ready | vol attached/degraded@ks-w3 | rep ks-w2:stopped ks-w1:running ks-w3:running | pod Running(1/1,restarts=0)@ks-w3
++90s 15:22:21 ks-w1=Ready ks-w2=NotReady ks-w3=Ready | vol attached/degraded@ks-w3 | rep ks-w2:stopped(failed 06:22:20) ks-w1:running ks-w3:running | pod Running(1/1,restarts=0)@ks-w3
++289s 15:25:40 ks-w1=Ready ks-w2=NotReady ks-w3=Ready | vol attached/degraded@ks-w3 | rep ks-w1:running ks-w3:running | pod Running(1/1,restarts=0)@ks-w3
+### 기동 15:27:52
+up 15:28:24
++0s 15:28:24 ks-w1=Ready ks-w2=Ready ks-w3=Ready | vol attached/degraded@ks-w3 | rep ks-w1:running ks-w3:running | pod Running(1/1,restarts=0)@ks-w3
++735s 15:40:39 ks-w1=Ready ks-w2=Ready ks-w3=Ready | vol attached/degraded@ks-w3 | rep ks-w2:stopped ks-w1:running ks-w3:running | pod Running(1/1,restarts=0)@ks-w3
++741s 15:40:45 ks-w1=Ready ks-w2=Ready ks-w3=Ready | vol attached/degraded@ks-w3 | rep ks-w2:running ks-w1:running ks-w3:running | pod Running(1/1,restarts=0)@ks-w3
++810s 15:41:54 ks-w1=Ready ks-w2=Ready ks-w3=Ready | vol attached/healthy@ks-w3 | rep ks-w2:running ks-w1:running ks-w3:running | pod Running(1/1,restarts=0)@ks-w3
+time="2026-11-17T06:25:38.687099827Z" ledb7d-72a2-43c3-a547-99448b0829ca-r-a591d5ae in instance manager instance-manager-232daedaaa5f584bea7d1584db330005" func="controller.(*ReplicaController).DeleteInstance" file="replica_controller.go:608" controller=longhorn-replica n
+time="2026-11-17T06:25:38.769671426Z" le0829ca-r-a591d5ae failed too long ago to be useful during a rebuild" func="controller.(*VolumeController).shouldCleanUpFailedReplica" file="volume_controller.go:7527" accessMode=rwo controller=longhorn-volume frontend=blockdev migr
+time="2026-11-17T06:25:38.769719138Z" lecontroller.(*VolumeController).cleanupCorruptedOrStaleReplicas" file="volume_controller.go:1358" accessMode=rwo controller=longhorn-volume frontend=blockdev migratable=false node=ks-w3 owner=ks-w3 replica=pvc-2e0ddb7d-72a2-43c3-a54
+write fails: 0
+DONE

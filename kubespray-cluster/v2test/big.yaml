@@ -1,0 +1,26 @@
+# 데이터가 든 3벌 V2 볼륨: 3GB 를 써 넣고 1초마다 한 줄씩 쓴다. 재구축 시간과 그동안 파드가 흔들리는지 보는 용
+apiVersion: apps/v1
+kind: StatefulSet
+metadata: {name: big, namespace: v2test}
+spec:
+  serviceName: big
+  replicas: 1
+  selector: {matchLabels: {app: big}}
+  template:
+    metadata: {labels: {app: big}}
+    spec:
+      terminationGracePeriodSeconds: 5
+      securityContext: {runAsUser: 26, runAsGroup: 26, fsGroup: 26}
+      containers:
+      - name: w
+        image: ghcr.io/cloudnative-pg/postgresql:16.15-minimal-bookworm
+        command: ["bash","-c"]
+        args:
+        - |
+          [ -f /data/fill.done ] || { dd if=/dev/urandom of=/data/fill bs=1M count=3000 oflag=direct status=none && touch /data/fill.done; }
+          echo "$(date -u +%H:%M:%S) start fill=$(du -m /data/fill | cut -f1)MB"
+          while true; do date -u +%H:%M:%S >> /data/tick && sync /data/tick || echo "$(date -u +%H:%M:%S) WRITE-FAIL"; sleep 1; done
+        volumeMounts: [{name: data, mountPath: /data}]
+  volumeClaimTemplates:
+  - metadata: {name: data}
+    spec: {accessModes: [ReadWriteOnce], storageClassName: longhorn-v2, resources: {requests: {storage: 4Gi}}}

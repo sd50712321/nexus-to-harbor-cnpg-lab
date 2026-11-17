@@ -1,0 +1,12 @@
+### K2-holder 18:38:51 big-0 @ ks-w3 pv=pvc-385a2311
++0s pod Terminating(1/1)@ks-w3 | vol attached/healthy@ks-w3
++6s pod ContainerCreating(0/1)@ks-w1 | vol attached/healthy@ks-w3
++10s pod ContainerCreating(0/1)@ks-w1 | vol detaching/unknown@ks-w3
++13s pod ContainerCreating(0/1)@ks-w1 | vol attaching/unknown@
++19s pod ContainerCreating(0/1)@ks-w1 | vol attaching/healthy@
++22s pod ContainerCreating(0/1)@ks-w1 | vol attached/healthy@ks-w1
++32s pod Running(1/1)@ks-w1 | vol attached/healthy@ks-w1
+  결과: 32s
+  옛 노드: mounts=0 umount= hung=0
+2026-11-17T09:39:12Z   FailedAttachVolume         AttachVolume.Attach failed for volume "pvc-385a2311-8dda-4fd5-9fae-69099fd2233b" : rpc error: code = Aborted desc = volume pvc-385a2311-8dda-4fd5-9fae
+2026-11-17T09:39:20Z   SuccessfulAttachVolume     AttachVolume.Attach succeeded for volume "pvc-385a2311-8dda-4fd5-9fae-69099fd2233b" 
