@@ -14,6 +14,7 @@ Harbor 의 DB 는 CloudNativePG(CNPG) 3개 인스턴스, 이미지 저장소는 
 | [V2-CNPG-FAILOVER.md](V2-CNPG-FAILOVER.md) | V2 볼륨 위의 CNPG 에서 노드가 죽었을 때: 승격까지 걸리는 시간, 쓰기 중단, 파드가 안 옮겨 가는 이유와 줄이는 법 (랩 실측) |
 | [LLM-GUIDE-V2-CNPG.md](LLM-GUIDE-V2-CNPG.md) | 사내 LLM 에 넣는 운영 보조 지침: V2 디스크·CNPG 장애를 증상 → 확인 → 조치로, 지켜야 할 조건과 하지 말 것, 검증 안 된 범위 |
 | [V2-DELAY-INVESTIGATION.md](V2-DELAY-INVESTIGATION.md) | V2 볼륨이 6분~1시간 늦게 붙는 증상: 랩 케이스 시험(K1~K13) 결과와 실서버에서 알아볼 것 |
+| [V2-DELAY-HYPOTHESES.md](V2-DELAY-HYPOTHESES.md) | 위 증상의 원인 후보 12개: 후보마다 실서버에서 보여야 할 출력, 판정표, 내부 LLM 지시문, 랩에서 재현이 안 되는 이유 |
 | [V2-ALL-IN-ONE.md](V2-ALL-IN-ONE.md) | 위 V2 문서 4개 + 진단 기록 + 설정·스크립트(붙여넣기 복원) + 로그 원문을 한 파일로 묶은 사본 |
 | [rendered/](rendered/) | 템플릿을 인벤토리 값으로 풀어 놓은 Helm values·매니페스트와 적용 순서 (아래 '설정 파일') |
 | [BUNDLE.md](BUNDLE.md) | **다운로드가 안 될 때**: 모든 코드 파일을 붙여넣기용 블럭으로 모은 것 (아래 '파일 옮기기') |
