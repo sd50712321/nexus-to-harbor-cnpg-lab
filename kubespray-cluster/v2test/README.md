@@ -194,6 +194,7 @@ kubectl -n v2test patch cluster pg-v2 --subresource=status --type merge -p "{\"s
 | `results/A1.log` ~ `A7.log` | 디스크 이름 밀림 시험. A1 에 오류 메시지 원문 |
 | `results/B1.log`, `B2.log` | primary 노드 정지(프로브 전), 3벌 볼륨 13분 관찰 + taint |
 | `results/k/K1.log` ~ `K13c.log`, `results/D1.log`, `E1.log` | 볼륨이 늦게 붙는 증상 케이스 시험. 설명은 [V2-DELAY-INVESTIGATION.md](../V2-DELAY-INVESTIGATION.md) |
+| `results/t/T1.log`, `T2.log` | `spdk_tgt` 를 강제로 죽인 시험(`t-spdk-kill.sh`, `t1-snap.sh`). 설명은 [V2-SPDK-CRASH-ANALYSIS.md](../V2-SPDK-CRASH-ANALYSIS.md) 4.4절 |
 | `results/C1.log` ~ `C4.log` | 승격 시험. 끝에 프로브 실패 구간(UTC) |
 | `results/S1.log` | switchover 3번과 쓰기 실패 구간 |
 

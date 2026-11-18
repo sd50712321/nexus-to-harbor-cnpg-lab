@@ -1,0 +1,161 @@
+T2: ks-w2 에서 dmsetup suspend pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235 직후 spdk_tgt 를 SIGABRT 로 죽임
+start(UTC) 2026-11-18T02:46:07Z
+== 02:46:11 spdk_tgt: pid=21296  04:15 RLl
+-- dm
+pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235:Active:1
+-- nvme
+   nvme1 live traddr=10.233.72.223,trsvcid=20001,src_addr=10.233.72.223 nvme0c1n2 
+   nvme0c1n2 size=4194304
+   nvme0n2 size=4194304
+-- D
+>>> dmsetup suspend
+rc=0
+>>> kill -ABRT
+== 02:46:16 spdk_tgt: pid= 
+-- dm
+pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235:Suspended:1
+-- nvme
+   nvme1 connecting traddr=10.233.72.223,trsvcid=20001 nvme0c1n2 
+   nvme0c1n2 size=4194304
+   nvme0n2 size=4194304
+-- D
+== 02:46:31 spdk_tgt: pid= 
+-- dm
+pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235:Suspended:1
+-- nvme
+   nvme1 connecting traddr=10.233.72.223,trsvcid=20001 nvme0c1n2 
+   nvme0c1n2 size=4194304
+   nvme0n2 size=4194304
+-- D
+== 02:47:01 spdk_tgt: pid= 
+-- dm
+pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235:Suspended:1
+-- nvme
+-- D
+== 02:47:31 spdk_tgt: pid=28182  00:15 RLl
+-- dm
+pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235:Active:1
+-- nvme
+   nvme1 live traddr=10.233.72.177,trsvcid=20002,src_addr=10.233.72.177 nvme0c1n1 
+   nvme0c1n1 size=4194304
+   nvme0n1 size=4194304
+-- D
+== 02:48:31 spdk_tgt: pid=28182  01:15 RLl
+-- dm
+pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235:Active:1
+-- nvme
+   nvme1 live traddr=10.233.72.177,trsvcid=20002,src_addr=10.233.72.177 nvme0c1n1 
+   nvme0c1n1 size=4194304
+   nvme0n1 size=4194304
+-- D
+== 02:49:31 spdk_tgt: pid=28182  02:15 RLl
+-- dm
+pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235:Active:1
+-- nvme
+   nvme1 live traddr=10.233.72.177,trsvcid=20002,src_addr=10.233.72.177 nvme0c1n1 
+   nvme0c1n1 size=4194304
+   nvme0n1 size=4194304
+-- D
+== 02:50:31 spdk_tgt: pid=28182  03:15 RLl
+-- dm
+pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235:Active:1
+-- nvme
+   nvme1 live traddr=10.233.72.177,trsvcid=20002,src_addr=10.233.72.177 nvme0c1n1 
+   nvme0c1n1 size=4194304
+   nvme0n1 size=4194304
+-- D
+== 02:51:31 spdk_tgt: pid=28182  04:15 RLl
+-- dm
+pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235:Active:1
+-- nvme
+   nvme1 live traddr=10.233.72.177,trsvcid=20002,src_addr=10.233.72.177 nvme0c1n1 
+   nvme0c1n1 size=4194304
+   nvme0n1 size=4194304
+-- D
+== 02:52:31 spdk_tgt: pid=28182  05:15 RLl
+-- dm
+pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235:Active:1
+-- nvme
+   nvme1 live traddr=10.233.72.177,trsvcid=20002,src_addr=10.233.72.177 nvme0c1n1 
+   nvme0c1n1 size=4194304
+   nvme0n1 size=4194304
+-- D
+== 02:53:31 spdk_tgt: pid=28182  06:15 RLl
+-- dm
+pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235:Active:1
+-- nvme
+   nvme1 live traddr=10.233.72.177,trsvcid=20002,src_addr=10.233.72.177 nvme0c1n1 
+   nvme0c1n1 size=4194304
+   nvme0n1 size=4194304
+-- D
+-- dmesg
+[ 1081.498349] nvme nvme1: starting error recovery
+[ 1083.533856] nvme nvme1: Failed reconnect attempt 1
+[ 1085.581988] nvme nvme1: Failed reconnect attempt 2
+[ 1087.630093] nvme nvme1: Failed reconnect attempt 3
+[ 1089.678140] nvme nvme1: Failed reconnect attempt 4
+[ 1091.726923] nvme nvme1: Failed reconnect attempt 5
+[ 1093.775475] nvme nvme1: Failed reconnect attempt 6
+[ 1095.823360] nvme nvme1: Failed reconnect attempt 7
+[ 1096.654682] nvme nvme1: failfast expired
+[ 1097.870919] nvme nvme1: Failed reconnect attempt 8
+[ 1099.919128] nvme nvme1: Failed reconnect attempt 9
+[ 1101.967173] nvme nvme1: Failed reconnect attempt 10
+[ 1104.015307] nvme nvme1: Failed reconnect attempt 11
+[ 1106.063566] nvme nvme1: Failed reconnect attempt 12
+[ 1108.111606] nvme nvme1: Failed reconnect attempt 13
+[ 1110.159795] nvme nvme1: Failed reconnect attempt 14
+[ 1112.207921] nvme nvme1: Failed reconnect attempt 15
+[ 1112.207923] nvme nvme1: Removing controller...
+[ 1112.207932] nvme nvme1: Removing ctrl: NQN "nqn.2023-01.io.longhorn.spdk:volume-pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235"
+[ 1112.234849] nvme nvme1: Property Set error: 880, offset 0x14
+[ 1145.914279] eth0: renamed from tmpecd2b
+[ 1158.023480] nvme_fabrics: I/O fail on reconnect controller after 15 sec
+[ 1158.039468] nvme nvme1: creating 2 I/O queues.
+[ 1158.056653] nvme nvme1: mapped 2/0/0 default/read/poll queues.
+[ 1158.057386] nvme nvme1: new ctrl: NQN "nqn.2023-01.io.longhorn.spdk:volume-pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235", addr 10.233.72.177:20002, hostnqn: nqn.2014-08.org.nvmexpress:uuid:26c64d56-b85d-e868-7b0e-e973114be5f1
+[ 1176.046168] EXT4-fs (dm-1): unmounting filesystem e67e9ae2-546c-4126-b3e8-f4674a6d4e4f.
+[ 1179.600719] EXT4-fs (dm-1): mounted filesystem e67e9ae2-546c-4126-b3e8-f4674a6d4e4f r/w with ordered data mode. Quota mode: none.
+[ 1180.008173] eth0: renamed from tmpce667
+-- k8s
+pg-r3-1 1/1 Running 0 ks-w1
+pg-r3-2 1/1 Running 0 ks-w2
+pg-v2-3 0/1 Init:0/1 0 ks-w3
+probe 0/1 Error 0 ks-w1
+pvc-2308cb8c-6dc7-45b0-b88f-5bfe69a743d5 detached unknown
+pvc-2c677a21-e972-4ffc-a195-d80ea674dbb6 detached unknown
+pvc-3fa81098-50dc-4f88-8b30-77493dc3c63b detached faulted
+pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235 attached degraded
+pvc-cfdeee8d-8ca2-450e-b24f-07d591ff4be6 attached degraded
+instance-manager-232daedaaa5f584bea7d1584db330005 1/1 Running 0 6m17s ks-w2
+instance-manager-3e4a4190fdbc93758009d451933bdde8 1/1 Running 0 25m ks-w1
+instance-manager-408ebee3b7a429848cad7fbb0cb35823 1/1 Running 0 24m ks-w3
+instance-manager-764b94835e6c63c20bcb3f6934983dce 1/1 Running 0 24m ks-w2
+instance-manager-844ad2bd450731fb18614ce8a1c35648 1/1 Running 0 24m ks-w3
+instance-manager-c575a98109a81be94f9b3395fa12844d 1/1 Running 0 25m ks-w1
+-- events
+v2test            5m41s       Normal    Started                    pod/pg-r3-2                                                                      Container started
+v2test            5m41s       Normal    Created                    pod/pg-r3-2                                                                      Container created
+v2test            5m41s       Normal    Pulled                     pod/pg-r3-2                                                                      Container image "ghcr.io/cloudnative-pg/postgresql:16.15-minimal-bookworm" already present on machine and can be accessed by the pod
+longhorn-system   5m22s       Normal    Schedulable                node/ks-w2                                                                       Disk v2-disk(/dev/disk/by-id/wwn-0x5000c29037894912) on node ks-w2 is schedulable
+longhorn-system   5m22s       Normal    Ready                      node/ks-w2                                                                       Disk v2-disk(/dev/disk/by-id/wwn-0x5000c29037894912) on node ks-w2 is ready
+longhorn-system   5m21s       Normal    OrphanCleanupCompleted     orphan/orphan-05aeadcb7cb80a6e312b9207761c46f68bbe4541491e7519b460f47307a1ad77   Orphan orphan-05aeadcb7cb80a6e312b9207761c46f68bbe4541491e7519b460f47307a1ad77 cleanup completed
+longhorn-system   5m21s       Normal    Start                      replica/pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235-r-8ab2fbed                      Starts pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235-r-8ab2fbed
+longhorn-system   5m21s       Normal    OrphanCleanupCompleted     orphan/orphan-b986443c59cd4c27e476d1a1deec697f63996d67591629c6fccc20bd9ead59cd   Orphan orphan-b986443c59cd4c27e476d1a1deec697f63996d67591629c6fccc20bd9ead59cd cleanup completed
+longhorn-system   5m21s       Normal    Start                      replica/pvc-cfdeee8d-8ca2-450e-b24f-07d591ff4be6-r-3a76b539                      Starts pvc-cfdeee8d-8ca2-450e-b24f-07d591ff4be6-r-3a76b539
+longhorn-system   5m21s       Normal    OrphanCleanupCompleted     orphan/orphan-f5e419c5e2514042cc3b6ac9d933b538c7a22d88f2d366e341ca5b3020bbfddd   Orphan orphan-f5e419c5e2514042cc3b6ac9d933b538c7a22d88f2d366e341ca5b3020bbfddd cleanup completed
+longhorn-system   5m11s       Normal    Rebuilding                 engine/pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235-e-0                              Start rebuilding replica pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235-r-8ab2fbed with Address 10.233.72.177:20003 through engine frontend pvc-8a44b69b-a454-
+longhorn-system   5m11s       Normal    Rebuilding                 engine/pvc-cfdeee8d-8ca2-450e-b24f-07d591ff4be6-e-0                              Start rebuilding replica pvc-cfdeee8d-8ca2-450e-b24f-07d591ff4be6-r-3a76b539 with Address 10.233.72.177:20008 through engine frontend pvc-cfdeee8d-8ca2-
+longhorn-system   5m10s       Normal    Rebuilding                 engine/pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235-e-0                              Detected rebuilding replica pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235-r-8ab2fbed (10.233.72.177:20003)
+longhorn-system   5m8s        Normal    Rebuilding                 engine/pvc-cfdeee8d-8ca2-450e-b24f-07d591ff4be6-e-0                              Detected rebuilding replica pvc-cfdeee8d-8ca2-450e-b24f-07d591ff4be6-r-3a76b539 (10.233.72.177:20008)
+longhorn-system   5m6s        Normal    Update                     snapshot/rebuild-af00ff7c                                                        snapshot becomes ready to use
+longhorn-system   5m5s        Normal    Update                     snapshot/rebuild-bb2ad34a                                                        snapshot becomes ready to use
+longhorn-system   4m28s       Normal    Rebuilt                    engine/pvc-cfdeee8d-8ca2-450e-b24f-07d591ff4be6-e-0                              Detected replica pvc-cfdeee8d-8ca2-450e-b24f-07d591ff4be6-r-3a76b539 (10.233.72.177:20008) has been rebuilt
+longhorn-system   4m25s       Normal    Rebuilt                    engine/pvc-cfdeee8d-8ca2-450e-b24f-07d591ff4be6-e-0                              Replica pvc-cfdeee8d-8ca2-450e-b24f-07d591ff4be6-r-3a76b539 with Address 10.233.72.177:20008 has been rebuilt through engine frontend pvc-cfdeee8d-8ca2-
+longhorn-system   4m23s       Warning   Update                     snapshot/rebuild-af00ff7c                                                        snapshot becomes not ready to use
+longhorn-system   4m23s       Normal    Delete                     snapshot/rebuild-af00ff7c                                                        snapshot was removed from engine
+longhorn-system   4m15s       Normal    Rebuilt                    engine/pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235-e-0                              Detected replica pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235-r-8ab2fbed (10.233.72.177:20003) has been rebuilt
+longhorn-system   4m15s       Normal    Rebuilt                    engine/pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235-e-0                              Replica pvc-8a44b69b-a454-4c9d-83ee-03226f7f6235-r-8ab2fbed with Address 10.233.72.177:20003 has been rebuilt through engine frontend pvc-8a44b69b-a454-
+longhorn-system   4m10s       Normal    Delete                     snapshot/rebuild-bb2ad34a                                                        snapshot was removed from engine
+longhorn-system   4m10s       Warning   Update                     snapshot/rebuild-bb2ad34a                                                        snapshot becomes not ready to use
+v2test            4m          Warning   FailedMount                pod/pg-v2-3                                                                      MountVolume.MountDevice failed for volume "pvc-3fa81098-50dc-4f88-8b30-77493dc3c63b" : rpc error: code = InvalidArgument desc = volume pvc-3fa81098-50dc

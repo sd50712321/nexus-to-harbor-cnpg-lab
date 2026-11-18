@@ -392,3 +392,10 @@ kubectl -n longhorn-system get instancemanagers.longhorn.io | awk '$2=="v2"'
 - 랩에서 확인한 것: 장치가 멈춘 시간만큼 걸리고, 풀리면 16~33초 안에 회복한다. 이벤트는 2분마다 `FailedMount … DeadlineExceeded`, 노드에는 `D` 상태 `blkid` 가 쌓인다.
 - 남은 것: 실서버에서 무엇이 I/O 를 멈추는지는 모른다. Longhorn V2 가 스냅샷·복제본 추가·확장 때 스스로 장치를 멈춘다는 것은 소스에서 읽었지만 재개가 늦는 경로는 재현하지 못했다. 확인 명령과 판정표는 [V2-DELAY-INVESTIGATION.md](V2-DELAY-INVESTIGATION.md) 5·6절.
 
+
+## 31. 30절의 다음 단계: 실서버 관측이 오자 "`spdk_tgt` 가 죽었다"로 좁혀졌다 [실서버 영향: 원인 미확정]
+
+- 새 관측(실서버, 전달받음): 문제 노드에서 `spdk_tgt` 만 8분 전에 새로 떴다(노드 58일). 워커 7대 중 5대에 `Suspended` dm 이 남았고, 밑장치가 살아 있는데도 굳은 것이 있다. `blkid` 가 `D` 로 쌓인다. 30절에서 예상한 모양(H1)과 같다.
+- 좁히기: 처음엔 CPU 경합을 봤지만 reactor 99.9% 는 폴링 모드의 정상 모습이라 증거가 못 된다. 다음으로 "무엇이 `spdk_tgt` 를 죽이나"를 Longhorn 이슈에서 찾았다. 1.12.1 에서 `dmsetup suspend` 가 30초를 넘기면 멈춤 없이 진행하다 abort 하는 버그가 있고(#14411, #14353), 이슈의 로그 문구가 실서버 것과 같았다. 로그의 `failed after 10 attempts …` 는 소스를 보니 재시도 횟수가 아니라 덧붙는 문구였다.
+- 랩 시험(T1·T2): 1.13.0 에서 `spdk_tgt` 를 강제로 죽이면, 장치를 멈춘 직후에 죽여도 75~90초에 스스로 회복했다. 인스턴스 매니저 파드가 통째로 새로 만들어지고 dm 이 재개됐다. 실서버처럼 굳지는 않았다.
+- 남은 것: 실서버 로그의 `Assertion` 줄, 파드가 정말 그대로였는지, 1.12.1 의 회복 동작. 정리는 [V2-SPDK-CRASH-ANALYSIS.md](V2-SPDK-CRASH-ANALYSIS.md).
