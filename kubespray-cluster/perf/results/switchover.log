@@ -1,0 +1,15 @@
+### pg-v2 switchover pg-v2-1 → pg-v2-2, clients=8 09:03:48
+전환 시작 00:04:18 UTC
+마지막 정상 00:04:20 → 첫 오류 00:04:20 → 다시 정상 00:04:34: 쓰기 중단 약 14초 (1초 단위)
+1초 구간 68개, 평균 551 tps, 오류·재접속 줄 21개
+--- 전환 앞뒤 ---
+30-00:04:18 progress: 30.0 s, 572.2 tps, lat 13.619 ms stddev 12.536, 0 failed
+31-00:04:19 progress: 31.0 s, 496.0 tps, lat 15.334 ms stddev 12.453, 0 failed
+39-00:04:20 pgbench: error: client 0 script 0 aborted in command 8 query 0: FATAL:  terminating connection due to admini
+40-00:04:20 progress: 32.0 s, 316.2 tps, lat 23.604 ms stddev 14.606, 0 failed
+41-00:04:20 pgbench: error: Run was aborted; the above results are incomplete.
+42-00:04:20 -- pgbench 재접속
+43-00:04:21 -- pgbench 재접속
+44-00:04:22 -- pgbench 재접속
+45-00:04:24 -- pgbench 재접속
+46-00:04:25 -- pgbench 재접속

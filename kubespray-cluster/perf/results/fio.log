@@ -1,0 +1,69 @@
+### longhorn-v2-single @ ks-w2 size=2G runtime=20s 08:41:48
+== randread-4k
+  read: IOPS=18.6k, BW=72.8MiB/s (76.3MB/s)(1456MiB/20003msec)
+    clat (usec): min=89, max=489127, avg=3411.59, stdev=7059.27
+     | 99.00th=[ 15533], 99.50th=[ 19792], 99.90th=[ 39060], 99.95th=[ 58983],
+== randwrite-4k
+  write: IOPS=12.7k, BW=49.8MiB/s (52.2MB/s)(996MiB/20010msec); 0 zone resets
+    clat (usec): min=147, max=78301, avg=4988.89, stdev=3805.20
+     | 99.00th=[19006], 99.50th=[24511], 99.90th=[45876], 99.95th=[52167],
+== seqread-1m
+  read: IOPS=969, BW=970MiB/s (1017MB/s)(19.0GiB/20019msec)
+    clat (usec): min=1147, max=78267, avg=15838.00, stdev=5003.46
+     | 99.00th=[35390], 99.50th=[43779], 99.90th=[65799], 99.95th=[69731],
+== seqwrite-1m
+  write: IOPS=746, BW=747MiB/s (783MB/s)(14.6GiB/20017msec); 0 zone resets
+    clat (usec): min=1161, max=92262, avg=20520.72, stdev=6623.77
+     | 99.00th=[46400], 99.50th=[60031], 99.90th=[82314], 99.95th=[89654],
+== fsync-8k
+  write: IOPS=2598, BW=20.3MiB/s (21.3MB/s)(406MiB/20001msec); 0 zone resets
+    clat (usec): min=2, max=5449, avg=15.59, stdev=52.75
+     | 99.00th=[   98], 99.50th=[  143], 99.90th=[  478], 99.95th=[  865],
+    sync (usec): min=126, max=39358, avg=366.61, stdev=515.37
+     | 99.00th=[ 2114], 99.50th=[ 2966], 99.90th=[ 6521], 99.95th=[ 9110],
+### longhorn-v2 @ ks-w2 size=2G runtime=20s 08:43:58
+== randread-4k
+  read: IOPS=18.6k, BW=72.8MiB/s (76.4MB/s)(1457MiB/20003msec)
+    clat (usec): min=57, max=74793, avg=3414.63, stdev=2653.49
+     | 99.00th=[11469], 99.50th=[16909], 99.90th=[37487], 99.95th=[44303],
+== randwrite-4k
+  write: IOPS=6760, BW=26.4MiB/s (27.7MB/s)(528MiB/20007msec); 0 zone resets
+    clat (usec): min=131, max=160039, avg=9441.81, stdev=6380.02
+     | 99.00th=[   42], 99.50th=[   54], 99.90th=[   72], 99.95th=[   82],
+== seqread-1m
+  read: IOPS=283, BW=283MiB/s (297MB/s)(5690MiB/20079msec)
+    clat (usec): min=271, max=757677, avg=56191.07, stdev=54167.46
+     | 99.00th=[  163], 99.50th=[  245], 99.90th=[  743], 99.95th=[  751],
+== seqwrite-1m
+  write: IOPS=66, BW=66.7MiB/s (69.9MB/s)(1351MiB/20262msec); 0 zone resets
+    clat (msec): min=24, max=469, avg=226.66, stdev=38.15
+     | 99.00th=[  380], 99.50th=[  409], 99.90th=[  451], 99.95th=[  468],
+== fsync-8k
+  write: IOPS=622, BW=4977KiB/s (5096kB/s)(97.2MiB/20001msec); 0 zone resets
+    clat (usec): min=3, max=7256, avg=20.68, stdev=75.58
+     | 99.00th=[  100], 99.50th=[  153], 99.90th=[  627], 99.95th=[ 1004],
+    sync (usec): min=479, max=18944, avg=1582.95, stdev=1049.72
+     | 99.00th=[ 4817], 99.50th=[ 5342], 99.90th=[ 7111], 99.95th=[ 7570],
+### longhorn @ ks-w2 size=2G runtime=20s 08:47:10
+== randread-4k
+  read: IOPS=4620, BW=18.0MiB/s (18.9MB/s)(361MiB/20011msec)
+    clat (usec): min=75, max=96463, avg=13823.04, stdev=6587.31
+     | 99.00th=[38011], 99.50th=[44827], 99.90th=[61080], 99.95th=[67634],
+== randwrite-4k
+  write: IOPS=2086, BW=8346KiB/s (8546kB/s)(163MiB/20026msec); 0 zone resets
+    clat (usec): min=84, max=203349, avg=30607.06, stdev=15723.93
+     | 99.00th=[   88], 99.50th=[  101], 99.90th=[  138], 99.95th=[  159],
+== seqread-1m
+  read: IOPS=49, BW=49.5MiB/s (51.9MB/s)(995MiB/20121msec)
+    clat (msec): min=6, max=1574, avg=322.75, stdev=267.88
+     | 99.00th=[ 1351], 99.50th=[ 1519], 99.90th=[ 1569], 99.95th=[ 1569],
+== seqwrite-1m
+  write: IOPS=38, BW=38.6MiB/s (40.5MB/s)(779MiB/20193msec); 0 zone resets
+    clat (msec): min=25, max=763, avg=412.54, stdev=103.85
+     | 99.00th=[  684], 99.50th=[  743], 99.90th=[  760], 99.95th=[  760],
+== fsync-8k
+  write: IOPS=677, BW=5418KiB/s (5548kB/s)(106MiB/20008msec); 0 zone resets
+    clat (usec): min=4, max=2121, avg=18.62, stdev=41.71
+     | 99.00th=[   89], 99.50th=[  145], 99.90th=[  545], 99.95th=[  898],
+    sync (usec): min=486, max=44530, avg=1452.96, stdev=1026.98
+     | 99.00th=[ 4883], 99.50th=[ 5932], 99.90th=[ 9503], 99.95th=[13435],

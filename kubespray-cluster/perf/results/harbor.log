@@ -1,0 +1,29 @@
+### Harbor v2.14.0-44a74424, DB primary harbor-pg-2, 09:11:44
+== 1. 큰 이미지 하나 (50MB 레이어 1개)
+  push 6.5s (7.7 MB/s)
+  DB: 커밋 +76, 행 변경 +26, 접속 7개, 크기 11MB
+  pull 2.3s (21.7 MB/s)
+== 2. 동시 push 4개 (각 50MB)
+  27.7s (합계 7.2 MB/s)
+  DB: 커밋 +421, 행 변경 +71, 접속 10개, 크기 11MB
+== 3. 작은 이미지 30개 (각 1MB, 차례로): 데이터보다 요청 수가 많은 경우
+  39.6s (이미지당 1.32s)
+  DB: 커밋 +2419, 행 변경 +598, 접속 10개, 크기 11MB
+== 4. API 부하 (oha, 20 동시, 500 요청씩)
+  /api/v2.0/projects
+    Requests/sec: 134.6591 | 50.00% in 109.4961 ms 95.00% in 358.2192 ms 99.00% in 497.4934 ms | [200] 500 responses
+  DB: 커밋 +12194, 행 변경 +1, 접속 12개, 크기 11MB
+  /api/v2.0/projects/perf/repositories?page_size=50
+    Requests/sec: 319.1363 | 50.00% in 48.5858 ms 95.00% in 149.1577 ms 99.00% in 189.0806 ms | [200] 500 responses
+  DB: 커밋 +7045, 행 변경 +0, 접속 12개, 크기 11MB
+  /api/v2.0/projects/perf/repositories/small/artifacts?page_size=50
+    Requests/sec: 94.3860 | 50.00% in 200.2924 ms 95.00% in 301.7250 ms 99.00% in 360.8164 ms | [200] 500 responses
+  DB: 커밋 +46941, 행 변경 +0, 접속 12개, 크기 11MB
+== 5. DB 에 쌓인 것
+audit_log_ext 37행 320 kB
+artifact_blob 105행 184 kB
+blob 111행 168 kB
+artifact 35행 160 kB
+project 1행 112 kB
+cve_allowlist 1행 88 kB
+max_connections=200, 지금 접속 12개 (idle 11)

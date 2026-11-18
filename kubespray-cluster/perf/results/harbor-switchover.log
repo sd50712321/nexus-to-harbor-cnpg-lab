@@ -1,0 +1,15 @@
+### Harbor DB switchover harbor-pg-2 → harbor-pg-1 중 API 부하, 09:13:36
+전환 시작 09:13:56
+oha: Success rate: 100.00% Requests/sec: 343.6686
+  상태 코드: [200] 17934 responses [500] 2677 responses [10] aborted due to deadline
+  [10] aborted due to deadline
+1초 간격 요청: 전체 54번, 200 아님 8번
+09:13:57 500 0.062823
+09:13:58 500 0.311701
+09:14:00 500 0.088022
+09:14:01 500 0.053816
+09:14:02 500 0.030611
+09:14:03 500 0.038966
+09:14:04 500 0.075152
+09:14:05 500 0.022716
+새 primary: harbor-pg-1

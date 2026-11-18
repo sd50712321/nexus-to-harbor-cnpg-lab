@@ -1,0 +1,148 @@
+### pg-v2 (primary pg-v2-1) scale=20 clients=8 60s 08:50:17
+sync: ANY 1 ("pg-v2-2","pg-v2-3","pg-v2-1")  shared_buffers: 128MB  max_connections: 100
+== init
+done in 12.41 s (drop tables 0.00 s, create tables 0.05 s, client-side generate 6.74 s, vacuum 3.55 s, primary keys 2.06 s).
+real	0m13.977s
+db size: 307 MB
+== 읽기·쓰기 (TPC-B)
+starting vacuum...end.
+progress: 10.0 s, 722.7 tps, lat 10.679 ms stddev 10.263, 0 failed
+progress: 20.0 s, 685.3 tps, lat 11.388 ms stddev 12.290, 0 failed
+progress: 30.0 s, 744.2 tps, lat 10.386 ms stddev 9.553, 0 failed
+  부하 중 복제 지연: pg-v2-2 quorum replay_lag=0 behind=65 kB | pg-v2-3 quorum replay_lag=0 behind=65 kB
+progress: 40.0 s, 793.3 tps, lat 9.727 ms stddev 10.787, 0 failed
+progress: 50.0 s, 790.0 tps, lat 9.902 ms stddev 10.082, 0 failed
+progress: 60.0 s, 784.0 tps, lat 9.899 ms stddev 12.476, 0 failed
+scaling factor: 20
+number of clients: 8
+number of failed transactions: 0 (0.000%)
+latency average = 10.301 ms
+latency stddev = 10.967 ms
+tps = 753.907746 (without initial connection time)
+== 읽기 전용 (-S)
+starting vacuum...end.
+progress: 10.0 s, 6560.0 tps, lat 0.974 ms stddev 2.029, 0 failed
+progress: 20.0 s, 7367.4 tps, lat 0.886 ms stddev 1.823, 0 failed
+progress: 30.0 s, 8591.6 tps, lat 0.721 ms stddev 1.172, 0 failed
+progress: 40.0 s, 8685.7 tps, lat 0.708 ms stddev 1.145, 0 failed
+progress: 50.0 s, 8298.9 tps, lat 0.768 ms stddev 1.403, 0 failed
+progress: 60.0 s, 8426.0 tps, lat 0.752 ms stddev 1.701, 0 failed
+scaling factor: 20
+number of clients: 8
+number of failed transactions: 0 (0.000%)
+latency average = 0.792 ms
+latency stddev = 1.554 ms
+tps = 7998.691176 (without initial connection time)
+== 읽기·쓰기, synchronous_commit=local (standby 를 기다리지 않음)
+starting vacuum...end.
+progress: 10.0 s, 941.9 tps, lat 8.087 ms stddev 8.637, 0 failed
+progress: 20.0 s, 991.4 tps, lat 7.717 ms stddev 8.529, 0 failed
+progress: 30.0 s, 1015.2 tps, lat 7.476 ms stddev 8.233, 0 failed
+progress: 40.0 s, 1035.9 tps, lat 7.310 ms stddev 8.013, 0 failed
+progress: 50.0 s, 1081.6 tps, lat 6.974 ms stddev 8.138, 0 failed
+progress: 60.0 s, 1079.1 tps, lat 7.000 ms stddev 6.964, 0 failed
+scaling factor: 20
+number of clients: 8
+number of failed transactions: 0 (0.000%)
+latency average = 7.409 ms
+latency stddev = 8.094 ms
+tps = 1025.567239 (without initial connection time)
+== 읽기·쓰기, 접속 수 32
+starting vacuum...end.
+progress: 10.0 s, 970.0 tps, lat 30.427 ms stddev 30.931, 0 failed
+progress: 20.0 s, 856.9 tps, lat 35.440 ms stddev 37.627, 0 failed
+progress: 30.0 s, 388.1 tps, lat 76.856 ms stddev 124.085, 0 failed
+progress: 40.0 s, 715.9 tps, lat 44.969 ms stddev 106.341, 0 failed
+progress: 50.0 s, 910.7 tps, lat 33.948 ms stddev 35.037, 0 failed
+progress: 60.0 s, 969.6 tps, lat 31.682 ms stddev 30.805, 0 failed
+scaling factor: 20
+number of clients: 32
+number of failed transactions: 0 (0.000%)
+latency average = 38.183 ms
+latency stddev = 62.847 ms
+tps = 804.424606 (without initial connection time)
+== pg_test_fsync (primary 의 데이터 볼륨)
+O_DIRECT supported on this platform for open_datasync and open_sync.
+(in wal_sync_method preference order, except fdatasync is Linux's default)
+        open_datasync                      4273.297 ops/sec     234 usecs/op
+        fdatasync                          3144.351 ops/sec     318 usecs/op
+== 체크포인트·WAL
+ERROR:  relation "pg_stat_checkpointer" does not exist
+LINE 1: ...d='||num_timed||' requested='||num_requested from pg_stat_ch...
+                                                             ^
+command terminated with exit code 1
+wal 614 MB fpi=43678
+### pg-r3 (primary pg-r3-2) scale=20 clients=8 60s 08:55:06
+sync:   shared_buffers: 128MB  max_connections: 100
+== init
+done in 41.02 s (drop tables 0.00 s, create tables 0.35 s, client-side generate 23.99 s, vacuum 8.87 s, primary keys 7.81 s).
+real	0m41.961s
+db size: 307 MB
+== 읽기·쓰기 (TPC-B)
+starting vacuum...end.
+progress: 10.0 s, 830.5 tps, lat 9.262 ms stddev 6.243, 0 failed
+progress: 20.0 s, 822.6 tps, lat 9.386 ms stddev 6.585, 0 failed
+progress: 30.0 s, 427.0 tps, lat 18.481 ms stddev 34.294, 0 failed
+  부하 중 복제 지연: pg-r3-1 async replay_lag=00:00:00.004347 behind=1073 kB
+progress: 40.0 s, 460.2 tps, lat 17.089 ms stddev 35.376, 0 failed
+progress: 50.0 s, 582.2 tps, lat 13.449 ms stddev 21.126, 0 failed
+progress: 60.0 s, 569.1 tps, lat 13.760 ms stddev 31.009, 0 failed
+scaling factor: 20
+number of clients: 8
+number of failed transactions: 0 (0.000%)
+latency average = 12.686 ms
+latency stddev = 23.251 ms
+tps = 615.943036 (without initial connection time)
+== 읽기 전용 (-S)
+starting vacuum...end.
+progress: 10.0 s, 3564.9 tps, lat 2.075 ms stddev 27.474, 0 failed
+progress: 20.0 s, 5512.5 tps, lat 1.278 ms stddev 2.363, 0 failed
+progress: 30.0 s, 6636.6 tps, lat 1.029 ms stddev 3.545, 0 failed
+progress: 40.0 s, 7428.6 tps, lat 0.898 ms stddev 1.272, 0 failed
+progress: 50.0 s, 7569.9 tps, lat 0.879 ms stddev 1.245, 0 failed
+progress: 60.0 s, 7797.3 tps, lat 0.851 ms stddev 1.374, 0 failed
+scaling factor: 20
+number of clients: 8
+number of failed transactions: 0 (0.000%)
+latency average = 1.071 ms
+latency stddev = 8.600 ms
+tps = 6426.634026 (without initial connection time)
+== 읽기·쓰기, synchronous_commit=local (standby 를 기다리지 않음)
+starting vacuum...end.
+progress: 10.0 s, 749.5 tps, lat 10.248 ms stddev 13.616, 0 failed
+progress: 20.0 s, 804.6 tps, lat 9.629 ms stddev 11.175, 0 failed
+progress: 30.0 s, 634.3 tps, lat 12.295 ms stddev 23.793, 0 failed
+progress: 40.0 s, 750.2 tps, lat 10.342 ms stddev 13.227, 0 failed
+progress: 50.0 s, 749.5 tps, lat 10.358 ms stddev 8.306, 0 failed
+progress: 60.0 s, 567.4 tps, lat 13.788 ms stddev 36.766, 0 failed
+scaling factor: 20
+number of clients: 8
+number of failed transactions: 0 (0.000%)
+latency average = 10.945 ms
+latency stddev = 19.124 ms
+tps = 710.338350 (without initial connection time)
+== 읽기·쓰기, 접속 수 32
+starting vacuum...end.
+progress: 10.0 s, 1024.5 tps, lat 28.787 ms stddev 21.691, 0 failed
+progress: 20.0 s, 960.2 tps, lat 31.646 ms stddev 41.439, 0 failed
+progress: 30.0 s, 986.1 tps, lat 30.517 ms stddev 45.181, 0 failed
+progress: 40.0 s, 976.9 tps, lat 31.318 ms stddev 38.567, 0 failed
+progress: 50.0 s, 1074.4 tps, lat 27.931 ms stddev 21.115, 0 failed
+progress: 60.0 s, 1006.9 tps, lat 30.198 ms stddev 36.712, 0 failed
+scaling factor: 20
+number of clients: 32
+number of failed transactions: 0 (0.000%)
+latency average = 30.038 ms
+latency stddev = 35.150 ms
+tps = 1007.959254 (without initial connection time)
+== pg_test_fsync (primary 의 데이터 볼륨)
+O_DIRECT supported on this platform for open_datasync and open_sync.
+(in wal_sync_method preference order, except fdatasync is Linux's default)
+        open_datasync                       538.307 ops/sec    1858 usecs/op
+        fdatasync                           616.534 ops/sec    1622 usecs/op
+== 체크포인트·WAL
+ERROR:  relation "pg_stat_checkpointer" does not exist
+LINE 1: ...d='||num_timed||' requested='||num_requested from pg_stat_ch...
+                                                             ^
+command terminated with exit code 1
+wal 608 MB fpi=43681
