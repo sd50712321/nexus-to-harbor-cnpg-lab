@@ -17,6 +17,7 @@ Harbor 의 DB 는 CloudNativePG(CNPG) 3개 인스턴스, 이미지 저장소는 
 | [V2-DELAY-HYPOTHESES.md](V2-DELAY-HYPOTHESES.md) | 위 증상의 원인 후보 12개: 후보마다 실서버에서 보여야 할 출력, 판정표, 내부 LLM 지시문, 랩에서 재현이 안 되는 이유 |
 | [V2-DELAY-ALL-IN-ONE.md](V2-DELAY-ALL-IN-ONE.md) | 볼륨 지연 조사(11-17~18)만 따로 묶은 사본: 위 두 문서 + 진단 기록 30절 + 시험 스크립트 + 기록 원문 |
 | [V2-SPDK-CRASH-ANALYSIS.md](V2-SPDK-CRASH-ANALYSIS.md) | V2 볼륨이 안 붙는 문제의 실서버 관측 정리, 원인 추정(`spdk_tgt` 죽음), 관련 Longhorn 이슈, 확인 명령, 조치, 내부 LLM 지시문, 랩 시험 T1·T2 |
+| [V2-SUSPENDED-DM-TESTS.md](V2-SUSPENDED-DM-TESTS.md) | 위 문서의 후속. 굳은 dm(`Suspended` + D 상태 `umount`)을 랩에서 재현하고 `dmsetup resume` 으로 푼 기록, Longhorn 1.12.1 대 1.12.2 비교, CPU 격리 확인 방법, 실서버용 절차, 내부 LLM 지시문 (시험 U1~U6) |
 | [PERF-TEST.md](PERF-TEST.md) | 성능 시험(CNPG·Harbor 위주): 시험 목록, 도구, 실행 방법(`perf/`), 랩 결과와 읽는 법 |
 | [V2-ALL-IN-ONE.md](V2-ALL-IN-ONE.md) | 위 V2 문서 4개 + 진단 기록 + 설정·스크립트(붙여넣기 복원) + 로그 원문을 한 파일로 묶은 사본 |
 | [rendered/](rendered/) | 템플릿을 인벤토리 값으로 풀어 놓은 Helm values·매니페스트와 적용 순서 (아래 '설정 파일') |

@@ -1,0 +1,221 @@
+U3a (Longhorn 1.12.1, CPU 격리 켬): ks-w2 에서 엔진 프런트엔드 NVMe-TCP 포트 20016 을 DROP. spdk_tgt 는 살아 있음. pg-prod-3 에 쓰기 부하. dm 은 Active 인 채
+== 08:05:59 spdk_tgt pid=6734       03:02 RLl
+-- dm (name:suspended:open)
+   pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f:Active:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   nvme0 live traddr=10.233.72.36,trsvcid=20016
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+-- D
+   10362 10223 D          0 dd              dd if=/dev/zero of=/var/lib/postgresql/data/load.bin bs=1M count=
+       blk_io_schedule+0x40/0x88
+       __iomap_dio_rw+0x27c/0x6a0
+       iomap_dio_rw+0x1c/0xa8
+       xfs_file_dio_write_aligned+0x110/0x1b8 [xfs]
+       xfs_file_write_iter+0x128/0x1f0 [xfs]
+       vfs_write+0x274/0x3a8
+       ksys_write+0x80/0x140
+>>> blackhole on
+-A INPUT -p tcp -m tcp --dport 20016 -j DROP
+-A OUTPUT -p tcp -m tcp --sport 20016 -j DROP
+== 08:06:09 spdk_tgt pid=6734       03:12 RLl
+-- dm (name:suspended:open)
+   pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f:Active:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   nvme0 connecting traddr=10.233.72.36,trsvcid=20016
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+-- D
+   10362 10223 D         11 dd              dd if=/dev/zero of=/var/lib/postgresql/data/load.bin bs=1M count=
+       blk_io_schedule+0x40/0x88
+       __iomap_dio_rw+0x27c/0x6a0
+       iomap_dio_rw+0x1c/0xa8
+       xfs_file_dio_write_aligned+0x110/0x1b8 [xfs]
+       xfs_file_write_iter+0x128/0x1f0 [xfs]
+       vfs_write+0x274/0x3a8
+       ksys_write+0x80/0x140
+== 08:06:19 spdk_tgt pid=6734       03:22 RLl
+-- dm (name:suspended:open)
+   pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f:Active:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   nvme0 connecting traddr=10.233.72.36,trsvcid=20016
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+-- D
+   10362 10223 D         21 dd              dd if=/dev/zero of=/var/lib/postgresql/data/load.bin bs=1M count=
+       blk_io_schedule+0x40/0x88
+       __iomap_dio_rw+0x27c/0x6a0
+       iomap_dio_rw+0x1c/0xa8
+       xfs_file_dio_write_aligned+0x110/0x1b8 [xfs]
+       xfs_file_write_iter+0x128/0x1f0 [xfs]
+       vfs_write+0x274/0x3a8
+       ksys_write+0x80/0x140
+== 08:06:39 spdk_tgt pid=6734       03:42 RLl
+-- dm (name:suspended:open)
+   pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f:Active:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   nvme0 connecting traddr=10.233.72.36,trsvcid=20016
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+-- D
+   10362 10223 D         41 dd              dd if=/dev/zero of=/var/lib/postgresql/data/load.bin bs=1M count=
+       blk_io_schedule+0x40/0x88
+       __iomap_dio_rw+0x27c/0x6a0
+       iomap_dio_rw+0x1c/0xa8
+       xfs_file_dio_write_aligned+0x110/0x1b8 [xfs]
+       xfs_file_write_iter+0x128/0x1f0 [xfs]
+       vfs_write+0x274/0x3a8
+       ksys_write+0x80/0x140
+== 08:06:59 spdk_tgt pid=6734       04:02 RLl
+-- dm (name:suspended:open)
+   pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f:Active:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   nvme0 connecting traddr=10.233.72.36,trsvcid=20016
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+-- D
+   10362 10223 D         61 dd              dd if=/dev/zero of=/var/lib/postgresql/data/load.bin bs=1M count=
+       blk_io_schedule+0x40/0x88
+       __iomap_dio_rw+0x27c/0x6a0
+       iomap_dio_rw+0x1c/0xa8
+       xfs_file_dio_write_aligned+0x110/0x1b8 [xfs]
+       xfs_file_write_iter+0x128/0x1f0 [xfs]
+       vfs_write+0x274/0x3a8
+       ksys_write+0x80/0x140
+== 08:07:29 spdk_tgt pid=6734       04:32 RLl
+-- dm (name:suspended:open)
+   pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f:Active:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+-- D
+== 08:07:59 spdk_tgt pid=6734       05:02 RLl
+-- dm (name:suspended:open)
+   pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f:Active:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   nvme1 live traddr=10.233.72.36,trsvcid=20022
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n2 ]
+-- D
+== 08:08:59 spdk_tgt pid=6734       06:02 RLl
+-- dm (name:suspended:open)
+   pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f:Active:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   nvme1 live traddr=10.233.72.36,trsvcid=20022
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n2 ]
+-- D
+== 08:09:59 spdk_tgt pid=6734       07:02 RLl
+-- dm (name:suspended:open)
+   pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f:Active:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   nvme1 live traddr=10.233.72.36,trsvcid=20022
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n2 ]
+-- D
+== 08:10:59 spdk_tgt pid=6734       08:02 RLl
+-- dm (name:suspended:open)
+   pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f:Active:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   nvme1 live traddr=10.233.72.36,trsvcid=20022
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n2 ]
+-- D
+-- dmesg
+      1 [  313.826950] nvme nvme0: failed to connect socket: -110
+      1 [  313.827007] nvme nvme0: Failed reconnect attempt 4
+      1 [  313.827008] nvme nvme0: Reconnecting in 2 seconds...
+      1 [  318.946784] nvme nvme0: failed to connect socket: -110
+      1 [  318.946844] nvme nvme0: Failed reconnect attempt 5
+      1 [  318.946846] nvme nvme0: Reconnecting in 2 seconds...
+      1 [  324.066830] nvme nvme0: failed to connect socket: -110
+      1 [  324.066876] nvme nvme0: Failed reconnect attempt 6
+      1 [  324.066878] nvme nvme0: Reconnecting in 2 seconds...
+      1 [  329.187739] nvme nvme0: failed to connect socket: -110
+      1 [  329.187783] nvme nvme0: Failed reconnect attempt 7
+      1 [  329.187784] nvme nvme0: Reconnecting in 2 seconds...
+      1 [  334.306963] nvme nvme0: failed to connect socket: -110
+      1 [  334.307010] nvme nvme0: Failed reconnect attempt 8
+      1 [  334.307012] nvme nvme0: Reconnecting in 2 seconds...
+      1 [  339.426574] nvme nvme0: failed to connect socket: -110
+      1 [  339.426625] nvme nvme0: Failed reconnect attempt 9
+      1 [  339.426627] nvme nvme0: Reconnecting in 2 seconds...
+      1 [  344.546537] nvme nvme0: failed to connect socket: -110
+      1 [  344.546577] nvme nvme0: Failed reconnect attempt 10
+      1 [  344.546579] nvme nvme0: Reconnecting in 2 seconds...
+      1 [  349.666298] nvme nvme0: failed to connect socket: -110
+      1 [  349.666340] nvme nvme0: Failed reconnect attempt 11
+      1 [  349.666341] nvme nvme0: Reconnecting in 2 seconds...
+      1 [  354.786454] nvme nvme0: failed to connect socket: -110
+      1 [  354.786528] nvme nvme0: Failed reconnect attempt 12
+      1 [  354.786530] nvme nvme0: Reconnecting in 2 seconds...
+      1 [  359.906110] nvme nvme0: failed to connect socket: -110
+      1 [  359.906162] nvme nvme0: Failed reconnect attempt 13
+      1 [  359.906163] nvme nvme0: Reconnecting in 2 seconds...
+      1 [  365.026117] nvme nvme0: failed to connect socket: -110
+      1 [  365.026171] nvme nvme0: Failed reconnect attempt 14
+      1 [  365.026172] nvme nvme0: Reconnecting in 2 seconds...
+      1 [  370.146073] nvme nvme0: failed to connect socket: -110
+      1 [  370.146163] nvme nvme0: Failed reconnect attempt 15
+      1 [  370.146168] nvme nvme0: Removing controller...
+      1 [  370.146176] nvme nvme0: Removing ctrl: NQN "nqn.2023-01.io.longhorn.spdk:volume-pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f"
+      3 [  370.153929] block nvme0n1: no available path - failing I/O
+      1 [  370.153972] XFS (dm-1): log I/O error -5
+      1 [  370.154037] XFS (dm-1): Filesystem has been shut down due to log error (0x2).
+      1 [  370.154062] XFS (dm-1): Please unmount the filesystem and rectify the problem(s).
+      1 [  370.169139] nvme nvme0: Property Set error: 880, offset 0x14
+      1 [  378.198376] nvme nvme1: creating 2 I/O queues.
+      1 [  378.216883] nvme nvme1: mapped 2/0/0 default/read/poll queues.
+      1 [  378.217168] nvme nvme1: new ctrl: NQN "nqn.2023-01.io.longhorn.spdk:volume-pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f", addr 10.233.72.36:20022, hostnqn: nqn.2014-08.org
+-- k8s
+pg-prod-1 1/1 Running 0 ks-w1
+pg-prod-2 1/1 Running 0 ks-w3
+pg-prod-3 0/1 CreateContainerError 0 ks-w2
+pvc-813e3dee-416a-4f95-bd7e-ed0c9ae791bb attached healthy
+pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f attached healthy
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b attached healthy
+instance-manager-2ced01c0ba2952d19b1173f3d1d49d27 1/1 Running 0 8m58s ks-w3
+instance-manager-3787df073f5a5202e17bb577d5251d07 1/1 Running 0 8m11s ks-w1
+instance-manager-61f533f34a15d5f85e6555453aba97e3 1/1 Running 0 9m28s ks-w1
+instance-manager-998d8f02bf69438e42627ddcd1ed1e21 1/1 Running 0 8m4s ks-w2
+instance-manager-c15b3449016064e881b4051bd3914faa 1/1 Running 0 8m6s ks-w3
+instance-manager-d8657260f23812a7aedadcff104c7b5d 1/1 Running 0 9m15s ks-w2
+-- events
+longhorn-system   3m32s       Normal    Stop                          replica/pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f-r-c701be66                      Stops pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f-r-c701be66
+longhorn-system   3m31s       Normal    Detached                      volume/pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f                                  volume pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f has been detached
+longhorn-system   3m31s       Normal    Start                         replica/pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f-r-86fbc951                      Starts pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f-r-86fbc951
+longhorn-system   3m31s       Normal    Start                         replica/pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f-r-3a61650a                      Starts pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f-r-3a61650a
+longhorn-system   3m31s       Normal    Start                         replica/pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f-r-c701be66                      Starts pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f-r-c701be66
+longhorn-system   3m30s       Normal    Start                         engine/pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f-e-0                              Starts pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f-e-0
+longhorn-system   3m29s       Normal    Start                         enginefrontend/pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f-ef-0                     Starts pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f-ef-0
+longhorn-system   3m24s       Normal    Attached                      volume/pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f                                  volume pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f has been attached to ks-w2
+v2test            2m9s        Warning   Failed                        pod/pg-prod-3                                                                    Error: failed to generate container "c044cb88da495b71da108c138c2e40ec2d7aa98a59fa527dba8544c20792f763" spec: 
+v2test            118s        Warning   Failed                        pod/pg-prod-3                                                                    Error: failed to generate container "045c39f449f2bf674547ddcd08dee0fad1011ffc60b9525a920e5cb0a2c1cecd" spec: 
+v2test            107s        Warning   Failed                        pod/pg-prod-3                                                                    Error: failed to generate container "64f61d432659182471d650d56866ab8769f119430b9cdf761e53ec2066830457" spec: 
+v2test            88s         Warning   Failed                        pod/pg-prod-3                                                                    Error: failed to generate container "02fc76df0a0cd43afcba6c9aa22b07cdb318a998950a6de79090f2961fe9a679" spec: 
+v2test            46s         Warning   Failed                        pod/pg-prod-3                                                                    Error: failed to generate container "506437cd37b4fae59a162b29882d80675633840deaf61df8ac235f4c0a1405aa" spec: 
+v2test            46s         Normal    Pulled                        pod/pg-prod-3                                                                    Container image "ghcr.io/cloudnative-pg/postgresql:16.15-minimal-bookworm" already present on machine and can
+v2test            34s         Warning   BackOff                       pod/pg-prod-3                                                                    Back-off restarting failed container postgres in pod pg-prod-3_v2test(0ccf7961-22d7-48c0-a8c4-ea91bb8524c7)
+-- 사후: 파드를 지워 복구
+08:11:12
+10s 0/1 Running
+20s 1/1 Running
+== 08:11:36 spdk_tgt pid=6734       08:39 RLl
+-- dm (name:suspended:open)
+   pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f:Active:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   nvme1 live traddr=10.233.72.36,trsvcid=20022
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n2 ]
+-- D

@@ -1,0 +1,20 @@
+nproc=2 spdk_tgt pid=6734
+spdk_tgt -L all --mem-size 2048 -m 0x1 
+
+Cpus_allowed_list:	0
+spdk threads:
+      1   dpdk-intr 1
+      1   reactor_0 0
+other procs Cpus_allowed_list:
+  kubelet 0-1
+  containerd 0-1
+workqueue cpumask (unbound): 2
+irq default_smp_affinity: 2
+irq smp_affinity_list 분포:
+     12 0-1
+     49 1
+rps_cpus:
+  /sys/class/net/eth0/queues/rx-0/rps_cpus 2
+  /sys/class/net/eth1/queues/rx-0/rps_cpus 2
+isolcpus cmdline: 
+engine-binaries instance-manager logs longhorn-disk.cfg metadata replicas unix-domain-socket 

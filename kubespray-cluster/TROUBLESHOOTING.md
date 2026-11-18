@@ -400,3 +400,14 @@ kubectl -n longhorn-system get instancemanagers.longhorn.io | awk '$2=="v2"'
 - 랩 시험(T1·T2): 1.13.0 에서 `spdk_tgt` 를 강제로 죽이면, 장치를 멈춘 직후에 죽여도 75~90초에 스스로 회복했다. 인스턴스 매니저 파드가 통째로 새로 만들어지고 dm 이 재개됐다. 실서버처럼 굳지는 않았다.
 - 버전을 맞춘 재시험(T3~T7): 랩을 1.12.1 로 새로 깔았다. 죽이면(T3) XFS 가 꺼지고 원래 노드에 `slaves=[nvme0n1]` 인 고아 dm 이 남았다. 실서버 관측과 같다. 하지만 2분 30초에 풀렸다. 그래서 "죽은 것이 아니라 멎은 것"을 의심해 `kill -STOP` 을 했다(T6·T7). `QID 0 timeout`, `limit=0`, `shouldn't contain the running instance` 가 실서버와 같은 문구로 나왔고, 타깃이 멎어 있는 동안 `umount` 가 `D` 였다. kubelet 이 프로브 실패로 파드를 죽이자 풀렸다. 실서버는 그 프로브와 파드 정리까지 타임아웃이었으니, 길게 굳는 조건은 노드가 같이 멎는 것이라고 본다.
 - 남은 것: 실서버 로그의 `Assertion` 줄, `spdk_tgt` 가 죽었는지 멎었는지, 노드를 멎게 한 것. 정리는 [V2-SPDK-CRASH-ANALYSIS.md](V2-SPDK-CRASH-ANALYSIS.md).
+
+## 32. 31절의 다음 단계: 굳은 dm 을 랩에서 만들고 풀었다 [실서버 영향: 해제 방법 확인, 원인 미확정]
+
+- 계기: 실서버 쪽에서 "굳은 dm 은 `dmsetup resume` 으로 풀린다", "`ata1` 은 CD-ROM 이라 노드 정지의 근거가 아니다", "CPU 격리를 켰는데 `Cpus_allowed_list` 에 안 보인다"가 왔다. 31절에서 세운 "노드가 같이 멎는다"는 갈래는 `ata1` 에 기대고 있었으므로 내렸다.
+- 첫 시도는 빗나갔다: 타깃을 죽이지 않고 포트만 막아 "응답 없는 타깃"을 오래 유지했다(U3a~U3c). dm 을 미리 suspend 해 두어도, 볼륨을 떼게 해도, Longhorn 이 약 2분 안에 스스로 풀거나 지웠다. 응답 없는 것만으로는 굳지 않는다.
+- 좁히기: Longhorn 이 스스로 못 푸는 경우는 그 dm 을 아는 프로세스가 사라졌을 때다. 그래서 dm 을 suspend 한 직후 `spdk_tgt` 를 죽이고 파드를 다른 노드로 보냈다(U4). 옛 노드에 `Suspended` open 1 과 D 상태 `umount` 가 8분 넘게 남았다. 실서버 모습과 같다.
+- 해제: `remove` 는 BUSY, `resume` 뒤 3초 안에 풀리고 `remove` 가 됐다(U4b). `remove --force` 로도 풀렸다(U4).
+- 버전 비교: 1.12.2 로 올려 같은 시험을 하니 똑같이 굳고 똑같이 풀렸다(U4-1122). 1.12.2 는 죽음을 줄일 뿐이다.
+- 곁가지: 격리는 IRQ·워크큐·RPS 를 옮기는 것이라 `Cpus_allowed_list` 로는 안 보인다(U1). `slaves=[nvme0n1]` 인데 `nvme0` 이 없다는 것은 고아의 근거가 아니었다(정상 볼륨도 `nvme1` / `nvme0n2`). 31절에서 그렇게 읽은 것은 틀렸다.
+- 헛디딘 곳: Helm `--reuse-values` 로 올리니 차트만 1.12.2 가 되고 이미지는 1.12.1 로 남았다. 대기 루프가 옛 `Error` 파드를 세느라 10분을 보낸 뒤에야 이미지 태그를 보고 알았다.
+- 남은 것: `__synchronize_srcu` 대기, D 로 쌓이는 `blkid`, 실서버에서 `spdk_tgt` 가 죽은 원인. 정리는 [V2-SUSPENDED-DM-TESTS.md](V2-SUSPENDED-DM-TESTS.md).

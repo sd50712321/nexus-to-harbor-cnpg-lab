@@ -1,0 +1,264 @@
+U4 (1.12.1): ks-w2 에서 쓰기 중인 볼륨 pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 의 dm 을 suspend 한 직후 spdk_tgt 를 SIGKILL. ks-w2 cordon 후 파드 삭제 → 파드가 다른 노드로 감
+== 08:31:39 spdk_tgt pid=6734       28:42 RLl
+-- dm (name:suspended:open)
+   pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f:Active:1
+   pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06:Active:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   nvme0 live traddr=10.233.72.36,trsvcid=20040
+   nvme1 live traddr=10.233.72.36,trsvcid=20046
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+   dm-2 slaves=[nvme1n1 ]
+-- D
+>>> dmsetup suspend --noflush --nolockfs
+rc=0
+>>> kill -9 spdk_tgt
+>>> delete pod u4 08:31:39
+== 08:32:02 spdk_tgt pid=       30:49 Ss
+-- dm (name:suspended:open)
+   pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f:Active:1
+   pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06:Suspended:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   nvme0 connecting traddr=10.233.72.36,trsvcid=20040
+   nvme1 connecting traddr=10.233.72.36,trsvcid=20046
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+   dm-2 slaves=[nvme1n1 ]
+-- D
+   40359 3304 D         17 umount          umount /var/lib/kubelet/plugins/kubernetes.io/csi/driver.longhorn
+       xlog_wait_on_iclog+0x1f0/0x258 [xfs]
+       xlog_force_lsn+0x1fc/0x250 [xfs]
+       xfs_log_force_seq+0xf4/0x298 [xfs]
+       __xfs_trans_commit+0x35c/0x470 [xfs]
+       xfs_trans_commit+0x50/0xd8 [xfs]
+       xfs_sync_sb+0xc0/0xd0 [xfs]
+       xfs_log_quiesce+0xb4/0x108 [xfs]
+== 08:32:42 spdk_tgt pid=       31:29 Ss
+-- dm (name:suspended:open)
+   pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f:Active:1
+   pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06:Suspended:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+   dm-2 slaves=[nvme1n1 ]
+-- D
+   40359 3304 D         57 umount          umount /var/lib/kubelet/plugins/kubernetes.io/csi/driver.longhorn
+       xlog_wait_on_iclog+0x1f0/0x258 [xfs]
+       xlog_force_lsn+0x1fc/0x250 [xfs]
+       xfs_log_force_seq+0xf4/0x298 [xfs]
+       __xfs_trans_commit+0x35c/0x470 [xfs]
+       xfs_trans_commit+0x50/0xd8 [xfs]
+       xfs_sync_sb+0xc0/0xd0 [xfs]
+       xfs_log_quiesce+0xb4/0x108 [xfs]
+== 08:33:42 spdk_tgt pid=       32:29 Ss
+-- dm (name:suspended:open)
+   pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f:Active:0
+   pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06:Suspended:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+   dm-2 slaves=[nvme1n1 ]
+-- D
+   40359 3304 D        117 umount          umount /var/lib/kubelet/plugins/kubernetes.io/csi/driver.longhorn
+       xlog_wait_on_iclog+0x1f0/0x258 [xfs]
+       xlog_force_lsn+0x1fc/0x250 [xfs]
+       xfs_log_force_seq+0xf4/0x298 [xfs]
+       __xfs_trans_commit+0x35c/0x470 [xfs]
+       xfs_trans_commit+0x50/0xd8 [xfs]
+       xfs_sync_sb+0xc0/0xd0 [xfs]
+       xfs_log_quiesce+0xb4/0x108 [xfs]
+== 08:34:42 spdk_tgt pid=       33:29 Ss
+-- dm (name:suspended:open)
+   pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f:Active:0
+   pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06:Suspended:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+   dm-2 slaves=[nvme1n1 ]
+-- D
+   40359 3304 D        177 umount          umount /var/lib/kubelet/plugins/kubernetes.io/csi/driver.longhorn
+       xlog_wait_on_iclog+0x1f0/0x258 [xfs]
+       xlog_force_lsn+0x1fc/0x250 [xfs]
+       xfs_log_force_seq+0xf4/0x298 [xfs]
+       __xfs_trans_commit+0x35c/0x470 [xfs]
+       xfs_trans_commit+0x50/0xd8 [xfs]
+       xfs_sync_sb+0xc0/0xd0 [xfs]
+       xfs_log_quiesce+0xb4/0x108 [xfs]
+== 08:36:42 spdk_tgt pid=       35:29 Ss
+-- dm (name:suspended:open)
+   pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f:Active:0
+   pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06:Suspended:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+   dm-2 slaves=[nvme1n1 ]
+-- D
+   40359 3304 D        297 umount          umount /var/lib/kubelet/plugins/kubernetes.io/csi/driver.longhorn
+       xlog_wait_on_iclog+0x1f0/0x258 [xfs]
+       xlog_force_lsn+0x1fc/0x250 [xfs]
+       xfs_log_force_seq+0xf4/0x298 [xfs]
+       __xfs_trans_commit+0x35c/0x470 [xfs]
+       xfs_trans_commit+0x50/0xd8 [xfs]
+       xfs_sync_sb+0xc0/0xd0 [xfs]
+       xfs_log_quiesce+0xb4/0x108 [xfs]
+== 08:39:42 spdk_tgt pid=       38:29 Ss
+-- dm (name:suspended:open)
+   pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f:Active:0
+   pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06:Suspended:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+   dm-2 slaves=[nvme1n1 ]
+-- D
+   40359 3304 D        477 umount          umount /var/lib/kubelet/plugins/kubernetes.io/csi/driver.longhorn
+       xlog_wait_on_iclog+0x1f0/0x258 [xfs]
+       xlog_force_lsn+0x1fc/0x250 [xfs]
+       xfs_log_force_seq+0xf4/0x298 [xfs]
+       __xfs_trans_commit+0x35c/0x470 [xfs]
+       xfs_trans_commit+0x50/0xd8 [xfs]
+       xfs_sync_sb+0xc0/0xd0 [xfs]
+       xfs_log_quiesce+0xb4/0x108 [xfs]
+-- dmesg
+      1 [ 1967.081067] INFO: task umount:40359 blocked for more than 122 seconds.
+      1 [ 1967.081302]       Not tainted 6.8.0-86-generic #87-Ubuntu
+      1 [ 1967.081409] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+      1 [ 1967.081530] task:umount          state:D stack:0     pid:40359 tgid:40359 ppid:3304   flags:0x0000000d
+      1 [ 1967.081534] Call trace:
+      3 [ 1967.081535]  __switch_to+0xd8/0x120
+     10 [ 1967.081556]  xlog_wait_on_iclog+0x1f0/0x258 [xfs]
+      2 [ 1967.082159]  generic_shutdown_super+0x80/0x180
+      1 [ 1967.082164]  xfs_kill_sb+0x24/0x58 [xfs]
+      9 [ 1967.082210]  deactivate_locked_super+0x5c/0x178
+      1 [ 2089.961607] INFO: task umount:40359 blocked for more than 245 seconds.
+      1 [ 2089.962521]       Not tainted 6.8.0-86-generic #87-Ubuntu
+      1 [ 2089.962642] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+      1 [ 2089.962730] task:umount          state:D stack:0     pid:40359 tgid:40359 ppid:3304   flags:0x0000000d
+      1 [ 2089.962733] Call trace:
+      3 [ 2089.962734]  __switch_to+0xd8/0x120
+     10 [ 2089.962747]  xlog_wait_on_iclog+0x1f0/0x258 [xfs]
+      2 [ 2089.963354]  generic_shutdown_super+0x80/0x180
+      1 [ 2089.963359]  xfs_kill_sb+0x24/0x58 [xfs]
+      9 [ 2089.963401]  deactivate_locked_super+0x5c/0x178
+      1 [ 2212.847063] INFO: task umount:40359 blocked for more than 368 seconds.
+      1 [ 2212.847276]       Not tainted 6.8.0-86-generic #87-Ubuntu
+      1 [ 2212.847377] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+      1 [ 2212.847470] task:umount          state:D stack:0     pid:40359 tgid:40359 ppid:3304   flags:0x0000000d
+      1 [ 2212.847474] Call trace:
+      3 [ 2212.847474]  __switch_to+0xd8/0x120
+     10 [ 2212.847482]  xlog_wait_on_iclog+0x1f0/0x258 [xfs]
+      2 [ 2212.847981]  generic_shutdown_super+0x80/0x180
+      1 [ 2212.847985]  xfs_kill_sb+0x24/0x58 [xfs]
+      9 [ 2212.848027]  deactivate_locked_super+0x5c/0x178
+-- k8s 08:39:42
+pg-prod-1 1/1 Running 0 ks-w1
+pg-prod-2 1/1 Running 1 36m
+pg-prod-3 0/1 Pending 0 <none>
+u4-7bb84748f9-frb54 1/1 Running 0 ks-w1
+pvc-813e3dee-416a-4f95-bd7e-ed0c9ae791bb attached degraded
+pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f detached unknown
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b attached degraded
+pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 attached degraded
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b ks-w3 true
+pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 ks-w1 true
+pvc-813e3dee-416a-4f95-bd7e-ed0c9ae791bb ks-w1 true
+8m4s        Normal    Scheduled                     pod/u4-7bb84748f9-cf79w               Successfully assigned v2test/u4-7bb84748f9-cf79w to ks-w1
+6m41s       Normal    SuccessfulCreate              replicaset/u4-7bb84748f9              Created pod: u4-7bb84748f9-frb54
+6m41s       Warning   FailedAttachVolume            pod/u4-7bb84748f9-frb54               Waiting for detach for volume "pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06" Volume is already exclusively attached to one node, waiting on detach before it can be 
+6m41s       Normal    Scheduled                     pod/u4-7bb84748f9-frb54               Successfully assigned v2test/u4-7bb84748f9-frb54 to ks-w1
+5m42s       Normal    SuccessfulAttachVolume        pod/u4-7bb84748f9-frb54               AttachVolume.Attach succeeded for volume "pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06"
+5m41s       Normal    Started                       pod/u4-7bb84748f9-frb54               Container started
+5m41s       Normal    Created                       pod/u4-7bb84748f9-frb54               Container created
+5m41s       Normal    Pulled                        pod/u4-7bb84748f9-frb54               Container image "ghcr.io/cloudnative-pg/postgresql:16.15-minimal-bookworm" already present on machine and can be accessed by the pod
+
+=== 해제 시험 08:39:57
+== 08:40:01 spdk_tgt pid=       38:48 Ss
+-- dm (name:suspended:open)
+   pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f:Active:0
+   pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06:Suspended:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+   dm-2 slaves=[nvme1n1 ]
+-- D
+   40359 3304 D        496 umount          umount /var/lib/kubelet/plugins/kubernetes.io/csi/driver.longhorn
+       xlog_wait_on_iclog+0x1f0/0x258 [xfs]
+       xlog_force_lsn+0x1fc/0x250 [xfs]
+       xfs_log_force_seq+0xf4/0x298 [xfs]
+       __xfs_trans_commit+0x35c/0x470 [xfs]
+       xfs_trans_commit+0x50/0xd8 [xfs]
+       xfs_sync_sb+0xc0/0xd0 [xfs]
+       xfs_log_quiesce+0xb4/0x108 [xfs]
+      1 D    umount
+>>> blkid (10초 제한)
+/dev/mapper/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06: UUID="aeaf92a1-30b1-43be-9fba-d9caa732dbd1" FSSIZE="1006632960" FSLASTBLOCK="262144" FSBLOCKSIZE="4096" BLOCK_SIZE="4096" TYPE="xfs" USAGE="filesystem"
+rc=0
+>>> dmsetup remove
+device-mapper: remove ioctl on pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06  failed: Device or resource busy
+Command failed.
+rc=1
+>>> dmsetup remove --force (20초 제한)
+rc=0
+== 08:40:01 spdk_tgt pid=       38:48 Ss
+-- dm (name:suspended:open)
+   pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f:Active:0
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+-- D
+>>> dmsetup resume
+device-mapper: resume ioctl on pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06  failed: No such device or address
+Command failed.
+rc=1
+== 08:40:04 spdk_tgt pid=       38:51 Ss
+-- dm (name:suspended:open)
+   pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f:Active:0
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+-- D
+== 08:40:14 spdk_tgt pid=       39:01 Ss
+-- dm (name:suspended:open)
+   pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f:Active:0
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+-- D
+== 08:40:44 spdk_tgt pid=       39:31 Ss
+-- dm (name:suspended:open)
+   pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f:Active:0
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+-- D
+>>> dmsetup remove (resume 뒤)
+device-mapper: remove ioctl on pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06  failed: No such device or address
+Command failed.
+rc=1
+pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f:Active:0
+ubuntu--vg-ubuntu--lv:Active:1
+0
+-- dmesg
+[ 2212.848032]  __cleanup_mnt+0x20/0x48
+[ 2212.848033]  task_work_run+0x80/0x100
+[ 2212.848036]  do_notify_resume+0x188/0x220
+[ 2212.848037]  el0_svc+0x11c/0x190
+[ 2212.848040]  el0t_64_sync_handler+0x148/0x158
+[ 2212.848042]  el0t_64_sync+0x1b0/0x1b8
+[ 2328.387473] XFS (dm-2): log I/O error -5
+[ 2328.387726] XFS (dm-2): Filesystem has been shut down due to log error (0x2).
+[ 2328.387857] XFS (dm-2): Please unmount the filesystem and rectify the problem(s).
+[ 2328.395607] Buffer I/O error on dev dm-2, logical block 0, async page read
+[ 2328.398977] Buffer I/O error on dev dm-2, logical block 0, async page read
+[ 2328.400372] Buffer I/O error on dev dm-2, logical block 1, async page read

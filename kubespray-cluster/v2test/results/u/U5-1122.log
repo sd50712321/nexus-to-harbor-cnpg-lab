@@ -1,0 +1,28 @@
+U5-1122: V2 인스턴스 매니저 파드 전부 동시 삭제 x3. Longhorn docker.io/longhornio/longhorn-manager:v1.12.2
+  vol pvc-813e3dee-416a-4f95-bd7e-ed0c9ae791bb attached healthy
+  vol pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f attached healthy
+  vol pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b attached healthy
+  vol pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 attached healthy
+== round 1 10:02:32 delete 3 IM pods
+   회복=1 걸린시간=154s  volumes: attached/healthy attached/healthy attached/healthy attached/healthy   notready_pods=0
+   ks-w2 restarts=0 transports=1 assert/iobuf줄=0
+   ks-w1 restarts=0 transports=1 assert/iobuf줄=0
+   ks-w3 restarts=0 transports=1 assert/iobuf줄=0
+== round 2 10:05:06 delete 3 IM pods
+   회복=1 걸린시간=184s  volumes: attached/healthy attached/healthy attached/healthy attached/healthy   notready_pods=0
+   ks-w2 restarts=0 transports=1 assert/iobuf줄=0
+   ks-w1 restarts=0 transports=1 assert/iobuf줄=0
+   ks-w3 restarts=0 transports=1 assert/iobuf줄=0
+== round 3 10:08:11 delete 3 IM pods
+   회복=1 걸린시간=215s  volumes: attached/healthy attached/healthy attached/healthy attached/healthy   notready_pods=0
+   ks-w2 restarts=0 transports=1 assert/iobuf줄=0
+   ks-w1 restarts=0 transports=1 assert/iobuf줄=0
+   ks-w3 restarts=0 transports=1 assert/iobuf줄=0
+v2test            18m         Warning   Unhealthy                pod/pg-prod-1                                                                    Readiness probe failed: HTTP probe failed with statuscode: 500
+v2test            8m42s       Warning   FailedAttachVolume       pod/u4-7bb84748f9-vpqhb                                                          Waiting for detach for volume "pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06" V
+v2test            7m31s       Warning   FailedAttachVolume       pod/u4-7bb84748f9-vpqhb                                                          AttachVolume.Attach failed for volume "pvc-bd247636-ae79-43ca-a1e5-aa051d6
+v2test            5m43s       Warning   FailedMount              pod/u4-7bb84748f9-5qgv8                                                          MountVolume.SetUp failed for volume "pvc-bd247636-ae79-43ca-a1e5-aa051d6f1
+v2test            5m41s       Warning   FailedMount              pod/pg-prod-3                                                                    MountVolume.MountDevice failed for volume "pvc-8a9b5cdc-9430-4668-bb6f-e77
+v2test            2m28s       Warning   FailedMount              pod/u4-7bb84748f9-5zt7d                                                          MountVolume.SetUp failed for volume "pvc-bd247636-ae79-43ca-a1e5-aa051d6f1
+v2test            2m28s       Warning   FailedMount              pod/pg-prod-3                                                                    MountVolume.MountDevice failed for volume "pvc-8a9b5cdc-9430-4668-bb6f-e77
+v2test            2m20s       Warning   FailedMount              pod/u4-7bb84748f9-5zt7d                                                          MountVolume.SetUp failed for volume "pvc-bd247636-ae79-43ca-a1e5-aa051d6f1

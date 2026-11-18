@@ -1,0 +1,7 @@
+ks-w1 pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f Active open=1 정상
+ks-w1 pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 Active open=1 정상
+ks-w1 D=0
+ks-w2 pvc-813e3dee-416a-4f95-bd7e-ed0c9ae791bb Active open=1 정상
+ks-w2 D=0
+ks-w3 pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b Active open=1 정상
+ks-w3 D=0

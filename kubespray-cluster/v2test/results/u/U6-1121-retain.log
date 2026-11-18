@@ -1,0 +1,16 @@
+U6-1121-retain: mode=retain x3 sc=u6-retain
+  round 1 ready_rc=0 attach+ready=15s detach=15s node=ks-w1 pv=pvc-8f19ba99-2980-42aa-9153-769f8be398fb
+  round 2 ready_rc=0 attach+ready=17s detach=13s node=ks-w1 pv=pvc-292f4aa6-6a88-467e-9856-b49ccc9efd73
+  round 3 ready_rc=0 attach+ready=15s detach=15s node=ks-w1 pv=pvc-2a64f335-7bc9-4210-ba18-5676d8d486da
+  PV (claim v2test/u6):
+    pvc-292f4aa6-6a88-467e-9856-b49ccc9efd73 Retain Released v2test/u6
+    pvc-2a64f335-7bc9-4210-ba18-5676d8d486da Retain Released v2test/u6
+    pvc-8f19ba99-2980-42aa-9153-769f8be398fb Retain Released v2test/u6
+  dm 전수:
+    ks-w1 pvc-813e3dee-416a-4f95-bd7e-ed0c9ae791bb Active open=1 정상
+    ks-w1 pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 Active open=1 정상
+    ks-w1 D=0
+    ks-w2 pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f Active open=1 정상
+    ks-w2 D=0
+    ks-w3 pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b Active open=1 정상
+    ks-w3 D=0

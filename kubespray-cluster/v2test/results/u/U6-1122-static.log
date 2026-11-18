@@ -1,0 +1,17 @@
+U6-1122-static: mode=static x3 sc=u6-retain
+  static PV=pvc-51240a9e-3e93-4222-8ec2-652c23b9f343
+  round 1 ready_rc=0 attach+ready=10s detach=11s node=ks-w1 pv=pvc-51240a9e-3e93-4222-8ec2-652c23b9f343
+  round 2 ready_rc=0 attach+ready=138s detach=16s node=ks-w1 pv=pvc-51240a9e-3e93-4222-8ec2-652c23b9f343
+  round 3 ready_rc=0 attach+ready=9s detach=12s node=ks-w1 pv=pvc-51240a9e-3e93-4222-8ec2-652c23b9f343
+  PV (claim v2test/u6):
+    pvc-51240a9e-3e93-4222-8ec2-652c23b9f343 Retain Released v2test/u6
+    pvc-a471a715-fd7d-4aaa-9f8c-39fded7c81d2 Retain Released v2test/u6
+    pvc-f6fe8d8c-aa6e-40e5-8be4-903c1ab9bdf0 Retain Released v2test/u6
+  dm 전수:
+    ks-w1 pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f Active open=1 정상
+    ks-w1 pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 Active open=1 정상
+    ks-w1 D=0
+    ks-w2 pvc-813e3dee-416a-4f95-bd7e-ed0c9ae791bb Active open=1 정상
+    ks-w2 D=0
+    ks-w3 pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b Active open=1 정상
+    ks-w3 D=0

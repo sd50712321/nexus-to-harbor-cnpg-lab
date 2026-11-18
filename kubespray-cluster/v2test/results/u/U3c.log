@@ -1,0 +1,146 @@
+U3c (1.12.1): ks-w2 cordon. 쓰기 부하 중 dmsetup suspend 후 포트 20028 DROP, 곧바로 파드 삭제. 볼륨이 노드를 떠나는 동안 dm 이 Suspended 인 경우
+== 08:20:47 spdk_tgt pid=6734       17:50 RLl
+-- dm (name:suspended:open)
+   pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f:Active:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   nvme1 live traddr=10.233.72.36,trsvcid=20028
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+-- D
+   28058 27910 D          0 dd              dd if=/dev/zero of=/var/lib/postgresql/data/load.bin bs=1M count=
+       blk_io_schedule+0x40/0x88
+       __iomap_dio_rw+0x27c/0x6a0
+       iomap_dio_rw+0x1c/0xa8
+       xfs_file_dio_write_aligned+0x110/0x1b8 [xfs]
+       xfs_file_write_iter+0x128/0x1f0 [xfs]
+       vfs_write+0x274/0x3a8
+       ksys_write+0x80/0x140
+>>> dmsetup suspend --noflush --nolockfs
+rc=0
+>>> blackhole on
+-A INPUT -p tcp -m tcp --dport 20028 -j DROP
+-A INPUT -p tcp -m tcp --dport 20022 -j DROP
+-A OUTPUT -p tcp -m tcp --sport 20028 -j DROP
+-A OUTPUT -p tcp -m tcp --sport 20022 -j DROP
+>>> delete pod pg-prod-3 08:20:47
+== 08:21:10 spdk_tgt pid=6734       18:13 RLl
+-- dm (name:suspended:open)
+   pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f:Suspended:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   nvme1 connecting traddr=10.233.72.36,trsvcid=20028
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+-- D
+   21886 21852 D        353 postgres        postgres -D /var/lib/postgresql/data/pgdata
+       folio_wait_bit_common+0x174/0x3e0
+       folio_wait_bit+0x24/0x58
+       folio_wait_writeback+0x5c/0xf0
+       __filemap_fdatawait_range+0xb0/0x178
+       file_write_and_wait_range+0xe4/0x130
+       xfs_file_fsync+0x74/0x2a0 [xfs]
+       vfs_fsync_range+0x40/0xb0
+   28058 27910 D         23 dd              dd if=/dev/zero of=/var/lib/postgresql/data/load.bin bs=1M count=
+       blk_io_schedule+0x40/0x88
+       __iomap_dio_rw+0x27c/0x6a0
+       iomap_dio_rw+0x1c/0xa8
+       xfs_file_dio_write_aligned+0x110/0x1b8 [xfs]
+       xfs_file_write_iter+0x128/0x1f0 [xfs]
+       vfs_write+0x274/0x3a8
+       ksys_write+0x80/0x140
+== 08:21:50 spdk_tgt pid=6734       18:53 RLl
+-- dm (name:suspended:open)
+   pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f:Suspended:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   nvme1 connecting traddr=10.233.72.36,trsvcid=20028
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+-- D
+   6737 2 D       1133 kworker/u6:1+xf [kworker/u6:1+xfs-cil/dm-1]
+       xlog_state_get_iclog_space+0x2c0/0x3d0 [xfs]
+       xlog_write+0x74/0x2a0 [xfs]
+       xlog_cil_push_work+0x4a0/0x638 [xfs]
+       process_one_work+0x17c/0x448
+   21683 2 D        395 xfsaild/dm-1    [xfsaild/dm-1]
+       __flush_workqueue+0x128/0x448
+       xlog_cil_push_now.isra.0+0x94/0x108 [xfs]
+       xlog_cil_force_seq+0x78/0x2f0 [xfs]
+       xfs_log_force+0xe0/0x340 [xfs]
+       xlog_cil_flush+0x108/0x150 [xfs]
+       xfsaild_push+0x438/0xa78 [xfs]
+       xfsaild+0xbc/0x180 [xfs]
+   21886 21852 D        393 postgres        postgres -D /var/lib/postgresql/data/pgdata
+       folio_wait_bit_common+0x174/0x3e0
+       folio_wait_bit+0x24/0x58
+       folio_wait_writeback+0x5c/0xf0
+       __filemap_fdatawait_range+0xb0/0x178
+       file_write_and_wait_range+0xe4/0x130
+       xfs_file_fsync+0x74/0x2a0 [xfs]
+       vfs_fsync_range+0x40/0xb0
+   23170 2 D        332 kworker/1:1+xfs [kworker/1:1+xfs-sync/dm-1]
+       __flush_workqueue+0x128/0x448
+       xlog_cil_push_now.isra.0+0x94/0x108 [xfs]
+       xlog_cil_force_seq+0x78/0x2f0 [xfs]
+       xfs_log_force+0xe0/0x340 [xfs]
+       xfs_log_worker+0x50/0x110 [xfs]
+       process_one_work+0x17c/0x448
+   28058 27910 D         63 dd              dd if=/dev/zero of=/var/lib/postgresql/data/load.bin bs=1M count=
+       blk_io_schedule+0x40/0x88
+       __iomap_dio_rw+0x27c/0x6a0
+       iomap_dio_rw+0x1c/0xa8
+       xfs_file_dio_write_aligned+0x110/0x1b8 [xfs]
+       xfs_file_write_iter+0x128/0x1f0 [xfs]
+       vfs_write+0x274/0x3a8
+       ksys_write+0x80/0x140
+== 08:22:50 spdk_tgt pid=6734       19:53 RLl
+-- dm (name:suspended:open)
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   dm-0 slaves=[sda3 ]
+-- D
+== 08:23:50 spdk_tgt pid=6734       20:53 RLl
+-- dm (name:suspended:open)
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   dm-0 slaves=[sda3 ]
+-- D
+== 08:25:50 spdk_tgt pid=6734       22:53 RLl
+-- dm (name:suspended:open)
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   dm-0 slaves=[sda3 ]
+-- D
+== 08:27:50 spdk_tgt pid=6734       24:53 RLl
+-- dm (name:suspended:open)
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   dm-0 slaves=[sda3 ]
+-- D
+-- dmesg
+      1 [ 1180.134741] nvme nvme1: I/O tag 1 (7001) type 4 opcode 0x18 (Admin Cmd) QID 0 timeout
+      1 [ 1180.134770] nvme nvme1: starting error recovery
+      1 [ 1180.134941] nvme nvme1: failed nvme_keep_alive_end_io error=10
+      1 [ 1180.135791] nvme nvme1: Identify namespace failed (-4)
+     15 [ 1185.254480] nvme nvme1: failed to connect socket: -110
+      1 [ 1256.935670] nvme nvme1: Removing controller...
+      1 [ 1256.935682] nvme nvme1: Removing ctrl: NQN "nqn.2023-01.io.longhorn.spdk:volume-pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f"
+      1 [ 1256.950966] nvme nvme1: Property Set error: 880, offset 0x14
+      1 [ 1264.139077] nvme nvme1: creating 2 I/O queues.
+      1 [ 1264.156225] nvme nvme1: mapped 2/0/0 default/read/poll queues.
+      1 [ 1264.158007] nvme nvme1: new ctrl: NQN "nqn.2023-01.io.longhorn.spdk:volume-pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f", addr 10.233.72.36:20034, hostnqn: nqn.2014-08.org
+      1 [ 1265.154121] XFS (dm-1): Unmounting Filesystem 2d9ec519-abb1-4db5-8ab6-b3ef5afcd34e
+      1 [ 1270.748185] nvme nvme1: Removing ctrl: NQN "nqn.2023-01.io.longhorn.spdk:volume-pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f"
+-- k8s 08:27:50
+pg-prod-1 1/1 Running 0 ks-w1
+pg-prod-2 1/1 Running 0 ks-w3
+pg-prod-3 0/1 Pending 0 <none>
+pvc-813e3dee-416a-4f95-bd7e-ed0c9ae791bb attached healthy
+pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f detached unknown
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b attached healthy
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b ks-w3 true
+pvc-813e3dee-416a-4f95-bd7e-ed0c9ae791bb ks-w1 true
+pvc-813e3dee-416a-4f95-bd7e-ed0c9ae791bb-ef-0   v2    running   ks-w1   instance-manager-3787df073f5a5202e17bb577d5251d07   4h22m
+pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f-ef-0   v2    stopped                                                               4h20m
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b-ef-0   v2    running   ks-w3   instance-manager-c15b3449016064e881b4051bd3914faa   4h20m

@@ -1,0 +1,28 @@
+U5-1121: V2 인스턴스 매니저 파드 전부 동시 삭제 x3. Longhorn docker.io/longhornio/longhorn-manager:v1.12.1
+  vol pvc-813e3dee-416a-4f95-bd7e-ed0c9ae791bb attached healthy
+  vol pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f attached healthy
+  vol pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b attached healthy
+  vol pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 attached healthy
+== round 1 08:53:23 delete 3 IM pods
+   회복=1 걸린시간=102s  volumes: attached/healthy attached/healthy attached/healthy attached/healthy   notready_pods=0
+   ks-w1 restarts=0 transports=1 assert/iobuf줄=0
+   ks-w2 restarts=0 transports=1 assert/iobuf줄=0
+   ks-w3 restarts=0 transports=1 assert/iobuf줄=0
+== round 2 08:55:06 delete 3 IM pods
+   회복=1 걸린시간=102s  volumes: attached/healthy attached/healthy attached/healthy attached/healthy   notready_pods=0
+   ks-w1 restarts=0 transports=1 assert/iobuf줄=0
+   ks-w2 restarts=0 transports=1 assert/iobuf줄=0
+   ks-w3 restarts=0 transports=1 assert/iobuf줄=0
+== round 3 08:56:48 delete 3 IM pods
+   회복=1 걸린시간=214s  volumes: attached/healthy attached/healthy attached/healthy attached/healthy   notready_pods=0
+   ks-w1 restarts=0 transports=1 assert/iobuf줄=0
+   ks-w2 restarts=0 transports=1 assert/iobuf줄=0
+   ks-w3 restarts=0 transports=1 assert/iobuf줄=0
+v2test            5m          Warning   Unhealthy                     pod/pg-prod-3                                                                    Readiness probe failed: HTTP probe failed with statuscode: 500
+v2test            4m35s       Warning   FailedMount                   pod/u4-7bb84748f9-2djwq                                                          MountVolume.SetUp failed for volume "pvc-bd247636-ae79-43ca-a1e5-aa05
+v2test            3m1s        Warning   FailedAttachVolume            pod/u4-7bb84748f9-sdctg                                                          Waiting for detach for volume "pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a
+v2test            2m56s       Warning   Unhealthy                     pod/pg-prod-3                                                                    Readiness probe failed: HTTP probe failed with statuscode: 500
+v2test            2m52s       Warning   Unhealthy                     pod/pg-prod-1                                                                    Readiness probe failed: HTTP probe failed with statuscode: 500
+v2test            2m14s       Warning   FailedMount                   pod/pg-prod-2                                                                    MountVolume.MountDevice failed for volume "pvc-a94696e6-4297-4d48-bcb
+v2test            2m14s       Warning   FailedAttachVolume            pod/u4-7bb84748f9-sdctg                                                          AttachVolume.Attach failed for volume "pvc-bd247636-ae79-43ca-a1e5-aa
+v2test            19s         Warning   FailedAttachVolume            pod/u4-7bb84748f9-gsdtf                                                          AttachVolume.Attach failed for volume "pvc-bd247636-ae79-43ca-a1e5-aa

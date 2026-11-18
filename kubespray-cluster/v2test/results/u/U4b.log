@@ -1,0 +1,131 @@
+U4b (1.12.1): U4 와 같은 방법을 ks-w1 에서 반복. 이번에는 remove --force 없이 dmsetup resume 만 써서 푼다
+== 08:42:41 spdk_tgt pid=6311       39:51 RLl
+-- dm (name:suspended:open)
+   pvc-813e3dee-416a-4f95-bd7e-ed0c9ae791bb:Active:1
+   pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06:Active:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   nvme0 live traddr=10.233.71.122,trsvcid=20011
+   nvme1 live traddr=10.233.71.122,trsvcid=20047
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+   dm-2 slaves=[nvme1n1 ]
+-- D
+>>> dmsetup suspend --noflush --nolockfs
+rc=0
+>>> kill -9 spdk_tgt
+>>> delete pod u4 08:42:41
+== 08:43:14 spdk_tgt pid=       42:24 Ss
+-- dm (name:suspended:open)
+   pvc-813e3dee-416a-4f95-bd7e-ed0c9ae791bb:Active:1
+   pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06:Suspended:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+   dm-2 slaves=[nvme1n1 ]
+-- D
+   161190 4018 D         27 umount          umount /var/lib/kubelet/plugins/kubernetes.io/csi/driver.longhorn
+       xlog_wait_on_iclog+0x1f0/0x258 [xfs]
+       xlog_force_lsn+0x1fc/0x250 [xfs]
+       xfs_log_force_seq+0xf4/0x298 [xfs]
+       __xfs_trans_commit+0x35c/0x470 [xfs]
+       xfs_trans_commit+0x50/0xd8 [xfs]
+       xfs_sync_sb+0xc0/0xd0 [xfs]
+       xfs_log_quiesce+0xb4/0x108 [xfs]
+== 08:44:14 spdk_tgt pid=       43:24 Ss
+-- dm (name:suspended:open)
+   pvc-813e3dee-416a-4f95-bd7e-ed0c9ae791bb:Active:0
+   pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06:Suspended:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+   dm-2 slaves=[nvme1n1 ]
+-- D
+   161190 4018 D         87 umount          umount /var/lib/kubelet/plugins/kubernetes.io/csi/driver.longhorn
+       xlog_wait_on_iclog+0x1f0/0x258 [xfs]
+       xlog_force_lsn+0x1fc/0x250 [xfs]
+       xfs_log_force_seq+0xf4/0x298 [xfs]
+       __xfs_trans_commit+0x35c/0x470 [xfs]
+       xfs_trans_commit+0x50/0xd8 [xfs]
+       xfs_sync_sb+0xc0/0xd0 [xfs]
+       xfs_log_quiesce+0xb4/0x108 [xfs]
+== 08:45:44 spdk_tgt pid=       44:54 Ss
+-- dm (name:suspended:open)
+   pvc-813e3dee-416a-4f95-bd7e-ed0c9ae791bb:Active:0
+   pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06:Suspended:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+   dm-2 slaves=[nvme1n1 ]
+-- D
+   161190 4018 D        177 umount          umount /var/lib/kubelet/plugins/kubernetes.io/csi/driver.longhorn
+       xlog_wait_on_iclog+0x1f0/0x258 [xfs]
+       xlog_force_lsn+0x1fc/0x250 [xfs]
+       xfs_log_force_seq+0xf4/0x298 [xfs]
+       __xfs_trans_commit+0x35c/0x470 [xfs]
+       xfs_trans_commit+0x50/0xd8 [xfs]
+       xfs_sync_sb+0xc0/0xd0 [xfs]
+       xfs_log_quiesce+0xb4/0x108 [xfs]
+>>> dmsetup remove
+device-mapper: remove ioctl on pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06  failed: Device or resource busy
+Command failed.
+rc=1
+>>> dmsetup resume
+rc=0
+== 08:45:48 spdk_tgt pid=       44:57 Ss
+-- dm (name:suspended:open)
+   pvc-813e3dee-416a-4f95-bd7e-ed0c9ae791bb:Active:0
+   pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06:Active:0
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+   dm-2 slaves=[nvme1n1 ]
+-- D
+== 08:45:58 spdk_tgt pid=       45:08 Ss
+-- dm (name:suspended:open)
+   pvc-813e3dee-416a-4f95-bd7e-ed0c9ae791bb:Active:0
+   pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06:Active:0
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+   dm-2 slaves=[nvme1n1 ]
+-- D
+== 08:46:28 spdk_tgt pid=       45:38 Ss
+-- dm (name:suspended:open)
+   pvc-813e3dee-416a-4f95-bd7e-ed0c9ae791bb:Active:0
+   pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06:Active:0
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+   dm-2 slaves=[nvme1n1 ]
+-- D
+>>> dmsetup remove (resume 뒤)
+rc=0
+pvc-813e3dee-416a-4f95-bd7e-ed0c9ae791bb:Active:0
+ubuntu--vg-ubuntu--lv:Active:1
+mounts=0
+-- dmesg
+               nvme1n1: rw=524288, sector=0, nr_sectors = 8 limit=0
+[ 2694.949981] (udev-worker): attempt to access beyond end of device
+               nvme1n1: rw=0, sector=0, nr_sectors = 8 limit=0
+[ 2694.949983] Buffer I/O error on dev dm-2, logical block 0, async page read
+[ 2694.951922] probe-bcache: attempt to access beyond end of device
+               nvme1n1: rw=524288, sector=0, nr_sectors = 8 limit=0
+[ 2694.951930] probe-bcache: attempt to access beyond end of device
+               nvme1n1: rw=0, sector=0, nr_sectors = 8 limit=0
+[ 2694.951931] Buffer I/O error on dev dm-2, logical block 0, async page read
+[ 2694.952396] probe-bcache: attempt to access beyond end of device
+               nvme1n1: rw=524288, sector=8, nr_sectors = 8 limit=0
+[ 2694.952402] probe-bcache: attempt to access beyond end of device
+               nvme1n1: rw=0, sector=8, nr_sectors = 8 limit=0
+[ 2694.952403] Buffer I/O error on dev dm-2, logical block 1, async page read
+pg-prod-1 0/1 Pending <none>
+pg-prod-2 1/1 Running 42m
+pg-prod-3 1/1 Running ks-w2
+u4-7bb84748f9-wvzwh 1/1 Running ks-w2
