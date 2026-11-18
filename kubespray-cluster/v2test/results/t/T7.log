@@ -1,0 +1,112 @@
+T7 (Longhorn 1.12.1): ks-w2 에서 spdk_tgt 를 SIGSTOP 으로 멈춘 직후 파드 t5 를 지워 볼륨을 떼게 함 (멎은 타깃에 nvme disconnect)
+start(UTC) 2026-11-18T04:34:28Z
+== 04:34:31 spdk_tgt: pid=39578  05:52 RLl
+-- dm
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b:Active:1
+-- nvme
+   nvme1 live traddr=10.233.72.40,trsvcid=20001,src_addr=10.233.72.40 nvme0c1n2 
+   nvme0c1n2 size=4194304
+   nvme0n2 size=4194304
+-- D
+>>> kill -STOP
+pod "t5" deleted from v2test namespace
+## +10s pod=from server vol=attached healthy ks-w2 im=1/1/Running/6m6s 1/1/Running/32m 
+== 04:34:47 spdk_tgt: pid=39578  06:08 TLl
+-- dm
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b:Active:1
+-- nvme
+   nvme1 connecting traddr=10.233.72.40,trsvcid=20001 nvme0c1n2 
+   nvme0c1n2 size=4194304
+   nvme0n2 size=4194304
+-- D
+  47370 D          00:13    5461 umount /var/lib/kubelet/plugins/kubernetes.io/csi/driver.longhorn.io/9e375e3bd36c1698d9d046246b657b32f0c0d430b09fca7a
+## +30s pod=from server vol=attached healthy ks-w2 im=1/1/Running/6m24s 1/1/Running/32m 
+== 04:35:06 spdk_tgt: pid=39578  06:26 TLl
+-- dm
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b:Active:1
+-- nvme
+   nvme1 connecting traddr=10.233.72.40,trsvcid=20001 nvme0c1n2 
+   nvme0c1n2 size=4194304
+   nvme0n2 size=4194304
+-- D
+  47370 D          00:31    5461 umount /var/lib/kubelet/plugins/kubernetes.io/csi/driver.longhorn.io/9e375e3bd36c1698d9d046246b657b32f0c0d430b09fca7a
+## +60s pod=from server vol=attached healthy ks-w2 im=1/1/Running/6m55s 1/1/Running/33m 
+== 04:35:36 spdk_tgt: pid=39578  06:57 TLl
+-- dm
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b:Active:1
+-- nvme
+   nvme1 connecting traddr=10.233.72.40,trsvcid=20001 nvme0c1n2 
+   nvme0c1n2 size=4194304
+   nvme0n2 size=4194304
+-- D
+  47370 D          01:02    5461 umount /var/lib/kubelet/plugins/kubernetes.io/csi/driver.longhorn.io/9e375e3bd36c1698d9d046246b657b32f0c0d430b09fca7a
+## +90s pod=from server vol=attached healthy ks-w2 im=1/1/Running/7m26s 1/1/Running/33m 
+== 04:36:07 spdk_tgt: pid= 
+-- dm
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b:Active:1
+-- nvme
+   nvme1 connecting traddr=10.233.72.40,trsvcid=20001 nvme0c1n2 
+   nvme0c1n2 size=4194304
+   nvme0n2 size=4194304
+-- D
+  47370 D          01:33    5461 umount /var/lib/kubelet/plugins/kubernetes.io/csi/driver.longhorn.io/9e375e3bd36c1698d9d046246b657b32f0c0d430b09fca7a
+## +120s pod=from server vol=detached unknown 29m im=1/1/Running/24s 1/1/Running/34m 
+== 04:36:35 spdk_tgt: pid=49272  00:25 RLl
+-- dm
+-- nvme
+-- D
+## +180s pod=from server vol=detached unknown 30m im=1/1/Running/85s 1/1/Running/35m 
+== 04:37:36 spdk_tgt: pid=49272  01:26 RLl
+-- dm
+-- nvme
+-- D
+## +240s pod=from server vol=detached unknown 31m im=1/1/Running/2m25s 1/1/Running/36m 
+== 04:38:37 spdk_tgt: pid=49272  02:27 RLl
+-- dm
+-- nvme
+-- D
+## +300s pod=from server vol=detached unknown 32m im=1/1/Running/3m23s 1/1/Running/37m 
+== 04:39:35 spdk_tgt: pid=49272  03:25 RLl
+-- dm
+-- nvme
+-- D
+## +360s pod=from server vol=detached unknown 33m im=1/1/Running/4m24s 1/1/Running/38m 
+== 04:40:36 spdk_tgt: pid=49272  04:26 RLl
+-- dm
+-- nvme
+-- D
+## +420s pod=from server vol=detached unknown 34m im=1/1/Running/5m25s 1/1/Running/39m 
+== 04:41:37 spdk_tgt: pid=49272  05:27 RLl
+-- dm
+-- nvme
+-- D
+-- manager log
+[pod/longhorn-manager-srk44/longhorn-manager] time="2026-11-18T04:36:07.478345698Z" level=warning msg="Marking the instance as state ERROR since the starting instance manager instance-manager-998d8f02bf69438e42627ddcd1ed1e21 shouldn't contain the running instance pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b-e-0" func="controller.(*InstanceHandler).syncStatusWithInstanceManager" file="instance_handler.go:107"
+[pod/longhorn-manager-srk44/longhorn-manager] time="2026-11-18T04:36:07.479151002Z" level=warning msg="Marking the instance as state ERROR since the starting instance manager instance-manager-998d8f02bf69438e42627ddcd1ed1e21 shouldn't contain the running instance pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b-r-fb4c5849" func="controller.(*InstanceHandler).syncStatusWithInstanceManager" file="instance_handler.go:107"
+[pod/longhorn-manager-srk44/longhorn-manager] time="2026-11-18T04:36:07.500904564Z" level=warning msg="Marking the instance as state ERROR since the starting instance manager instance-manager-998d8f02bf69438e42627ddcd1ed1e21 shouldn't contain the running instance pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b-ef-0" func="controller.(*InstanceHandler).syncStatusWithInstanceManager" file="instance_handler.go:107"
+-- dmesg
+[ 2109.011975] XFS (dm-1): Unmounting Filesystem 72b687fa-2b09-45e3-b6bf-4becf539957c
+[ 2113.179901] nvme nvme1: I/O tag 1 (6001) type 4 opcode 0x18 (Admin Cmd) QID 0 timeout
+[ 2113.179908] nvme nvme1: starting error recovery
+[ 2113.180084] block nvme0n2: no usable path - requeuing I/O
+[ 2113.180166] nvme nvme1: failed nvme_keep_alive_end_io error=10
+[ 2125.275816] nvme nvme1: Failed reconnect attempt 1
+[ 2137.563618] nvme nvme1: Failed reconnect attempt 2
+[ 2149.851272] nvme nvme1: Failed reconnect attempt 3
+[ 2162.140182] nvme nvme1: Failed reconnect attempt 4
+[ 2174.426922] nvme nvme1: Failed reconnect attempt 5
+[ 2186.714670] nvme nvme1: Failed reconnect attempt 6
+[ 2199.002864] nvme nvme1: Failed reconnect attempt 7
+[ 2202.047646] nvme nvme1: Failed reconnect attempt 8
+[ 2204.045333] eth0: renamed from tmp13ce1
+[ 2207.099178] nvme nvme1: Failed reconnect attempt 9
+[ 2211.304928] nvme nvme1: Removing ctrl: NQN "nqn.2023-01.io.longhorn.spdk:volume-pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b"
+[ 2212.154345] nvme nvme1: Failed reconnect attempt 10
+[ 2212.155310] XFS (dm-1): log I/O error -5
+[ 2212.155440] XFS (dm-1): Filesystem has been shut down due to log error (0x2).
+[ 2212.155523] XFS (dm-1): Please unmount the filesystem and rectify the problem(s).
+[ 2212.170668] nvme nvme1: Property Set error: 880, offset 0x14
+[ 2213.272285] nvme nvme0: creating 2 I/O queues.
+[ 2213.290914] nvme nvme0: mapped 2/0/0 default/read/poll queues.
+[ 2213.291739] nvme nvme0: new ctrl: NQN "nqn.2023-01.io.longhorn.spdk:volume-pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b", addr 10.233.72.229:20001, hostnqn: nqn.2014-08.org.nvmexpress:uuid:26c64d56-b85d-e868-7b0e-e973114be5f1
+[ 2220.444847] nvme nvme0: Removing ctrl: NQN "nqn.2023-01.io.longhorn.spdk:volume-pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b"

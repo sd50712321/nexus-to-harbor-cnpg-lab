@@ -398,4 +398,5 @@ kubectl -n longhorn-system get instancemanagers.longhorn.io | awk '$2=="v2"'
 - 새 관측(실서버, 전달받음): 문제 노드에서 `spdk_tgt` 만 8분 전에 새로 떴다(노드 58일). 워커 7대 중 5대에 `Suspended` dm 이 남았고, 밑장치가 살아 있는데도 굳은 것이 있다. `blkid` 가 `D` 로 쌓인다. 30절에서 예상한 모양(H1)과 같다.
 - 좁히기: 처음엔 CPU 경합을 봤지만 reactor 99.9% 는 폴링 모드의 정상 모습이라 증거가 못 된다. 다음으로 "무엇이 `spdk_tgt` 를 죽이나"를 Longhorn 이슈에서 찾았다. 1.12.1 에서 `dmsetup suspend` 가 30초를 넘기면 멈춤 없이 진행하다 abort 하는 버그가 있고(#14411, #14353), 이슈의 로그 문구가 실서버 것과 같았다. 로그의 `failed after 10 attempts …` 는 소스를 보니 재시도 횟수가 아니라 덧붙는 문구였다.
 - 랩 시험(T1·T2): 1.13.0 에서 `spdk_tgt` 를 강제로 죽이면, 장치를 멈춘 직후에 죽여도 75~90초에 스스로 회복했다. 인스턴스 매니저 파드가 통째로 새로 만들어지고 dm 이 재개됐다. 실서버처럼 굳지는 않았다.
-- 남은 것: 실서버 로그의 `Assertion` 줄, 파드가 정말 그대로였는지, 1.12.1 의 회복 동작. 정리는 [V2-SPDK-CRASH-ANALYSIS.md](V2-SPDK-CRASH-ANALYSIS.md).
+- 버전을 맞춘 재시험(T3~T7): 랩을 1.12.1 로 새로 깔았다. 죽이면(T3) XFS 가 꺼지고 원래 노드에 `slaves=[nvme0n1]` 인 고아 dm 이 남았다. 실서버 관측과 같다. 하지만 2분 30초에 풀렸다. 그래서 "죽은 것이 아니라 멎은 것"을 의심해 `kill -STOP` 을 했다(T6·T7). `QID 0 timeout`, `limit=0`, `shouldn't contain the running instance` 가 실서버와 같은 문구로 나왔고, 타깃이 멎어 있는 동안 `umount` 가 `D` 였다. kubelet 이 프로브 실패로 파드를 죽이자 풀렸다. 실서버는 그 프로브와 파드 정리까지 타임아웃이었으니, 길게 굳는 조건은 노드가 같이 멎는 것이라고 본다.
+- 남은 것: 실서버 로그의 `Assertion` 줄, `spdk_tgt` 가 죽었는지 멎었는지, 노드를 멎게 한 것. 정리는 [V2-SPDK-CRASH-ANALYSIS.md](V2-SPDK-CRASH-ANALYSIS.md).

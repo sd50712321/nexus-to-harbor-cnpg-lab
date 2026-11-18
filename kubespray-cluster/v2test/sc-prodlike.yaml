@@ -1,0 +1,17 @@
+# 실서버와 같은 값의 StorageClass (이름만 다름). Longhorn 1.12.1 시험용
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata: {name: pgtest-v2}
+provisioner: driver.longhorn.io
+allowVolumeExpansion: true
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer
+parameters:
+  dataEngine: v2
+  numberOfReplicas: "3"
+  dataLocality: best-effort
+  diskSelector: longhorn-v2
+  nodeSelector: longhorn-v2-node
+  fsType: xfs
+  staleReplicaTimeout: "30"
+  unmapMarkSnapChainRemoved: ignored

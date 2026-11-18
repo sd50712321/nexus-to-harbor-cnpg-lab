@@ -1,0 +1,155 @@
+T6 (Longhorn 1.12.1): ks-w2 에서 spdk_tgt 를 죽이지 않고 SIGSTOP 으로 멈춤 (응답 없는 타깃). 볼륨 pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b 는 파드 t5 가 쓰는 중
+start(UTC) 2026-11-18T04:27:00Z
+== 04:27:03 spdk_tgt: pid=22177  11:35 RLl
+-- dm
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b:Active:1
+-- nvme
+   nvme0 live traddr=10.233.72.129,trsvcid=20022,src_addr=10.233.72.129 nvme0c0n1 
+   nvme0c0n1 size=4194304
+   nvme0n1 size=4194304
+-- D
+>>> kill -STOP
+## +10s pod=1/1 Running vol=attached healthy ks-w2 im=1/1/Running/11m 1/1/Running/24m 
+== 04:27:19 spdk_tgt: pid=22177  11:50 TLl
+-- dm
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b:Active:1
+-- nvme
+   nvme0 connecting traddr=10.233.72.129,trsvcid=20022 nvme0c0n1 
+   nvme0c0n1 size=4194304
+   nvme0n1 size=4194304
+-- D
+## +30s pod=1/1 Running vol=attached healthy ks-w2 im=1/1/Running/12m 1/1/Running/25m 
+== 04:27:38 spdk_tgt: pid=22177  12:09 TLl
+-- dm
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b:Active:2
+-- nvme
+   nvme0 connecting traddr=10.233.72.129,trsvcid=20022 nvme0c0n1 
+   nvme0c0n1 size=4194304
+   nvme0n1 size=4194304
+-- D
+    986 Dsl        28:09       1 /usr/libexec/udisks2/udisksd
+## +60s pod=1/1 Running vol=attached healthy ks-w2 im=1/1/Running/12m 1/1/Running/25m 
+== 04:28:08 spdk_tgt: pid=22177  12:40 TLl
+-- dm
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b:Active:2
+-- nvme
+   nvme0 connecting traddr=10.233.72.129,trsvcid=20022 nvme0c0n1 
+   nvme0c0n1 size=4194304
+   nvme0n1 size=4194304
+-- D
+    986 Dsl        28:40       1 /usr/libexec/udisks2/udisksd
+## +90s pod=1/1 Running vol=attached healthy ks-w2 im=1/1/Running/13m 1/1/Running/26m 
+== 04:28:40 spdk_tgt: pid=39578  00:00 Rl
+-- dm
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b:Active:2
+-- nvme
+   nvme0 connecting traddr=10.233.72.129,trsvcid=20022 nvme0c0n1 
+   nvme0c0n1 size=4194304
+   nvme0n1 size=4194304
+-- D
+    986 Dsl        29:11       1 /usr/libexec/udisks2/udisksd
+## +120s pod=1/1 Running vol=attached degraded ks-w2 im=1/1/Running/26s 1/1/Running/26m 
+== 04:29:07 spdk_tgt: pid=39578  00:28 RLl
+-- dm
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b:Active:1
+-- nvme
+   nvme1 live traddr=10.233.72.40,trsvcid=20001,src_addr=10.233.72.40 nvme0c1n2 
+   nvme0c1n2 size=4194304
+   nvme0n2 size=4194304
+-- D
+## +180s pod=1/1 Running vol=attached healthy ks-w2 im=1/1/Running/87s 1/1/Running/27m 
+== 04:30:08 spdk_tgt: pid=39578  01:29 RLl
+-- dm
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b:Active:1
+-- nvme
+   nvme1 live traddr=10.233.72.40,trsvcid=20001,src_addr=10.233.72.40 nvme0c1n2 
+   nvme0c1n2 size=4194304
+   nvme0n2 size=4194304
+-- D
+## +240s pod=1/1 Running vol=attached healthy ks-w2 im=1/1/Running/2m28s 1/1/Running/28m 
+== 04:31:09 spdk_tgt: pid=39578  02:30 RLl
+-- dm
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b:Active:1
+-- nvme
+   nvme1 live traddr=10.233.72.40,trsvcid=20001,src_addr=10.233.72.40 nvme0c1n2 
+   nvme0c1n2 size=4194304
+   nvme0n2 size=4194304
+-- D
+## +300s pod=1/1 Running vol=attached healthy ks-w2 im=1/1/Running/3m26s 1/1/Running/29m 
+== 04:32:07 spdk_tgt: pid=39578  03:28 RLl
+-- dm
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b:Active:1
+-- nvme
+   nvme1 live traddr=10.233.72.40,trsvcid=20001,src_addr=10.233.72.40 nvme0c1n2 
+   nvme0c1n2 size=4194304
+   nvme0n2 size=4194304
+-- D
+## +360s pod=1/1 Running vol=attached healthy ks-w2 im=1/1/Running/4m27s 1/1/Running/30m 
+== 04:33:08 spdk_tgt: pid=39578  04:29 RLl
+-- dm
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b:Active:1
+-- nvme
+   nvme1 live traddr=10.233.72.40,trsvcid=20001,src_addr=10.233.72.40 nvme0c1n2 
+   nvme0c1n2 size=4194304
+   nvme0n2 size=4194304
+-- D
+## +420s pod=1/1 Running vol=attached healthy ks-w2 im=1/1/Running/5m28s 1/1/Running/31m 
+== 04:34:09 spdk_tgt: pid=39578  05:30 RLl
+-- dm
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b:Active:1
+-- nvme
+   nvme1 live traddr=10.233.72.40,trsvcid=20001,src_addr=10.233.72.40 nvme0c1n2 
+   nvme0c1n2 size=4194304
+   nvme0n2 size=4194304
+-- D
+-- events
+v2test            18m         Normal    Killing                       pod/pg-prod-3                                                           Stopping container postgres
+v2test            18m         Normal    Killing                       pod/pg-prod-2                                                           Stopping container postgres
+v2test            17m         Warning   FailedAttachVolume            pod/pg-prod-2                                                           AttachVolume.Attach failed for volume "pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b" : rpc error: code = Aborted desc = volume pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b is not ready for workloa
+v2test            17m         Normal    Killing                       pod/pg-prod-1                                                           Stopping container postgres
+v2test            13m         Normal    Killing                       pod/pg-prod-2                                                           Stopping container postgres
+v2test            13m         Normal    Killing                       pod/pg-prod-1                                                           Stopping container postgres
+v2test            13m         Normal    Killing                       pod/pg-prod-3                                                           Stopping container postgres
+v2test            13m         Warning   Unhealthy                     pod/pg-prod-3                                                           Readiness probe failed: Get "https://10.233.72.194:8000/readyz": net/http: request canceled while waiting for connection (Client.Timeout exceeded while awaiting headers)
+v2test            13m         Normal    Scheduled                     pod/t5                                                                  Successfully assigned v2test/t5 to ks-w2
+v2test            13m         Normal    SuccessfulAttachVolume        pod/t5                                                                  AttachVolume.Attach succeeded for volume "pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b"
+v2test            13m         Normal    Started                       pod/t5                                                                  Container started
+v2test            13m         Normal    Created                       pod/t5                                                                  Container created
+v2test            13m         Normal    Pulled                        pod/t5                                                                  Container image "ghcr.io/cloudnative-pg/postgresql:16.15-minimal-bookworm" already present on machine and can be accessed by the pod
+longhorn-system   6m2s        Warning   Unhealthy                     pod/instance-manager-998d8f02bf69438e42627ddcd1ed1e21                   Liveness probe failed:
+longhorn-system   6m2s        Normal    Killing                       pod/instance-manager-998d8f02bf69438e42627ddcd1ed1e21                   Stopping container instance-manager
+longhorn-system   5m32s       Warning   FailedPreStopHook             pod/instance-manager-998d8f02bf69438e42627ddcd1ed1e21                   PreStopHook failed
+longhorn-system   5m31s       Normal    NoPods                        poddisruptionbudget/instance-manager-998d8f02bf69438e42627ddcd1ed1e21   No matching pods found
+longhorn-system   5m30s       Normal    Pulled                        pod/instance-manager-998d8f02bf69438e42627ddcd1ed1e21                   Container image "docker.io/longhornio/longhorn-instance-manager:v1.12.1" already present on machine and can be accessed by the pod
+longhorn-system   5m30s       Normal    Started                       pod/instance-manager-998d8f02bf69438e42627ddcd1ed1e21                   Container started
+longhorn-system   5m30s       Normal    Created                       pod/instance-manager-998d8f02bf69438e42627ddcd1ed1e21                   Container created
+-- dmesg
+[ 1665.005354] nvme nvme0: I/O tag 1 (f001) type 4 opcode 0x18 (Admin Cmd) QID 0 timeout
+[ 1665.005374] nvme nvme0: starting error recovery
+[ 1665.005458] nvme nvme0: failed nvme_keep_alive_end_io error=10
+[ 1677.293173] nvme_tcp: queue 0: failed to receive icresp, error -11
+[ 1677.293219] nvme nvme0: Failed reconnect attempt 1
+[ 1684.251686] block nvme0n1: no usable path - requeuing I/O
+[ 1689.581129] nvme_tcp: queue 0: failed to receive icresp, error -11
+[ 1689.581176] nvme nvme0: Failed reconnect attempt 2
+[ 1701.869976] nvme_tcp: queue 0: failed to receive icresp, error -11
+[ 1701.870062] nvme nvme0: Failed reconnect attempt 3
+[ 1714.156786] nvme_tcp: queue 0: failed to receive icresp, error -11
+[ 1714.156849] nvme nvme0: Failed reconnect attempt 4
+[ 1726.443790] nvme_tcp: queue 0: failed to receive icresp, error -11
+[ 1726.443856] nvme nvme0: Failed reconnect attempt 5
+[ 1738.730974] nvme_tcp: queue 0: failed to receive icresp, error -11
+[ 1738.731037] nvme nvme0: Failed reconnect attempt 6
+[ 1751.018214] nvme_tcp: queue 0: failed to receive icresp, error -11
+[ 1751.018275] nvme nvme0: Failed reconnect attempt 7
+[ 1754.022809] eth0: renamed from tmpbf157
+[ 1756.106620] nvme nvme0: Failed reconnect attempt 8
+[ 1761.161497] nvme nvme0: Failed reconnect attempt 9
+[ 1761.317949] nvme nvme0: Removing ctrl: NQN "nqn.2023-01.io.longhorn.spdk:volume-pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b"
+[ 1761.322699] nvme_ns_head_submit_bio: 10 callbacks suppressed
+[ 1761.341409] nvme nvme0: Property Set error: 880, offset 0x14
+[ 1761.371952] xfs_db: attempt to access beyond end of device
+               nvme0n1: rw=2048, sector=0, nr_sectors = 64 limit=0
+[ 1765.162379] nvme nvme1: creating 2 I/O queues.
+[ 1765.180656] nvme nvme1: mapped 2/0/0 default/read/poll queues.
+[ 1765.181076] nvme nvme1: new ctrl: NQN "nqn.2023-01.io.longhorn.spdk:volume-pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b", addr 10.233.72.40:20001, hostnqn: nqn.2014-08.org.nvmexpress:uuid:26c64d56-b85d-e868-7b0e-e973114be5f1

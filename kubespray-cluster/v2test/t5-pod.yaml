@@ -1,0 +1,13 @@
+# T5: 고아 dm 이 남은 노드(ks-w2)에 pg-prod-2 의 볼륨을 다시 붙이는 파드
+apiVersion: v1
+kind: Pod
+metadata: {name: t5, namespace: v2test}
+spec:
+  nodeSelector: {kubernetes.io/hostname: ks-w2}
+  terminationGracePeriodSeconds: 2
+  containers:
+  - name: c
+    image: ghcr.io/cloudnative-pg/postgresql:16.15-minimal-bookworm
+    command: ["sleep", "infinity"]
+    volumeMounts: [{name: d, mountPath: /data}]
+  volumes: [{name: d, persistentVolumeClaim: {claimName: pg-prod-2}}]

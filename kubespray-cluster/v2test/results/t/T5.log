@@ -1,0 +1,112 @@
+T5 (Longhorn 1.12.1): T3 에서 ks-w2 에 남은 고아 dm(pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b)을 Suspended 로 둔 채 같은 볼륨을 ks-w2 에 다시 붙임
+start(UTC) 2026-11-18T04:20:13Z
+suspend_rc=0
+== 04:20:16 spdk_tgt: pid=22177  04:47 RLl
+-- dm
+pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f:Active:1
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b:Suspended:0
+-- nvme
+   nvme2 live traddr=10.233.72.129,trsvcid=20001,src_addr=10.233.72.129 nvme1c2n2 
+   nvme1c2n2 size=4194304
+   nvme1n2 size=4194304
+-- D
+pvc-813e3dee-416a-4f95-bd7e-ed0c9ae791bb detached unknown
+pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f detached unknown
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b detached unknown
+pod/t5 created
+## +20s pod=1/1 Running vol=attached healthy ks-w2
+== 04:20:57 spdk_tgt: pid=22177  05:28 RLl
+-- dm
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b:Active:1
+-- nvme
+   nvme0 live traddr=10.233.72.129,trsvcid=20022,src_addr=10.233.72.129 nvme0c0n1 
+   nvme0c0n1 size=4194304
+   nvme0n1 size=4194304
+-- D
+## +40s pod=1/1 Running vol=attached healthy ks-w2
+== 04:21:15 spdk_tgt: pid=22177  05:47 RLl
+-- dm
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b:Active:1
+-- nvme
+   nvme0 live traddr=10.233.72.129,trsvcid=20022,src_addr=10.233.72.129 nvme0c0n1 
+   nvme0c0n1 size=4194304
+   nvme0n1 size=4194304
+-- D
+## +60s pod=1/1 Running vol=attached healthy ks-w2
+== 04:21:37 spdk_tgt: pid=22177  06:09 RLl
+-- dm
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b:Active:1
+-- nvme
+   nvme0 live traddr=10.233.72.129,trsvcid=20022,src_addr=10.233.72.129 nvme0c0n1 
+   nvme0c0n1 size=4194304
+   nvme0n1 size=4194304
+-- D
+## +90s pod=1/1 Running vol=attached healthy ks-w2
+== 04:22:08 spdk_tgt: pid=22177  06:39 RLl
+-- dm
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b:Active:1
+-- nvme
+   nvme0 live traddr=10.233.72.129,trsvcid=20022,src_addr=10.233.72.129 nvme0c0n1 
+   nvme0c0n1 size=4194304
+   nvme0n1 size=4194304
+-- D
+## +120s pod=1/1 Running vol=attached healthy ks-w2
+== 04:22:36 spdk_tgt: pid=22177  07:07 RLl
+-- dm
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b:Active:1
+-- nvme
+   nvme0 live traddr=10.233.72.129,trsvcid=20022,src_addr=10.233.72.129 nvme0c0n1 
+   nvme0c0n1 size=4194304
+   nvme0n1 size=4194304
+-- D
+## +180s pod=1/1 Running vol=attached healthy ks-w2
+== 04:23:37 spdk_tgt: pid=22177  08:08 RLl
+-- dm
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b:Active:1
+-- nvme
+   nvme0 live traddr=10.233.72.129,trsvcid=20022,src_addr=10.233.72.129 nvme0c0n1 
+   nvme0c0n1 size=4194304
+   nvme0n1 size=4194304
+-- D
+## +240s pod=1/1 Running vol=attached healthy ks-w2
+== 04:24:38 spdk_tgt: pid=22177  09:09 RLl
+-- dm
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b:Active:1
+-- nvme
+   nvme0 live traddr=10.233.72.129,trsvcid=20022,src_addr=10.233.72.129 nvme0c0n1 
+   nvme0c0n1 size=4194304
+   nvme0n1 size=4194304
+-- D
+## +300s pod=1/1 Running vol=attached healthy ks-w2
+== 04:25:36 spdk_tgt: pid=22177  10:07 RLl
+-- dm
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b:Active:1
+-- nvme
+   nvme0 live traddr=10.233.72.129,trsvcid=20022,src_addr=10.233.72.129 nvme0c0n1 
+   nvme0c0n1 size=4194304
+   nvme0n1 size=4194304
+-- D
+## +360s pod=1/1 Running vol=attached healthy ks-w2
+== 04:26:37 spdk_tgt: pid=22177  11:08 RLl
+-- dm
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b:Active:1
+-- nvme
+   nvme0 live traddr=10.233.72.129,trsvcid=20022,src_addr=10.233.72.129 nvme0c0n1 
+   nvme0c0n1 size=4194304
+   nvme0n1 size=4194304
+-- D
+-- pod events
+6m5s        Normal    Scheduled                     pod/t5                                Successfully assigned v2test/t5 to ks-w2
+5m54s       Normal    SuccessfulAttachVolume        pod/t5                                AttachVolume.Attach succeeded for volume "pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b"
+5m53s       Normal    Pulled                        pod/t5                                Container image "ghcr.io/cloudnative-pg/postgresql:16.15-minimal-bookworm" already present on machine and can be accessed by the pod
+5m53s       Normal    Created                       pod/t5                                Container created
+5m53s       Normal    Started                       pod/t5                                Container started
+-- dmesg
+[ 1257.167932] XFS (dm-2): Unmounting Filesystem 2d9ec519-abb1-4db5-8ab6-b3ef5afcd34e
+[ 1260.862491] nvme nvme2: Removing ctrl: NQN "nqn.2023-01.io.longhorn.spdk:volume-pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f"
+[ 1269.863084] nvme nvme0: creating 2 I/O queues.
+[ 1269.881860] nvme nvme0: mapped 2/0/0 default/read/poll queues.
+[ 1269.882270] nvme nvme0: new ctrl: NQN "nqn.2023-01.io.longhorn.spdk:volume-pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b", addr 10.233.72.129:20022, hostnqn: nqn.2014-08.org.nvmexpress:uuid:26c64d56-b85d-e868-7b0e-e973114be5f1
+[ 1278.206830] XFS (dm-1): Mounting V5 Filesystem 72b687fa-2b09-45e3-b6bf-4becf539957c
+[ 1278.305657] XFS (dm-1): Ending clean mount
+[ 1278.651803] eth0: renamed from tmpbe1e8

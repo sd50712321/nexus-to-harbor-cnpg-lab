@@ -1,0 +1,11 @@
+# 실서버 모양: CNPG 3 인스턴스, 3벌 복제 V2 볼륨(xfs, best-effort). Longhorn 1.12.1 시험용
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata: {name: pg-prod, namespace: v2test}
+spec:
+  instances: 3
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.15-minimal-bookworm
+  smartShutdownTimeout: 15
+  affinity: {enablePodAntiAffinity: true, topologyKey: kubernetes.io/hostname, podAntiAffinityType: required}
+  storage: {storageClass: pgtest-v2, size: 2Gi}
+  resources: {requests: {cpu: 50m, memory: 192Mi}, limits: {memory: 384Mi}}

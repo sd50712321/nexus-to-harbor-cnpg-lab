@@ -6,12 +6,15 @@
 > - **관측**: 실서버에서 사람이 직접 본 출력이다. 이 문서 작성자는 실서버에 접근하지 못했고 전달받은 내용을 옮겼다.
 > - **이슈**: Longhorn 공개 이슈에 적힌 내용이다.
 > - **소스**: Longhorn 1.13.0 소스에서 읽은 동작이다. 실서버는 1.12.1 이라 다를 수 있다.
-> - **랩**: 랩(Longhorn 1.13.0, 커널 6.8, arm64 VM)에서 직접 만든 결과다. 각 1번씩 했다.
+> - **랩**: 랩(커널 6.8, arm64 VM, 워커 2 vCPU)에서 직접 만든 결과다. T1·T2 는 Longhorn 1.13.0, T3~T7 은 실서버와 같은 1.12.1 이다. 각 1번씩 했다.
 > - **추정**: 위 넷을 이어 붙인 해석이다.
 
 ## 1. 한 줄 결론
 
-Longhorn 1.12.1 의 알려진 버그로 `spdk_tgt` 가 죽은 것이 출발점일 가능성이 가장 높다 [추정]. 같은 계열 수정이 1.12.2(2026-11-09 출시)에 백포트 대상으로 표시되어 있다 [이슈]. 확정하려면 실서버 인스턴스 매니저 로그에서 `Assertion` 줄을 찾아야 한다(5절 1번).
+두 가지가 겹친 것으로 본다.
+
+- **출발점**: Longhorn 1.12.1 의 알려진 버그로 `spdk_tgt` 가 죽거나 멎는다 [추정]. 같은 계열 수정이 1.12.2(2026-11-09 출시)에 백포트 대상으로 표시되어 있다 [이슈]. 확정하려면 실서버 인스턴스 매니저 로그에서 `Assertion` 줄을 찾아야 한다(5절 1번).
+- **길게 굳는 이유**: 랩을 1.12.1 로 맞춰 `spdk_tgt` 를 죽이거나 멈춰 보면 실서버와 같은 로그와 고아 dm 이 나오지만 2분 30초 안에 회복한다 [랩]. 회복은 kubelet 이 프로브 실패로 파드를 죽이고 새로 만드는 데 달려 있다. 실서버는 그 프로브와 파드 정리까지 타임아웃이었다 [관측]. 노드가 같이 멎어 정리가 못 끝난 것으로 본다 [추정].
 
 ## 2. 환경 [관측]
 
@@ -123,31 +126,55 @@ NMI watchdog: Perf NMI watchdog permanently disabled
 - **exec 프로브 실패는 네트워크 문제가 아닐 수 있다.** exec 프로브는 containerd 가 컨테이너 안에 프로세스를 띄워야 한다. `cannot exec in a stopped state`, `KillPodSandbox DeadlineExceeded` 는 런타임이 느려졌다는 쪽을 가리킨다.
 - **`ata1` 이 어느 디스크인지 모른다.** V2 디스크가 아닐 수 있다.
 
-### 4.4 랩 시험: `spdk_tgt` 를 강제로 죽이면 [랩]
+### 4.4 랩 시험: `spdk_tgt` 를 죽이거나 멈추면 [랩]
 
-3중 복제 V2 볼륨이 붙어 있고 PostgreSQL 이 도는 노드에서 `kill -ABRT` 로 `spdk_tgt` 를 죽였다. 기록은 `v2test/results/t/`.
+처음 두 번(T1·T2)은 Longhorn 1.13.0 에서 했다. 버전이 달라 의미가 약하므로 랩을 **1.12.1 로 새로 깔고** 실서버와 같은 StorageClass(`dataEngine: v2`, 3벌, `best-effort`, `xfs`, `diskSelector`, `nodeSelector`, aio 디스크)와 CNPG 3 인스턴스로 다시 했다(T3~T7). 각 1번씩이다. 기록은 `v2test/results/t/`.
 
-| 시험 | 한 일 | 결과 |
+| 시험 | 버전 | 한 일 | 결과 |
+|---|---|---|---|
+| T1 | 1.13.0 | dm `Active` 인 채 `kill -ABRT` | 약 90초에 회복. 남는 것 없음 |
+| T2 | 1.13.0 | `dmsetup suspend` 직후 `kill -ABRT` | 약 75초에 회복. `Suspended` → `Active` |
+| T3 | 1.12.1 | dm `Active` 인 채 `kill -ABRT` | 약 2분 30초에 회복. **XFS 가 꺼지고, 파드가 다른 노드로 옮겨 가고, 원래 노드에 고아 dm 이 남음** |
+| T4 | 1.12.1 | `dmsetup suspend` 직후 `kill -ABRT` | 약 75초에 같은 노드에서 회복. `Suspended` → `Active` |
+| T5 | 1.12.1 | T3 의 고아 dm 을 `Suspended` 로 두고 같은 볼륨을 그 노드에 다시 붙임 | 11초에 붙음. Longhorn 이 고아 dm 을 치웠다 (Open 0 이었다) |
+| T6 | 1.12.1 | 쓰기 중에 `kill -STOP` (죽이지 않고 멈춤) | 약 2분에 회복. liveness 프로브가 실패해 kubelet 이 파드를 죽인 뒤에야 풀림 |
+| T7 | 1.12.1 | `kill -STOP` 직후 파드를 지워 볼륨을 떼게 함 | 타깃이 멎어 있는 약 100초 동안 `umount` 가 `D` 상태. 파드가 죽은 뒤 풀림 |
+
+**실서버 관측과 같은 것이 나온 항목**
+
+| 실서버 관측 | 랩에서 나온 시험 | 랩 출력 |
 |---|---|---|
-| T1 | dm `Active` 인 채 죽임 | 약 90초에 회복. dm 은 계속 `Active`, `D` 상태 없음 |
-| T2 | `dmsetup suspend` 직후 죽임 | 약 75초에 회복. dm 이 `Suspended` 였다가 `Active` 로 돌아옴, `D` 상태 없음 |
+| `dm-1 slaves=[nvme0n1]` 인데 `nvme0` 컨트롤러가 없음 | T3 | `pvc-…a02f… Active 0`, `slaves=[nvme0n1]`, `/sys/class/nvme/` 에는 `nvme1` 만 |
+| `XFS (dm-N): log I/O error -5`, `Filesystem has been shut down due to log error (0x2)` | T3, T7 | 같은 문구 |
+| `Property Set error: 880, offset 0x14` | T1~T7 전부 | 같은 문구. 회복하는 경우에도 나온다 |
+| `I/O tag 1 (f001) type 4 opcode … QID 0 timeout` | T6, T7 | `opcode 0x18 (Admin Cmd)`. 실서버는 `0x7f (Fabrics Cmd)` |
+| `attempt to access beyond end of device … limit=0` | T6 | `nvme0n1: rw=2048, sector=0, nr_sectors = 64 limit=0` |
+| `Marking the instance as state ERROR since the starting instance manager … shouldn't contain the running instance` | T7 | 같은 문구 (engine, replica, engine frontend 각각) |
+| V2 인스턴스 매니저 `Liveness probe failed` | T6, T7 | `Unhealthy` → `Killing` → `FailedPreStopHook` |
+| CSI 쪽 프로세스가 `D` 상태 | T7 | `umount /var/lib/kubelet/plugins/kubernetes.io/csi/driver.longhorn.io/…` 가 100초 |
 
-두 시험 모두 같은 순서로 회복했다.
+**랩에서 나오지 않은 것**
 
-1. 커널이 2초 간격으로 15번 다시 붙으려다(`ctrl-loss-tmo` 30초) 컨트롤러를 지운다. 이때 `Property Set error: 880, offset 0x14` 가 한 번 나온다.
-2. **인스턴스 매니저 파드가 통째로 새로 만들어진다** (파드 IP 가 바뀐다).
-3. Longhorn 이 새 타깃에 다시 붙이고 dm 을 재개한다. 볼륨은 다시 마운트되고 복제본은 재구축된다.
+- 몇 분 넘게 굳는 것. 가장 긴 것이 T3 의 2분 30초다.
+- `opcode 0x7f (Fabrics Cmd) timeout`, `Property Set error: 881`
+- `nvme disconnect` 가 `D` 로 남는 것, `__synchronize_srcu` 대기
+- `found instance manager name conflict`, `bdev_raid_create … BaseBdevs:[]`
+- V1 인스턴스 매니저 프로브까지 같이 실패하는 노드 단위 멈춤
 
-**실서버와 다른 점**: 실서버는 파드가 그대로인데 `spdk_tgt` 만 새로 떴다고 관측됐다. 랩(1.13.0)은 파드가 새로 만들어졌고 그 뒤 정리가 끝까지 됐다. 이 차이가 버전 차이인지, 실서버 관측이 다시 확인이 필요한 것인지는 모른다(5절 2번).
+**여기서 읽을 수 있는 것**
 
-**랩이 못 만든 것**: `nvme disconnect` 가 `D` 로 굳는 것, `Fabrics Cmd timeout`, `synchronize_srcu` 대기, CRD 이름 충돌, 노드 단위 프로브 실패. 랩은 타깃이 한 번 깨끗이 죽은 경우만 봤다. 실서버는 여러 볼륨이 붙은 채, 노드가 느려진 상황에서, 1.12.1 로 일어났다.
+1. **죽은 타깃은 금방 정리되고, 멎은 타깃은 멎어 있는 동안 계속 붙잡는다.** `kill -ABRT` 는 커널이 `connection refused` 를 받고 30초 뒤 포기한다. `kill -STOP` 은 TCP 는 붙는데 응답이 없어, 타깃이 사라질 때까지 `umount` 가 `D` 로 기다렸다 [랩 T6·T7].
+2. **랩이 2분에 풀린 것은 kubelet 이 멎은 `spdk_tgt` 를 죽였기 때문이다.** 프로브 6번 실패(약 60초) 뒤 파드를 죽이고 새로 만든다. 실서버는 그 프로브 실행 자체가 `timed out` 이었고 `KillPodSandbox` 도 `DeadlineExceeded` 였다. 즉 정리하는 손이 같이 멎었다 [추정].
+3. **따라서 실서버가 길게 굳는 조건은 "`spdk_tgt` 가 죽은 것"만으로는 부족하다.** `spdk_tgt` 가 응답 없이 살아 있거나, 죽인 뒤 정리가 못 끝나는 시간이 길어야 한다. 그 시간은 노드가 멎는 길이를 따라가므로 매번 다르다 [추정].
+4. **고아 dm 은 1.12.1 에서 실제로 남는다.** 다만 여는 프로세스가 없으면 다음 부착 때 치워진다. 실서버의 고아 dm 은 `blkid` 가 열고 있어(Open 수 = `blkid` 수) 치워지지 못하는 것으로 보인다 [T5 + 추정].
 
 ## 5. 실서버에서 확인할 것 (전부 읽기 전용)
 
 | # | 알고 싶은 것 | 명령 | 판정 |
 |---|---|---|---|
 | 1 | `spdk_tgt` 가 왜 죽었나 | `kubectl -n longhorn-system logs <v2 instance-manager 파드> \| grep -E "Assertion\|proceeding without suspension\|Failed to suspend\|Performing recovery"` 와 노드에서 `coredumpctl list`, `journalctl -k \| grep -E "reactor_\|ABRT\|coredump"` | `Assertion` 줄이 있으면 4.2 의 이슈와 같은 문제다. 파일·줄 번호로 어느 이슈인지 가른다 |
-| 2 | 파드가 정말 그대로였나 | `kubectl -n longhorn-system get pod <파드> -o jsonpath='{.metadata.creationTimestamp} {.status.containerStatuses[0].restartCount}'` 와 노드에서 `ps -o pid,etime,cmd -C spdk_tgt` | 파드 생성 시각이 `spdk_tgt` 시작보다 훨씬 앞이면 파드 안에서만 다시 뜬 것이다 |
+| 2 | `spdk_tgt` 가 죽었나, 멎었나. 파드는 그대로였나 | `kubectl -n longhorn-system get pod <파드> -o jsonpath='{.metadata.creationTimestamp} {.status.containerStatuses[0].restartCount}'` 와 노드에서 `ps -o pid,etime,cmd -C spdk_tgt` | 파드 생성 시각이 `spdk_tgt` 시작보다 훨씬 앞이면 파드 안에서만 다시 뜬 것이다 |
+| 2-1 | 멎어 있던 흔적이 있나 | 노드에서 `journalctl -k \| grep -E "QID 0 timeout\|failed to receive icresp\|Failed reconnect attempt"` | `icresp` 실패와 12초 간격 재시도면 타깃이 응답 없이 살아 있었다(랩 T6). `failed to connect socket: -111` 과 2초 간격이면 타깃이 죽어 있었다(랩 T3) |
 | 3 | 문제 노드 5대가 모두 같은가 | 각 노드에서 `ps -o etime,cmd -C spdk_tgt` | 5대 모두 최근에 다시 떴으면 `spdk_tgt` 죽음이 공통 원인이다 |
 | 4 | 죽기 직전에 무엇이 돌았나 | `kubectl -n longhorn-system get recurringjobs,snapshots,backups` 와 `kubectl get events -A \| grep -E "Rebuilding\|Rebuilt\|snapshot"` | 스냅샷·재구축·확장 시각이 `spdk_tgt` 시작 직전이면 ②③ 단계를 지지한다 |
 | 5 | `ata1` 이 무엇인가 | `lsscsi`, `ls -l /sys/block/*/device` | 루트 디스크나 V2 디스크면 저장소 지연 쪽, CD-ROM 이면 무시해도 된다 |
@@ -202,7 +229,7 @@ V2 에서 `dataLocality: strict-local` 이 되는지는 확인하지 못했다.
 3. 판단 불가인 단계마다 5절에서 읽기 전용 명령 하나만 고른다. 5절에 없으면 새로 제안하되 읽기 전용이어야 한다.
 4. 상태를 바꾸는 명령(dmsetup resume, reload, kubectl delete, patch, 재부팅)은 내가 요청할 때만 내고, 무엇이 바뀌고 되돌릴 수 있는지 함께 쓴다.
 5. Assertion 줄이 나오면 파일 이름과 줄 번호로 4.2 의 어느 이슈인지 말한다. 맞는 것이 없으면 없다고 쓴다.
-6. 랩 결과는 Longhorn 1.13.0 기준이다. 실서버 1.12.1 에 그대로 적용하지 않는다.
+6. 랩은 Longhorn 버전만 실서버와 같다(1.12.1). 커널, CPU 종류, 노드 크기가 달라 랩의 시간 값을 실서버에 그대로 적용하지 않는다.
 
 먼저 할 일
 - 5절 1번과 2번의 출력을 요청한다.
@@ -212,5 +239,6 @@ V2 에서 `dataLocality: strict-local` 이 되는지는 확인하지 못했다.
 
 - `spdk_tgt` 를 실제로 죽인 것이 무엇인지 (assertion 줄 미확인)
 - 노드가 멎는 원인이 하이퍼바이저인지, 굳은 장치가 커널을 붙잡아서인지
-- 1.12.1 에서 `spdk_tgt` 가 죽은 뒤 인스턴스 매니저가 어떻게 동작하는지 (랩은 1.13.0)
+- `spdk_tgt` 가 죽은 것인지 응답 없이 멎어 있던 것인지, 멎었다면 얼마나 오래였는지
+- 랩에서 못 만든 `Fabrics Cmd timeout`, `name conflict`, `BaseBdevs:[]` 가 어떤 조건에서 나오는지
 - 1.12.2 가 실서버 환경에서 실제로 이 증상을 없애는지
