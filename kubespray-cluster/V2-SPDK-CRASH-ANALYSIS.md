@@ -174,7 +174,7 @@ NMI watchdog: Perf NMI watchdog permanently disabled
 |---|---|---|---|
 | 1 | `spdk_tgt` 가 왜 죽었나 | `kubectl -n longhorn-system logs <v2 instance-manager 파드> \| grep -E "Assertion\|proceeding without suspension\|Failed to suspend\|Performing recovery"` 와 노드에서 `coredumpctl list`, `journalctl -k \| grep -E "reactor_\|ABRT\|coredump"` | `Assertion` 줄이 있으면 4.2 의 이슈와 같은 문제다. 파일·줄 번호로 어느 이슈인지 가른다 |
 | 2 | `spdk_tgt` 가 죽었나, 멎었나. 파드는 그대로였나 | `kubectl -n longhorn-system get pod <파드> -o jsonpath='{.metadata.creationTimestamp} {.status.containerStatuses[0].restartCount}'` 와 노드에서 `ps -o pid,etime,cmd -C spdk_tgt` | 파드 생성 시각이 `spdk_tgt` 시작보다 훨씬 앞이면 파드 안에서만 다시 뜬 것이다 |
-| 2-1 | 멎어 있던 흔적이 있나 | 노드에서 `journalctl -k \| grep -E "QID 0 timeout\|failed to receive icresp\|Failed reconnect attempt"` | `icresp` 실패와 12초 간격 재시도면 타깃이 응답 없이 살아 있었다(랩 T6). `failed to connect socket: -111` 과 2초 간격이면 타깃이 죽어 있었다(랩 T3) |
+| 2-1 | 멎어 있던 흔적이 있나 | 노드에서 `journalctl -k \| grep -E "QID 0 timeout\|failed to receive icresp\|Failed reconnect attempt"` | `queue 0: failed to receive icresp, error -11` 과 12초 간격 재시도면 타깃이 응답 없이 살아 있었다(랩 T6). `failed to connect socket: -111` 과 2초 간격이면 타깃이 죽어 있었다(랩 T1·T3. `-111` 줄은 T1 기록에만 남겼다) |
 | 3 | 문제 노드 5대가 모두 같은가 | 각 노드에서 `ps -o etime,cmd -C spdk_tgt` | 5대 모두 최근에 다시 떴으면 `spdk_tgt` 죽음이 공통 원인이다 |
 | 4 | 죽기 직전에 무엇이 돌았나 | `kubectl -n longhorn-system get recurringjobs,snapshots,backups` 와 `kubectl get events -A \| grep -E "Rebuilding\|Rebuilt\|snapshot"` | 스냅샷·재구축·확장 시각이 `spdk_tgt` 시작 직전이면 ②③ 단계를 지지한다 |
 | 5 | `ata1` 이 무엇인가 | `lsscsi`, `ls -l /sys/block/*/device` | 루트 디스크나 V2 디스크면 저장소 지연 쪽, CD-ROM 이면 무시해도 된다 |
