@@ -1,0 +1,212 @@
+W3-1122: Longhorn v1.12.2, ks-w1. spdk_tgt 를 150초 동안 0.95s 멈춤/0.05s 실행 반복. 버퍼 쓰기 600MB 직후 스냅샷 생성 요청
+>>> slow on 10:52:21
+>>> snapshot create 10:52:27 w3-1794999137
+-- snapshot CR
+   readyToUse=false error=failed to get engine client proxy: failed to initialize proxy client for instance-manager-55dcdba92221474a98395728ac09c488 IP 10.233.71.115: failed to check proxy client connection for instance-manager-55dcdba92221474a98395728ac09c488 IP 10.233.71.115: rpc error: code = Una
+-- volume
+    attached healthy
+    pod 1/1 Running 0 ks-w1
+    IM restarts=0
+-- instance-manager 로그 (suspend/resume/timeout)
+10:52:27.592666567Z" level=info msg="Suspending before the snapshot operation snapshot-create for snapshot w3-1794999137" endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-ef-0 engineNam
+10:52:27.597742304Z" level=info msg="Suspending linear dm device" controllerName=nvme1 name=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 namespaceName=nvme1n1 nvmeTCPInfo="&{SubsystemNQN:nqn.2023-01.io.longhorn.spdk:volume-pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 
+10:52:57.598211803Z" level=warning msg="Failed to suspend the dm device" elapsedMs=30005 endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-ef-0 engineName=pvc-bd247636-ae79-43ca-a1e5-aa0
+10:52:58.592876491Z" level=info msg="Suspending before the snapshot operation snapshot-create for snapshot w3-1794999137" endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-ef-0 engineNam
+10:52:58.602210066Z" level=info msg="Suspending linear dm device" controllerName=nvme1 name=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 namespaceName=nvme1n1 nvmeTCPInfo="&{SubsystemNQN:nqn.2023-01.io.longhorn.spdk:volume-pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 
+10:53:28.604300427Z" level=warning msg="Failed to suspend the dm device" elapsedMs=30011 endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-ef-0 engineName=pvc-bd247636-ae79-43ca-a1e5-aa0
+-- dmwatch
+10:52:21.4 813e3dee:Active:1 bd247636:Active:1 | D:
+10:52:22.0 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 1 kworker/u6:1+flush-252:2,
+10:52:27.6 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 1 dmsetup, 1 kworker/u6:1+flush-252:2,
+10:52:59.0 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 2 dmsetup, 1 kworker/u6:1+flush-252:2,
+10:53:06.8 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 2 dmsetup, 1 kworker/u6:1+flush-252:2, 1 kworker/u6:3+flush-252:1, 1 postgres,
+10:53:08.8 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 2 dmsetup, 1 kworker/u6:1+flush-252:2, 1 postgres,
+10:53:15.0 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 2 dmsetup, 1 kworker/u6:1+flush-252:2,
+10:53:15.5 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 2 dmsetup, 1 kworker/u6:1+flush-252:2, 1 xfsaild/dm-2,
+10:53:18.1 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 2 dmsetup, 1 kworker/u6:1+flush-252:2,
+10:53:23.8 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 2 dmsetup,
+10:54:09.0 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 2 dmsetup, 1 jbd2/dm-0-8, 1 systemd-journal,
+10:54:09.5 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 2 dmsetup,
+>>> slow off 10:54:51
+== 10:58:10 spdk_tgt pid=       21:23 Ss
+-- dm (name:suspended:open)
+   pvc-813e3dee-416a-4f95-bd7e-ed0c9ae791bb:Active:1
+   pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06:Active:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+   dm-2 slaves=[nvme1n1 ]
+-- D
+   38692 38528 D        350 dd              dd if=/dev/zero of=/data/load.bin bs=1M count=64 oflag=direct
+   38799 38794 D        349 dd              dd if=/dev/zero of=/data/big bs=1M count=600
+   39137 4059 D        343 dmsetup         dmsetup suspend pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06
+   41052 4059 D        312 dmsetup         dmsetup suspend pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06
+-- dmsetup 프로세스
+  39137    4059 D        343 dmsetup
+  41052    4059 D        312 dmsetup
+-- dmesg
+      1 [ 1282.448385] xfsaild/dm-2: attempt to access beyond end of device
+      1                nvme1n1: rw=4097, sector=1048640, nr_sectors = 8 limit=0
+      1 [ 1282.499379] xfsaild/dm-2: attempt to access beyond end of device
+      1                nvme1n1: rw=4097, sector=128, nr_sectors = 32 limit=0
+      1 [ 1282.499402] xfsaild/dm-2: attempt to access beyond end of device
+      1                nvme1n1: rw=4097, sector=524352, nr_sectors = 8 limit=0
+      1 [ 1282.499405] xfsaild/dm-2: attempt to access beyond end of device
+      1                nvme1n1: rw=4097, sector=1048584, nr_sectors = 8 limit=0
+      1 [ 1282.499410] xfsaild/dm-2: attempt to access beyond end of device
+      1                nvme1n1: rw=4097, sector=1048608, nr_sectors = 8 limit=0
+== 10:58:24 spdk_tgt pid=       21:36 Ss
+-- dm (name:suspended:open)
+   pvc-813e3dee-416a-4f95-bd7e-ed0c9ae791bb:Active:1
+   pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06:Active:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+   dm-2 slaves=[nvme1n1 ]
+-- D
+   38692 38528 D        363 dd              dd if=/dev/zero of=/data/load.bin bs=1M count=64 oflag=direct
+       percpu_rwsem_wait+0x10c/0x130
+       percpu_down_read+0xe0/0xe8
+       vfs_write+0x308/0x3a8
+       ksys_write+0x80/0x140
+   38799 38794 D        362 dd              dd if=/dev/zero of=/data/big bs=1M count=600
+       percpu_rwsem_wait+0x10c/0x130
+       percpu_down_read+0xe0/0xe8
+       vfs_write+0x308/0x3a8
+       ksys_write+0x80/0x140
+   39137 4059 D        356 dmsetup         dmsetup suspend pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06
+       xfs_ail_push_all_sync+0xa4/0x128 [xfs]
+       xfs_log_quiesce+0x48/0x108 [xfs]
+       xfs_fs_freeze+0x48/0xd0 [xfs]
+       freeze_super+0x1ac/0x418
+       fs_bdev_freeze+0x94/0xb0
+       bdev_freeze+0x70/0x178
+       __dm_suspend+0x1b4/0x2d0
+   41052 4059 D        325 dmsetup         dmsetup suspend pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06
+       dm_suspend+0x40/0x198
+       dev_suspend+0xf8/0x128
+       ctl_ioctl+0x338/0x4d0
+       dm_ctl_ioctl+0x1c/0x48
+=== 사후 관찰 11:01:12
+== 11:01:15 spdk_tgt pid=       24:28 Ss
+-- dm (name:suspended:open)
+   pvc-813e3dee-416a-4f95-bd7e-ed0c9ae791bb:Active:1
+   pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06:Active:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+   dm-2 slaves=[nvme1n1 ]
+-- D
+   38692 38528 D        535 dd              dd if=/dev/zero of=/data/load.bin bs=1M count=64 oflag=direct
+       percpu_rwsem_wait+0x10c/0x130
+       percpu_down_read+0xe0/0xe8
+       vfs_write+0x308/0x3a8
+       ksys_write+0x80/0x140
+   38799 38794 D        534 dd              dd if=/dev/zero of=/data/big bs=1M count=600
+       percpu_rwsem_wait+0x10c/0x130
+       percpu_down_read+0xe0/0xe8
+       vfs_write+0x308/0x3a8
+       ksys_write+0x80/0x140
+   39137 4059 D        528 dmsetup         dmsetup suspend pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06
+       xfs_ail_push_all_sync+0xa4/0x128 [xfs]
+       xfs_log_quiesce+0x48/0x108 [xfs]
+       xfs_fs_freeze+0x48/0xd0 [xfs]
+       freeze_super+0x1ac/0x418
+       fs_bdev_freeze+0x94/0xb0
+       bdev_freeze+0x70/0x178
+       __dm_suspend+0x1b4/0x2d0
+   41052 4059 D        497 dmsetup         dmsetup suspend pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06
+       dm_suspend+0x40/0x198
+       dev_suspend+0xf8/0x128
+       ctl_ioctl+0x338/0x4d0
+       dm_ctl_ioctl+0x1c/0x48
+[ 1467.969204] xfsaild/dm-2: attempt to access beyond end of device
+[ 1467.969206] xfsaild/dm-2: attempt to access beyond end of device
+[ 1467.969208] xfsaild/dm-2: attempt to access beyond end of device
+[ 1467.969209] xfsaild/dm-2: attempt to access beyond end of device
+[ 1468.020387] xfsaild/dm-2: attempt to access beyond end of device
+[ 1468.020403] xfsaild/dm-2: attempt to access beyond end of device
+[ 1468.020406] xfsaild/dm-2: attempt to access beyond end of device
+[ 1468.020408] xfsaild/dm-2: attempt to access beyond end of device
+pvc-813e3dee-416a-4f95-bd7e-ed0c9ae791bb attached healthy ks-w1
+pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f attached degraded ks-w2
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b attached degraded ks-w3
+pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 attached healthy ks-w1
+pg-prod-1 1/1 Running 0 ks-w1
+pg-prod-2 1/1 Running 0 ks-w3
+pg-prod-3 1/1 Running 1 22m
+u4-54f8c57d74-vdxc2 1/1 Running 0 ks-w1
+=== 해제 시험 11:01:33
+mnt=
+/usr/sbin/xfs_io
+-1 -1 1 
+>>> dmsetup resume (20초 제한)
+rc=0
+-- D
+   38692 38528 D        556 dd              dd if=/dev/zero of=/data/load.bin bs=1M count=64 oflag=direct
+   38799 38794 D        555 dd              dd if=/dev/zero of=/data/big bs=1M count=600
+   39137 4059 D        549 dmsetup         dmsetup suspend pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06
+   41052 4059 D        518 dmsetup         dmsetup suspend pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06
+>>> xfs max_retries=0 (EIO, default)
+== 11:01:44 spdk_tgt pid=62247       00:04 RLl
+-- dm (name:suspended:open)
+   pvc-813e3dee-416a-4f95-bd7e-ed0c9ae791bb:Active:1
+   pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06:Suspended:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+   dm-2 slaves=[nvme1n1 ]
+-- D
+   38692 38528 D        564 dd              dd if=/dev/zero of=/data/load.bin bs=1M count=64 oflag=direct
+   38799 38794 D        563 dd              dd if=/dev/zero of=/data/big bs=1M count=600
+[ 1461.942128] XFS (dm-2): Failing async write on buffer block 0x100028. Retrying async write.
+[ 1461.942254] XFS (dm-2): Failing async write on buffer block 0x100020. Retrying async write.
+[ 1461.942370] XFS (dm-2): Failing async write on buffer block 0x100040. Retrying async write.
+[ 1461.942496] XFS (dm-2): Failing async write on buffer block 0x80040. Retrying async write.
+[ 1489.516355] XFS (dm-2): Metadata I/O Error (0x1) detected at xfs_buf_ioend_handle_error+0x3f8/0x4a8 [xfs] (fs/xfs/xfs_buf.c:1265).  Shutting down f
+[ 1489.517355] XFS (dm-2): Please unmount the filesystem and rectify the problem(s)
+command terminated with exit code 137
+=== 2분 뒤 11:03:52 (Longhorn 이 스스로 푸나)
+== 11:03:56 spdk_tgt pid=62247       02:16 RLl
+-- dm (name:suspended:open)
+   pvc-813e3dee-416a-4f95-bd7e-ed0c9ae791bb:Active:1
+   pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06:Active:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   nvme0 live traddr=10.233.71.66,trsvcid=20013
+   nvme2 live traddr=10.233.71.66,trsvcid=20014
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+   dm-2 slaves=[nvme1n2 ]
+-- D
+   62627 2 D        120 kworker/u6:5+fl [kworker/u6:5+flush-252:1]
+   64851 64794 D         34 pg_rewind       pg_rewind -P --source-server host=pg-prod-rw user=streaming_repli
+   65335 63823 D          7 dd              dd if=/dev/zero of=/data/load.bin bs=1M count=64 oflag=direct
+pvc-813e3dee-416a-4f95-bd7e-ed0c9ae791bb attached degraded ks-w1
+pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f attached degraded ks-w2
+pvc-a94696e6-4297-4d48-bcbc-4dce52224f6b attached healthy ks-w3
+pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 attached degraded ks-w1
+pg-prod-1 0/1 Running 0 ks-w1
+pg-prod-2 1/1 Running 0 ks-w3
+pg-prod-3 1/1 Running 1 25m
+u4-54f8c57d74-r5dld 1/1 Running 0 ks-w1
+>>> dmsetup resume
+상태=Active
+== 11:04:05 spdk_tgt pid=62247       02:25 RLl
+-- dm (name:suspended:open)
+   pvc-813e3dee-416a-4f95-bd7e-ed0c9ae791bb:Active:1
+   pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06:Active:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   nvme0 live traddr=10.233.71.66,trsvcid=20013
+   nvme2 live traddr=10.233.71.66,trsvcid=20014
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+   dm-2 slaves=[nvme1n2 ]
+-- D
+   62627 2 D        130 kworker/u6:5+fl [kworker/u6:5+flush-252:1]
+   65810 63823 D          0 dd              dd if=/dev/zero of=/data/load.bin bs=1M count=64 oflag=direct

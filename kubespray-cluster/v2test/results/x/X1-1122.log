@@ -1,0 +1,124 @@
+X1-1122: Longhorn v1.12.2. 엔진 노드 ks-w2(u4), 인스턴스 매니저를 내릴 노드 ks-w1. 더티 400MB. 손으로 suspend 하지 않음
+trigger armed
+   dd: 419430400 bytes (419 MB, 400 MiB) copied, 2.52589 s, 166 MB/s
+[05:51:10] 처음
+   volume attached   healthy   ks-w2
+   pod u4-54f8c57d74-npzhg 1/1 Running ks-w2
+   dm pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9:Active:1
+   dm pvc-eedf2ea0-4c8c-4b92-8de9-922a238aec97:Active:1
+   spdk_tgt 살아 있음
+>>> 05:51:14 ks-w1 의 인스턴스 매니저 파드 삭제 (instance-manager-55dcdba92221474a98395728ac09c488) → 올라오면 재구축
+>>> 트리거: FIRED 05:52:09.365 Suspended 를 보고 spdk_tgt kill -9 (폴링 22941회째)
+[05:52:28] kill 후 ~20s
+   volume attached   degraded   ks-w2
+   pod u4-54f8c57d74-npzhg 1/1 Running ks-w2
+   dm pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9:Suspended:1
+   dm pvc-eedf2ea0-4c8c-4b92-8de9-922a238aec97:Suspended:1
+   D 23s dd
+   spdk_tgt 없음
+[05:53:22] kill 후 ~60s
+   volume attached   degraded   ks-w2
+   pod u4-54f8c57d74-npzhg 1/1 Running ks-w2
+   dm pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9:Active:1
+   dm pvc-eedf2ea0-4c8c-4b92-8de9-922a238aec97:Active:1
+   D 0s dd
+   spdk_tgt 살아 있음
+[05:54:16] kill 후 ~120s
+   volume attached   degraded   ks-w2
+   pod u4-54f8c57d74-nts9f 1/1 Running ks-w2
+   dm pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9:Active:1
+   D 0s dd
+   spdk_tgt 살아 있음
+[05:55:10] kill 후 ~180s
+   volume attached   degraded   ks-w2
+   pod u4-54f8c57d74-nts9f 1/1 Running ks-w2
+   dm pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9:Active:1
+   dm pvc-eedf2ea0-4c8c-4b92-8de9-922a238aec97:Active:1
+   spdk_tgt 살아 있음
+>>> 05:55:14 ks-w2 cordon + 파드 삭제 (다른 노드로 이동)
+Error from server (NotFound): pods "u4-54f8c57d74-npzhg" not found
+[05:56:04] 이동 후 ~60s
+   volume attached   degraded   ks-w2
+   pod u4-54f8c57d74-nts9f 1/1 Running ks-w2
+   dm pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9:Active:1
+   dm pvc-eedf2ea0-4c8c-4b92-8de9-922a238aec97:Active:1
+   D 2s dd
+   spdk_tgt 살아 있음
+[05:57:48] 이동 후 ~120s
+   volume attached   degraded   ks-w2
+   pod u4-54f8c57d74-nts9f 1/1 Running ks-w2
+   dm pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9:Active:1
+   dm pvc-eedf2ea0-4c8c-4b92-8de9-922a238aec97:Active:1
+   spdk_tgt 살아 있음
+[05:59:32] 이동 후 ~240s
+   volume attached   degraded   ks-w2
+   pod u4-54f8c57d74-nts9f 1/1 Running ks-w2
+   dm pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9:Active:1
+   dm pvc-eedf2ea0-4c8c-4b92-8de9-922a238aec97:Active:1
+   D 0s dd
+   spdk_tgt 살아 있음
+[06:01:16] 이동 후 ~360s
+   volume attached   degraded   ks-w2
+   pod u4-54f8c57d74-nts9f 1/1 Running ks-w2
+   dm pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9:Active:1
+   dm pvc-eedf2ea0-4c8c-4b92-8de9-922a238aec97:Active:1
+   D 0s dd
+   spdk_tgt 살아 있음
+-- 이벤트
+   17h         Normal    Killing                  pod/pg-prod-3                         Stopping container postgres
+   5h36m       Normal    Killing                  pod/u4-54f8c57d74-l49qg               Stopping container w
+   9m23s       Normal    Killing                  pod/pg-prod-1                         Stopping container postgres
+   8m10s       Warning   FailedAttachVolume       pod/pg-prod-1                         AttachVolume.Attach failed for volume "pvc-66684a25-6bba-45ae-ae12-02e79483d65c" : rpc error: code = Aborted desc = volume pvc-66684a25-6bba-45ae
+   7m48s       Normal    Killing                  pod/pg-prod-3                         Stopping container postgres
+   7m48s       Normal    Killing                  pod/u4-54f8c57d74-npzhg               Stopping container w
+-- dmwatch (ks-w2)
+05:51:06.9 d6c38ac3:Active:1 eedf2ea0:Active:1 | D: 1 dd,
+05:52:09.6 d6c38ac3:Suspended:1 eedf2ea0:Suspended:1 | D: 1 dd,
+05:53:16.7 d6c38ac3:Active:1 eedf2ea0:Suspended:1 | D:
+05:53:25.5 d6c38ac3:Active:1 eedf2ea0:Active:2 | D: 1 dd, 1 (udev-worker),
+05:53:26.1 d6c38ac3:Active:1 eedf2ea0:Active:1 | D: 1 dd,
+05:53:33.2 d6c38ac3:Active:1 eedf2ea0:Active:0 | D: 2 dd,
+05:53:34.3 d6c38ac3:Active:1 | D: 2 dd,
+05:54:23.7 d6c38ac3:Active:1 eedf2ea0:Active:1 | D: 1 dd, 1 xfs_db,
+05:54:24.2 d6c38ac3:Active:1 eedf2ea0:Active:0 | D: 1 dd,
+05:54:31.8 d6c38ac3:Active:1 eedf2ea0:Active:1 | D: 1 blkid, 1 kworker/1:1H+nvme_tcp_wq,
+05:54:32.9 d6c38ac3:Active:1 eedf2ea0:Active:2 | D: 1 blkid, 1 dd,
+05:54:33.5 d6c38ac3:Active:1 eedf2ea0:Active:1 | D: 1 dd,
+05:55:18.6 d6c38ac3:Active:1 eedf2ea0:Suspended:1 | D: 1 dd,
+05:55:19.2 d6c38ac3:Active:1 eedf2ea0:Active:1 | D: 1 dd,
+05:55:25.6 d6c38ac3:Suspended:1 eedf2ea0:Active:1 | D: 1 dd,
+05:55:26.1 d6c38ac3:Active:1 eedf2ea0:Active:1 | D: 1 dd,
+05:55:31.5 d6c38ac3:Active:1 eedf2ea0:Suspended:1 | D: 1 dd,
+05:55:32.0 d6c38ac3:Active:1 eedf2ea0:Active:1 | D: 1 dd,
+05:56:29.2 d6c38ac3:Suspended:1 eedf2ea0:Active:1 | D: 1 dd,
+05:56:29.7 d6c38ac3:Active:1 eedf2ea0:Active:1 | D: 1 dd,
+-- 인스턴스 매니저 로그 (ks-w2, suspend/resume)
+   05:55:25.854837579Z" level=info msg="Resuming engine frontend" endpoint=/dev/longhorn/pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9 engineFrontendName=pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-ef-0 engineName=pvc-d6c38ac3-da30-48e2-8238
+   05:55:25.859931429Z" level=info msg="Resumed engine frontend" endpoint=/dev/longhorn/pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9 engineFrontendName=pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-ef-0 engineName=pvc-d6c38ac3-da30-48e2-8238-
+   05:55:31.32934724Z" level=info msg="Suspending engine frontend" endpoint=/dev/longhorn/pvc-eedf2ea0-4c8c-4b92-8de9-922a238aec97 engineFrontendName=pvc-eedf2ea0-4c8c-4b92-8de9-922a238aec97-ef-0 engineName=pvc-eedf2ea0-4c8c-4b92-8de
+   05:55:31.33716642Z" level=info msg="Suspended the dm device" elapsedMs=6 endpoint=/dev/longhorn/pvc-eedf2ea0-4c8c-4b92-8de9-922a238aec97 engineFrontendName=pvc-eedf2ea0-4c8c-4b92-8de9-922a238aec97-ef-0 engineName=pvc-eedf2ea0-4c8c
+   05:55:31.337309626Z" level=info msg="Suspended engine frontend" endpoint=/dev/longhorn/pvc-eedf2ea0-4c8c-4b92-8de9-922a238aec97 engineFrontendName=pvc-eedf2ea0-4c8c-4b92-8de9-922a238aec97-ef-0 engineName=pvc-eedf2ea0-4c8c-4b92-8de
+   05:55:31.584678093Z" level=info msg="Resuming engine frontend" endpoint=/dev/longhorn/pvc-eedf2ea0-4c8c-4b92-8de9-922a238aec97 engineFrontendName=pvc-eedf2ea0-4c8c-4b92-8de9-922a238aec97-ef-0 engineName=pvc-eedf2ea0-4c8c-4b92-8de9
+   05:55:31.589357669Z" level=info msg="Resumed engine frontend" endpoint=/dev/longhorn/pvc-eedf2ea0-4c8c-4b92-8de9-922a238aec97 engineFrontendName=pvc-eedf2ea0-4c8c-4b92-8de9-922a238aec97-ef-0 engineName=pvc-eedf2ea0-4c8c-4b92-8de9-
+   05:56:28.990945003Z" level=info msg="Suspending engine frontend" endpoint=/dev/longhorn/pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9 engineFrontendName=pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-ef-0 engineName=pvc-d6c38ac3-da30-48e2-82
+   05:56:29.011441094Z" level=info msg="Suspended the dm device" elapsedMs=19 endpoint=/dev/longhorn/pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9 engineFrontendName=pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-ef-0 engineName=pvc-d6c38ac3-da
+   05:56:29.011524718Z" level=info msg="Suspended engine frontend" endpoint=/dev/longhorn/pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9 engineFrontendName=pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-ef-0 engineName=pvc-d6c38ac3-da30-48e2-823
+   05:56:29.264751749Z" level=info msg="Resuming engine frontend" endpoint=/dev/longhorn/pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9 engineFrontendName=pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-ef-0 engineName=pvc-d6c38ac3-da30-48e2-8238
+   05:56:29.269297621Z" level=info msg="Resumed engine frontend" endpoint=/dev/longhorn/pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9 engineFrontendName=pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-ef-0 engineName=pvc-d6c38ac3-da30-48e2-8238-
+-- dmesg (ks-w2)
+      1 [  258.213351] nvme nvme0: Removing controller...
+      1 [  258.213356] nvme nvme0: Removing ctrl: NQN "nqn.2023-01.io.longhorn.spdk:volume-pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9"
+      1 [  258.213859] nvme nvme1: Removing controller...
+      1 [  258.213865] nvme nvme1: Removing ctrl: NQN "nqn.2023-01.io.longhorn.spdk:volume-pvc-eedf2ea0-4c8c-4b92-8de9-922a238aec97"
+      1 [  311.181549] XFS (dm-2): Unmounting Filesystem 40784d62-138f-41f4-9e9b-39d5a6d37f95
+      1 [  312.044547] nvme nvme3: Removing ctrl: NQN "nqn.2023-01.io.longhorn.spdk:volume-pvc-eedf2ea0-4c8c-4b92-8de9-922a238aec97"
+      1 [  370.277665] XFS (dm-2): Mounting V5 Filesystem 40784d62-138f-41f4-9e9b-39d5a6d37f95
+      1 [  370.974620] XFS (dm-2): Ending clean mount
+-- 남은 dm 전수 조사
+   ks-w1 pvc-66684a25-6bba-45ae-ae12-02e79483d65c Active open=1 정상
+   ks-w1 D=0
+   ks-w2 pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9 Active open=1 정상
+   ks-w2 pvc-eedf2ea0-4c8c-4b92-8de9-922a238aec97 Active open=1 정상
+   ks-w2 D=1
+   ks-w3 pvc-9f5104bf-d5e3-47e3-8f8b-29bab4ff368a Active open=1 정상
+   ks-w3 D=0

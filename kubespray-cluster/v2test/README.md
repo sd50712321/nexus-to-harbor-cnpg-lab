@@ -196,6 +196,7 @@ kubectl -n v2test patch cluster pg-v2 --subresource=status --type merge -p "{\"s
 | `results/k/K1.log` ~ `K13c.log`, `results/D1.log`, `E1.log` | 볼륨이 늦게 붙는 증상 케이스 시험. 설명은 [V2-DELAY-INVESTIGATION.md](../V2-DELAY-INVESTIGATION.md) |
 | `results/t/T1.log` ~ `T7.log` | `spdk_tgt` 를 죽이거나 멈춘 시험. T1·T2 는 Longhorn 1.13.0, T3~T7 은 1.12.1 (`sc-prodlike.yaml`, `pg-prod.yaml`, `t5-pod.yaml`, `t-spdk-kill.sh`, `t1-snap.sh`). 설명은 [V2-SPDK-CRASH-ANALYSIS.md](../V2-SPDK-CRASH-ANALYSIS.md) 4.4절 |
 | `results/u/` | 굳은 dm 재현과 해제 시험 U1~U6. Longhorn 1.12.1 과 1.12.2 (`u4-orphan.sh`, `u5-im-restart.sh`, `u6-pv-cycle.sh`, `u-snap.sh`, `u-blackhole.sh`, `u1-cpu.sh`, `dm-audit.sh`, `u4.yaml`). 설명은 [V2-SUSPENDED-DM-TESTS.md](../V2-SUSPENDED-DM-TESTS.md) 3절 |
+| `results/w/` | "떼는 순간" 가설 시험 W1~W4. Longhorn 1.12.1 과 1.12.2 (`w-prep.sh`, `w1-suspend-healthy.sh`, `w2-suspend-timeout.sh`, `w3-slow-suspend.sh`, `w3b-cpu-throttle.sh`, `w4-rebuild-suspend.sh`, `u-dmwatch.sh`). 설명은 [V2-DETACH-HYPOTHESES.md](../V2-DETACH-HYPOTHESES.md) 3절 |
 | `results/C1.log` ~ `C4.log` | 승격 시험. 끝에 프로브 실패 구간(UTC) |
 | `results/S1.log` | switchover 3번과 쓰기 실패 구간 |
 

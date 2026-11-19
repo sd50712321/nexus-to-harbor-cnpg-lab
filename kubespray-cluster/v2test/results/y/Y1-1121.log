@@ -1,0 +1,62 @@
+Y1-1121: Longhorn v1.12.1. pgbench 접속 4, u4 쓰기. spdk_tgt 무작위 kill -9 8번, 회복 한도 420초
+[16:25:19] 1/8 ks-w1 의 spdk_tgt kill (48초 대기 뒤, primary=pg-prod-2@ks-w3, 그때 degraded 볼륨 있음=0)
+   회복=1 249초  Suspended: 없음
+[16:29:59] 2/8 ks-w3 의 spdk_tgt kill (32초 대기 뒤, primary=pg-prod-1@ks-w2, 그때 degraded 볼륨 있음=0)
+   회복=1 361초  Suspended: 없음
+[16:36:54] 3/8 ks-w1 의 spdk_tgt kill (54초 대기 뒤, primary=pg-prod-3@ks-w3, 그때 degraded 볼륨 있음=0)
+   회복=1 35초  Suspended: 없음
+[16:38:16] 4/8 ks-w2 의 spdk_tgt kill (47초 대기 뒤, primary=pg-prod-1@ks-w2, 그때 degraded 볼륨 있음=1)
+   회복=1 431초  Suspended: 없음
+[16:45:44] 5/8 ks-w2 의 spdk_tgt kill (17초 대기 뒤, primary=pg-prod-1@ks-w3, 그때 degraded 볼륨 있음=0)
+   회복=1 361초  Suspended: 없음
+[16:52:12] 6/8 ks-w2 의 spdk_tgt kill (27초 대기 뒤, primary=pg-prod-3@ks-w2, 그때 degraded 볼륨 있음=0)
+   회복=1 360초  Suspended: 없음
+[16:58:49] 7/8 ks-w1 의 spdk_tgt kill (37초 대기 뒤, primary=pg-prod-2@ks-w1, 그때 degraded 볼륨 있음=0)
+   회복=0 433초  Suspended: 없음
+   볼륨: attached/healthy attached/healthy attached/healthy attached/healthy 
+   파드 pg-prod-1 0/1 Running ks-w3
+   Warning FailedAttachVolume pod/u4-54f8c57d74-x5qpm AttachVolume.Attach failed for volume "pvc-25cc2f59-5f73-4539-ae8f-7fa6d48d1a45" : rpc error: code = Aborted desc = volume pvc-25cc2f59-5f73-4539-
+   Warning FailedAttachVolume pod/u4-54f8c57d74-7zwcp Waiting for detach for volume "pvc-25cc2f59-5f73-4539-ae8f-7fa6d48d1a45" Volume is already used by pod(s) u4-54f8c57d74-x5qpm
+   Warning FailedAttachVolume pod/u4-54f8c57d74-7zwcp AttachVolume.Attach failed for volume "pvc-25cc2f59-5f73-4539-ae8f-7fa6d48d1a45" : rpc error: code = Aborted desc = volume pvc-25cc2f59-5f73-4539-
+   ks-w1 D 0s dd
+   조치 뒤 회복까지 305초 (allok=0)
+[17:12:11] 8/8 ks-w2 의 spdk_tgt kill (50초 대기 뒤, primary=pg-prod-3@ks-w2, 그때 degraded 볼륨 있음=0)
+   회복=0 434초  Suspended: 없음
+   볼륨: attached/healthy attached/healthy attached/healthy attached/healthy 
+   파드 pg-prod-1 0/1 Running ks-w3
+   Warning FailedAttachVolume pod/u4-54f8c57d74-7zwcp Waiting for detach for volume "pvc-25cc2f59-5f73-4539-ae8f-7fa6d48d1a45" Volume is already used by pod(s) u4-54f8c57d74-x5qpm
+   Warning FailedAttachVolume pod/u4-54f8c57d74-7zwcp AttachVolume.Attach failed for volume "pvc-25cc2f59-5f73-4539-ae8f-7fa6d48d1a45" : rpc error: code = Aborted desc = volume pvc-25cc2f59-5f73-4539-
+   Warning FailedMount pod/u4-54f8c57d74-76hg6 MountVolume.SetUp failed for volume "pvc-25cc2f59-5f73-4539-ae8f-7fa6d48d1a45" : rpc error: code = FailedPrecondition desc = Staging target path /var/lib
+   ks-w1 D 0s dd
+   조치 뒤 회복까지 305초 (allok=0)
+>>> 요약: 8번 중 한도 안에 회복 못 함 2번
+-- 쓰기 중단
+   부하 2400초, 평균 101 tps, 쓰기 중단 19번 합계 714초
+   중단 16:25:19 ~ 16:25:30 (11초)
+   중단 16:25:58 ~ 16:26:19 (21초)
+   중단 16:26:50 ~ 16:27:04 (14초)
+   중단 16:30:00 ~ 16:30:11 (11초)
+   중단 16:30:35 ~ 16:31:03 (28초)
+   중단 16:31:32 ~ 16:31:58 (26초)
+   중단 16:36:55 ~ 16:37:06 (11초)
+   중단 16:37:35 ~ 16:37:54 (19초)
+   중단 16:37:55 ~ 16:38:12 (17초)
+   중단 16:38:16 ~ 16:41:20 (184초)
+   중단 16:45:45 ~ 16:45:56 (11초)
+   중단 16:46:24 ~ 16:46:51 (27초)
+   중단 16:47:21 ~ 16:47:51 (30초)
+   중단 16:52:13 ~ 16:53:18 (65초)
+   중단 16:53:18 ~ 16:53:35 (17초)
+   중단 16:53:48 ~ 16:55:04 (76초)
+   중단 16:58:50 ~ 16:59:47 (57초)
+   중단 16:59:47 ~ 17:00:08 (21초)
+   중단 17:00:17 ~ 17:01:25 (68초)
+-- 남은 dm
+   ks-w1 D=0
+   ks-w2 D=0
+   ks-w3 D=0
+-- pg 데이터
+   primary=pg-prod-3 잔액 합(계좌|창구|지점|history): 81281|81281|81281|-59897
+   amcheck 인덱스: 3개 통과
+   amcheck 테이블 오류 줄: 0
+   복제: pg-prod-2:streaming:304

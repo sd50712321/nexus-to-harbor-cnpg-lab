@@ -1,0 +1,60 @@
+W1-1121: Longhorn v1.12.1, ks-w2. 정상 볼륨 pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9 의 dm 을 suspend(--noflush --nolockfs)만 하고 3분 둔다. 그 뒤 ks-w2 cordon + 파드 삭제
+>>> suspend 11:47:21
+rc=0
+-- 3분 뒤 (Longhorn 이 스스로 풀었나)
+   volume attached healthy
+   ef running ks-w2
+== 11:50:24 spdk_tgt pid=78025       21:51 RLl
+-- dm (name:suspended:open)
+   pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9:Suspended:1
+   pvc-eedf2ea0-4c8c-4b92-8de9-922a238aec97:Active:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   nvme0 live traddr=10.233.72.50,trsvcid=20027
+   nvme1 live traddr=10.233.72.50,trsvcid=20048
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+   dm-2 slaves=[nvme1n1 ]
+-- D
+   98543 97960 D        184 dd              dd if=/dev/zero of=/data/load.bin bs=1M count=64 oflag=direct
+>>> delete pod 11:50:24
+   새 파드 Running=0 노드= 걸린시간=406s
+54m         Warning   FailedMount                   pod/u4-54f8c57d74-r5dld               MountVolume.SetUp failed for volume "pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06" : rpc error: code = Aborted desc = volume pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 is not r
+54m         Warning   FailedMount                   pod/u4-54f8c57d74-r5dld               MountVolume.SetUp failed for volume "pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06" : rpc error: code = FailedPrecondition desc = Staging target path /var/lib/kubelet/plugins/
+6m46s       Warning   FailedAttachVolume            pod/u4-54f8c57d74-s6tqj               Waiting for detach for volume "pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9" Volume is already used by pod(s) u4-54f8c57d74-k5kc4
+2m41s       Warning   FailedKillPod                 pod/u4-54f8c57d74-k5kc4               error killing pod: [failed to "KillContainer" for "w" with KillContainerError: "rpc error: code = DeadlineExceeded desc = context deadline exceeded", failed to "KillPodSa
+== 11:57:33 spdk_tgt pid=78025       29:00 RLl
+-- dm (name:suspended:open)
+   pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9:Suspended:1
+   pvc-eedf2ea0-4c8c-4b92-8de9-922a238aec97:Active:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   nvme0 live traddr=10.233.72.50,trsvcid=20027
+   nvme1 live traddr=10.233.72.50,trsvcid=20048
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+   dm-2 slaves=[nvme1n1 ]
+-- D
+   98543 97960 D        613 dd              dd if=/dev/zero of=/data/load.bin bs=1M count=64 oflag=direct
+-- dmwatch
+11:47:19.3 d6c38ac3:Active:1 eedf2ea0:Active:1 | D: 1 dd,
+11:47:21.4 d6c38ac3:Suspended:1 eedf2ea0:Active:1 | D: 1 dd,
+=== 15분 뒤 상태 12:05:13 (정리 단계가 돌지 않아 그대로 둠)
+   u4-54f8c57d74-k5kc4 1/1 Terminating 18m ks-w2
+   u4-54f8c57d74-s6tqj 0/1 ContainerCreating 14m ks-w1
+   volume attached healthy ks-w2
+14m         Warning   FailedAttachVolume            pod/u4-54f8c57d74-s6tqj               Waiting for detach for volume "pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9" Volume is already used by pod(s) u4-54f8c57d74-k5kc4
+6m38s       Warning   FailedKillPod                 pod/u4-54f8c57d74-k5kc4               error killing pod: [failed to "KillContainer" for "w" with KillContainerError: "rpc error: code = DeadlineExceeded desc = context deadline exceeded", failed to "KillPodSandbox" for "e92683a8-50e5-4a10-93a4-49536dca9687" with KillPodSandboxE
+2m32s       Warning   FailedKillPod                 pod/u4-54f8c57d74-k5kc4               error killing pod: [failed to "KillContainer" for "w" with KillContainerError: "rpc error: code = DeadlineExceeded desc = context deadline exceeded", failed to "KillPodSandbox" for "e92683a8-50e5-4a10-93a4-49536dca9687" with KillPodSandboxE
+-- D
+   98543 97960 D       1076 dd              dd if=/dev/zero of=/data/load.bin bs=1M count=64 oflag=direct
+>>> dmsetup resume 12:05:17
+rc=0
+   resume 뒤 새 파드 Running 노드=ks-w1 걸린시간=36s
+ks-w1 pvc-66684a25-6bba-45ae-ae12-02e79483d65c Active open=1 정상
+ks-w1 pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9 Active open=1 정상
+ks-w1 D=1
+ks-w2 pvc-eedf2ea0-4c8c-4b92-8de9-922a238aec97 Active open=1 정상
+ks-w2 D=0
+ks-w3 pvc-9f5104bf-d5e3-47e3-8f8b-29bab4ff368a Active open=1 정상
+ks-w3 D=0

@@ -1,0 +1,61 @@
+W2-1122: Longhorn v1.12.2, ks-w1. 쓰기 중인 pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 의 NVMe-TCP 포트를 45초 DROP, 3초 뒤 스냅샷 생성 요청
+port=20027
+>>> blackhole on 10:44:56
+>>> snapshot create 10:44:58 w2-1794998691
+-- snapshot CR
+   readyToUse=false error=proxyServer=10.233.71.115:8501 destination=10.233.71.115:0: failed to snapshot volume: rpc error: code = Internal desc = failed to create snapshot w2-1794998691: failed to create snapshot w2-1794998691: rpc error: code = Unknown desc = failed to suspend before the snapshot operation snapshot-create for snapshot "w2-1794998691": failed to suspend linear dm device for NVMe/TCP initiator pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06: failed after 10 attempts to refresh stale namespace directory: failed to execute: /usr/bin/nsenter [nsenter --mount=/proc/1/ns/mnt --ipc=/proc/1/ns/ipc --net=/proc/1/ns/net dmsetup suspend pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06], output , stderr device-mapper: suspend ioctl on pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06  failed: Input/output error
+Command failed.: exit status 1
+-- volume
+    attached healthy
+    pod 1/1 Running 0 ks-w1
+-- instance-manager 로그 (suspend/resume)
+[longhorn-instance-manager] time="2026-11-18T10:45:28.317532859Z" level=info msg="Suspending linear dm device" func="initiator.(*Initiator).suspendLinearDmDevice" file="initiator.go:1513" controllerName=nvme1 name=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 namespaceName=nvme1n1 nvmeTCPInfo="&{SubsystemNQN:nqn.2023-01.io.longhorn.s
+[longhorn-instance-manager] time="2026-11-18T10:45:28.326182055Z" level=warning msg="Failed to suspend the dm device" func="spdk.(*EngineFrontend).suspendWithInitiator" file="enginefrontend.go:2528" elapsedMs=13 endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa051d6
+[longhorn-instance-manager] time="2026-11-18T10:45:38.570221325Z" level=info msg="Suspending before the snapshot operation snapshot-create for snapshot w2-1794998691" func="log.(*SafeLogger).Infof" file="log.go:73" endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa05
+[longhorn-instance-manager] time="2026-11-18T10:45:38.574365776Z" level=info msg="Suspending linear dm device" func="initiator.(*Initiator).suspendLinearDmDevice" file="initiator.go:1513" controllerName=nvme1 name=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 namespaceName=nvme1n1 nvmeTCPInfo="&{SubsystemNQN:nqn.2023-01.io.longhorn.s
+[longhorn-instance-manager] time="2026-11-18T10:45:38.584242477Z" level=warning msg="Failed to suspend the dm device" func="spdk.(*EngineFrontend).suspendWithInitiator" file="enginefrontend.go:2528" elapsedMs=13 endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa051d6
+[longhorn-instance-manager] time="2026-11-18T10:45:59.068482515Z" level=info msg="Suspending before the snapshot operation snapshot-create for snapshot w2-1794998691" func="log.(*SafeLogger).Infof" file="log.go:73" endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa05
+[longhorn-instance-manager] time="2026-11-18T10:45:59.073240578Z" level=info msg="Suspending linear dm device" func="initiator.(*Initiator).suspendLinearDmDevice" file="initiator.go:1513" controllerName=nvme1 name=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 namespaceName=nvme1n1 nvmeTCPInfo="&{SubsystemNQN:nqn.2023-01.io.longhorn.s
+[longhorn-instance-manager] time="2026-11-18T10:45:59.082198818Z" level=warning msg="Failed to suspend the dm device" func="spdk.(*EngineFrontend).suspendWithInitiator" file="enginefrontend.go:2528" elapsedMs=13 endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa051d6
+[longhorn-instance-manager] time="2026-11-18T10:46:40.047609432Z" level=info msg="Suspending before the snapshot operation snapshot-create for snapshot w2-1794998691" func="log.(*SafeLogger).Infof" file="log.go:73" endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa05
+[longhorn-instance-manager] time="2026-11-18T10:46:40.052098622Z" level=info msg="Suspending linear dm device" func="initiator.(*Initiator).suspendLinearDmDevice" file="initiator.go:1513" controllerName=nvme1 name=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 namespaceName=nvme1n1 nvmeTCPInfo="&{SubsystemNQN:nqn.2023-01.io.longhorn.s
+[longhorn-instance-manager] time="2026-11-18T10:46:40.06226435Z" level=warning msg="Failed to suspend the dm device" func="spdk.(*EngineFrontend).suspendWithInitiator" file="enginefrontend.go:2528" elapsedMs=14 endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f
+[longhorn-instance-manager] time="2026-11-18T10:48:01.986978939Z" level=info msg="Suspending before the snapshot operation snapshot-create for snapshot w2-1794998691" func="log.(*SafeLogger).Infof" file="log.go:73" endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa05
+[longhorn-instance-manager] time="2026-11-18T10:48:01.990941631Z" level=info msg="Suspending linear dm device" func="initiator.(*Initiator).suspendLinearDmDevice" file="initiator.go:1513" controllerName=nvme1 name=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 namespaceName=nvme1n1 nvmeTCPInfo="&{SubsystemNQN:nqn.2023-01.io.longhorn.s
+[longhorn-instance-manager] time="2026-11-18T10:48:02.002400342Z" level=warning msg="Failed to suspend the dm device" func="spdk.(*EngineFrontend).suspendWithInitiator" file="enginefrontend.go:2528" elapsedMs=15 endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa051d6
+-- dmwatch
+10:44:54.1 813e3dee:Active:1 bd247636:Active:1 | D:
+10:44:59.7 813e3dee:Active:1 bd247636:Active:1 | D: 1 dmsetup,
+10:45:00.3 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd, 1 dmsetup,
+10:45:17.8 813e3dee:Active:1 bd247636:Active:1 | D:
+>>> blackhole off 10:45:41
+10:48:06.8 813e3dee:Active:1 bd247636:Active:1 | D: 1 postgres,
+10:48:07.4 813e3dee:Active:1 bd247636:Active:1 | D:
+== 10:50:02 spdk_tgt pid=4374       12:36 RLl
+-- dm (name:suspended:open)
+   pvc-813e3dee-416a-4f95-bd7e-ed0c9ae791bb:Active:1
+   pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06:Active:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   nvme0 live traddr=10.233.71.115,trsvcid=20016
+   nvme1 live traddr=10.233.71.115,trsvcid=20027
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+   dm-2 slaves=[nvme1n1 ]
+-- D
+-- dmsetup 프로세스
+  34644   34643 Ss         0 sudo bash -c echo "-- dmwatch"; cat /root/dmwatch.out; /root/u-snap.sh | grep -v "^      "; echo "-- dmsetup 프로세스"; ps -eo pid,ppid,stat,etimes,args | grep "[d]msetup"; echo "-- dmesg"; dmesg | grep -v "Reconnecting in\|Failed reconnect\|^\[[ 0-9.]*\]  " | uniq -c -f3 | tail -12 | cut -c1-150
+  34648   34644 S          0 bash -c echo "-- dmwatch"; cat /root/dmwatch.out; /root/u-snap.sh | grep -v "^      "; echo "-- dmsetup 프로세스"; ps -eo pid,ppid,stat,etimes,args | grep "[d]msetup"; echo "-- dmesg"; dmesg | grep -v "Reconnecting in\|Failed reconnect\|^\[[ 0-9.]*\]  " | uniq -c -f3 | tail -12 | cut -c1-150
+-- dmesg
+      1 [  495.025351] nvme nvme1: failed nvme_keep_alive_end_io error=10
+      3 [  500.145323] nvme nvme1: failed to connect socket: -110
+      1 [  510.386236] nvme nvme1: failfast expired
+      1 [  510.386243] block nvme1n1: no available path - failing I/O
+      1 [  510.386249] XFS (dm-2): log I/O error -5
+      1 [  510.386280] XFS (dm-2): Filesystem has been shut down due to log error (0x2).
+      1 [  510.386307] XFS (dm-2): Please unmount the filesystem and rectify the problem(s).
+      1 [  510.386726] VFS:Filesystem freeze failed
+      4 [  515.505923] nvme nvme1: failed to connect socket: -110
+      1 [  533.946353] nvme nvme1: creating 2 I/O queues.
+      1 [  533.968416] nvme nvme1: mapped 2/0/0 default/read/poll queues.
+      1 [  533.970213] nvme nvme1: Successfully reconnected (8 attempt)

@@ -1,0 +1,41 @@
+W4-1121: Longhorn v1.12.1, ks-w1. spdk_tgt 컨테이너 CPU 를 240초 동안 cpu.max=3000/100000 으로 제한. 버퍼 쓰기 800MB 직후 다른 노드의 레플리카 1개 삭제(재구축)
+cgroup=/sys/fs/cgroup/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod6aebdafe_8925_4007_8d84_7b1f4794c1d8.slice/cri-containerd-bd136ccbcb5ad7938538def3f2c53cf44cb5739d0ba0b4d4a3b77710bb40bb01.scope
+>>> slow on 11:32:40
+>>> replica delete 11:32:46 pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-a119d855 (재구축 유도)
+838860800 bytes (839 MB, 800 MiB) copied, 211.01 s, 4.0 MB/s
+-- volume
+    attached healthy
+    pod 1/1 Running 0 ks-w1
+    IM restarts=0
+-- instance-manager 로그 (suspend/resume/timeout)
+11:33:11.077784288Z" level=info msg="Suspending engine frontend" endpoint=/dev/longhorn/pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9 engineFrontendName=pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-ef-0 engineName=pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-e-0 frontend=s
+11:34:46.877680865Z" level=info msg="Suspended engine frontend" endpoint=/dev/longhorn/pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9 engineFrontendName=pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-ef-0 engineName=pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-e-0 frontend=sp
+11:34:55.778927907Z" level=info msg="Resuming engine frontend" endpoint=/dev/longhorn/pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9 engineFrontendName=pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-ef-0 engineName=pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-e-0 frontend=spd
+11:34:56.279283009Z" level=info msg="Resumed engine frontend" endpoint=/dev/longhorn/pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9 engineFrontendName=pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-ef-0 engineName=pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-e-0 frontend=spdk
+11:37:11.404103507Z" level=info msg="Suspending engine frontend" endpoint=/dev/longhorn/pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9 engineFrontendName=pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-ef-0 engineName=pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-e-0 frontend=s
+11:37:11.454011277Z" level=info msg="Suspended engine frontend" endpoint=/dev/longhorn/pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9 engineFrontendName=pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-ef-0 engineName=pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-e-0 frontend=sp
+11:37:11.651603208Z" level=info msg="Resuming engine frontend" endpoint=/dev/longhorn/pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9 engineFrontendName=pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-ef-0 engineName=pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-e-0 frontend=spd
+11:37:11.657612818Z" level=info msg="Resumed engine frontend" endpoint=/dev/longhorn/pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9 engineFrontendName=pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-ef-0 engineName=pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-e-0 frontend=spdk
+-- dmwatch
+11:32:40.5 66684a25:Active:1 d6c38ac3:Active:1 | D: 1 dd,
+11:32:56.4 dmsetup 프로세스 1개 | D: 2 dd, 1 kworker/u6:2+flush-252:1,
+11:34:46.8 66684a25:Active:1 d6c38ac3:Suspended:1 | D: 2 dd,
+11:34:56.3 66684a25:Active:1 d6c38ac3:Active:1 | D: 1 dd,
+>>> slow off 11:36:40
+최장 Suspended 구간: d6c38ac3 9.4초
+dmsetup 프로세스: 
+== 11:40:00 spdk_tgt pid=124734       11:22 RLl
+-- dm (name:suspended:open)
+   pvc-66684a25-6bba-45ae-ae12-02e79483d65c:Active:1
+   pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9:Active:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   nvme0 live traddr=10.233.71.61,trsvcid=20012
+   nvme1 live traddr=10.233.71.61,trsvcid=20011
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+   dm-2 slaves=[nvme1n1 ]
+-- D
+   160538 126262 D          0 dd              dd if=/dev/zero of=/data/load.bin bs=1M count=64 oflag=direct
+-- dmsetup 프로세스
+-- dmesg

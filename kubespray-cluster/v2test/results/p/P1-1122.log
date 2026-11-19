@@ -1,0 +1,170 @@
+# P1: V2 디스크 경로를 바꿔도 데이터가 남는가 (Longhorn 1.12.2, ks-w2, 볼륨 attached + 쓰기 부하)
+d59c899bd1738186a524114a18fe5d5e  /data/marker.bin
+[09:09:49] 처음
+  path=/dev/disk/by-id/wwn-0x5000c2939973ab96 uuid=45be071c-7125-489b-aa74-f5ba639a96b0 ready=True  Disk v2-disk(/dev/disk/by-id/wwn-0x5000c2939973ab96) on node ks-w2 is ready
+  pvc-66684a25-6bba-45ae-ae12-02e79483d65c-r-e878fe99   ks-w2   stopped   
+  pvc-9f5104bf-d5e3-47e3-8f8b-29bab4ff368a-r-980202e1   ks-w2   stopped   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-49a9e292   ks-w2   running   
+  pvc-eedf2ea0-4c8c-4b92-8de9-922a238aec97-r-1f832faf   ks-w2   stopped   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9   attached   healthy
+>>> 경로를 /dev/sdc 로 (실서버와 같은 등록 방식)
+node.longhorn.io/ks-w2 patched
+[09:09:54] +~5s
+  path=/dev/sdc uuid=45be071c-7125-489b-aa74-f5ba639a96b0 ready=True  Disk v2-disk(/dev/disk/by-id/wwn-0x5000c2939973ab96) on node ks-w2 is ready
+  pvc-66684a25-6bba-45ae-ae12-02e79483d65c-r-e878fe99   ks-w2   stopped   
+  pvc-9f5104bf-d5e3-47e3-8f8b-29bab4ff368a-r-980202e1   ks-w2   stopped   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-49a9e292   ks-w2   running   
+  pvc-eedf2ea0-4c8c-4b92-8de9-922a238aec97-r-1f832faf   ks-w2   stopped   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9   attached   healthy
+[09:10:09] +~15s
+  path=/dev/sdc uuid=45be071c-7125-489b-aa74-f5ba639a96b0 ready=True  Disk v2-disk(/dev/disk/by-id/wwn-0x5000c2939973ab96) on node ks-w2 is ready
+  pvc-66684a25-6bba-45ae-ae12-02e79483d65c-r-e878fe99   ks-w2   stopped   
+  pvc-9f5104bf-d5e3-47e3-8f8b-29bab4ff368a-r-980202e1   ks-w2   stopped   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-49a9e292   ks-w2   running   
+  pvc-eedf2ea0-4c8c-4b92-8de9-922a238aec97-r-1f832faf   ks-w2   stopped   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9   attached   healthy
+[09:10:25] +~30s
+  path=/dev/sdc uuid=45be071c-7125-489b-aa74-f5ba639a96b0 ready=True  Disk v2-disk(/dev/sdc) on node ks-w2 is ready
+  pvc-66684a25-6bba-45ae-ae12-02e79483d65c-r-e878fe99   ks-w2   stopped   
+  pvc-9f5104bf-d5e3-47e3-8f8b-29bab4ff368a-r-980202e1   ks-w2   stopped   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-49a9e292   ks-w2   running   
+  pvc-eedf2ea0-4c8c-4b92-8de9-922a238aec97-r-1f832faf   ks-w2   stopped   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9   attached   healthy
+[09:10:40] +~60s
+  path=/dev/sdc uuid=45be071c-7125-489b-aa74-f5ba639a96b0 ready=True  Disk v2-disk(/dev/sdc) on node ks-w2 is ready
+  pvc-66684a25-6bba-45ae-ae12-02e79483d65c-r-e878fe99   ks-w2   stopped   
+  pvc-9f5104bf-d5e3-47e3-8f8b-29bab4ff368a-r-980202e1   ks-w2   stopped   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-49a9e292   ks-w2   running   
+  pvc-eedf2ea0-4c8c-4b92-8de9-922a238aec97-r-1f832faf   ks-w2   stopped   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9   attached   healthy
+[09:10:55] +~90s
+  path=/dev/sdc uuid=45be071c-7125-489b-aa74-f5ba639a96b0 ready=True  Disk v2-disk(/dev/sdc) on node ks-w2 is ready
+  pvc-66684a25-6bba-45ae-ae12-02e79483d65c-r-e878fe99   ks-w2   stopped   
+  pvc-9f5104bf-d5e3-47e3-8f8b-29bab4ff368a-r-980202e1   ks-w2   stopped   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-49a9e292   ks-w2   running   
+  pvc-eedf2ea0-4c8c-4b92-8de9-922a238aec97-r-1f832faf   ks-w2   stopped   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9   attached   healthy
+>>> 경로를 /dev/disk/by-path/pci-0000:01:00.0-ata-4 로
+node.longhorn.io/ks-w2 patched
+[09:11:57] +40s
+  path=/dev/disk/by-path/pci-0000:01:00.0-ata-4 uuid=45be071c-7125-489b-aa74-f5ba639a96b0 ready=True  Disk v2-disk(/dev/disk/by-path/pci-0000:01:00.0-ata-4) on node ks-w2 is ready
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-49a9e292   ks-w2   running   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9   attached   healthy
+>>> ks-w2 의 V2 인스턴스 매니저 재시작 (새 경로로 다시 여는지)
+pod "instance-manager-556efe696b2183a861e797baf6e99096" deleted from longhorn-system namespace
+[09:12:17] +~20s
+  path=/dev/disk/by-path/pci-0000:01:00.0-ata-4 uuid=45be071c-7125-489b-aa74-f5ba639a96b0 ready=False DiskFilesystemChanged Disk v2-disk(/dev/disk/by-path/pci-0000:01:00.0-ata-4) on node ks-w2 is not ready: cannot find disk config file, maybe due to a mount er
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-49a9e292   ks-w2   stopped   2026-11-19T00:11:57Z
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9   attached   healthy
+[09:12:53] +~50s
+  path=/dev/disk/by-path/pci-0000:01:00.0-ata-4 uuid=45be071c-7125-489b-aa74-f5ba639a96b0 ready=True  Disk v2-disk(/dev/disk/by-path/pci-0000:01:00.0-ata-4) on node ks-w2 is ready
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-49a9e292   ks-w2   running   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9   attached   degraded
+[09:13:28] +~80s
+  path=/dev/disk/by-path/pci-0000:01:00.0-ata-4 uuid=45be071c-7125-489b-aa74-f5ba639a96b0 ready=True  Disk v2-disk(/dev/disk/by-path/pci-0000:01:00.0-ata-4) on node ks-w2 is ready
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-49a9e292   ks-w2   running   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9   attached   degraded
+[09:14:03] +~120s
+  path=/dev/disk/by-path/pci-0000:01:00.0-ata-4 uuid=45be071c-7125-489b-aa74-f5ba639a96b0 ready=True  Disk v2-disk(/dev/disk/by-path/pci-0000:01:00.0-ata-4) on node ks-w2 is ready
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-49a9e292   ks-w2   running   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9   attached   healthy
+[09:14:39] +~160s
+  path=/dev/disk/by-path/pci-0000:01:00.0-ata-4 uuid=45be071c-7125-489b-aa74-f5ba639a96b0 ready=True  Disk v2-disk(/dev/disk/by-path/pci-0000:01:00.0-ata-4) on node ks-w2 is ready
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-49a9e292   ks-w2   running   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9   attached   healthy
+[09:15:14] +~200s
+  path=/dev/disk/by-path/pci-0000:01:00.0-ata-4 uuid=45be071c-7125-489b-aa74-f5ba639a96b0 ready=True  Disk v2-disk(/dev/disk/by-path/pci-0000:01:00.0-ata-4) on node ks-w2 is ready
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-49a9e292   ks-w2   running   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9   attached   healthy
+>>> spdk_tgt 가 실제로 연 장치
+>>> 체크섬
+d59c899bd1738186a524114a18fe5d5e  /data/marker.bin
+
+# P2: 경로가 다른 장치를 가리킬 때 (ks-w3, 1GB 빈 디스크 sdb 를 가리키게 함)
+  sda                         64G disk 0x5000c29bdbf10663
+  sdb                          1G disk 0x5000c29d8ae2cab6
+  sdc                         10G disk 0x5000c297b8a5ed4f
+  620f0b67a91f7f74151bc5be745b7110  -
+[09:15:39] 처음
+  path=/dev/disk/by-id/wwn-0x5000c297b8a5ed4f uuid=1fec15ce-c6c3-4224-a5ba-3a3c665d1db5 ready=True  Disk v2-disk(/dev/disk/by-id/wwn-0x5000c297b8a5ed4f) on node ks-w3 is ready
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-0f5064b8   ks-w1   running   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-49a9e292   ks-w2   running   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-b1b5f4c3   ks-w3   running   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9   attached   healthy
+node.longhorn.io/ks-w3 patched
+pod "instance-manager-fdad2f665961a1594554ca956fe1bc0d" deleted from longhorn-system namespace
+[09:16:17] +~30s
+  path=/dev/sdb uuid=1fec15ce-c6c3-4224-a5ba-3a3c665d1db5 ready=False NoDiskInfo Disk v2-disk(/dev/sdb) on node ks-w3 is not ready: errors: disk is not in ready state, current state: creating
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-0f5064b8   ks-w1   running   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-49a9e292   ks-w2   running   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-b1b5f4c3   ks-w3   stopped   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9   attached   degraded
+[09:16:56] +~70s
+  path=/dev/sdb uuid=1fec15ce-c6c3-4224-a5ba-3a3c665d1db5 ready=False NoDiskInfo Disk v2-disk(/dev/sdb) on node ks-w3 is not ready: errors: disk is not in ready state, current state: creating, message: rpc error: code = Internal desc = failed to add disk block device: rpc error: code = NotFound desc = cannot find lvstore with UU
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-0f5064b8   ks-w1   running   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-49a9e292   ks-w2   running   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-b1b5f4c3   ks-w3   stopped   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9   attached   degraded
+[09:17:34] +~110s
+  path=/dev/sdb uuid=1fec15ce-c6c3-4224-a5ba-3a3c665d1db5 ready=False NoDiskInfo Disk v2-disk(/dev/sdb) on node ks-w3 is not ready: errors: disk is not in ready state, current state: creating, message: rpc error: code = Internal desc = failed to add disk block device: failed to validate disk creation: disk /dev/sdb is already us
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-0f5064b8   ks-w1   running   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-49a9e292   ks-w2   running   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-b1b5f4c3   ks-w3   stopped   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9   attached   degraded
+[09:18:12] +~150s
+  path=/dev/sdb uuid=1fec15ce-c6c3-4224-a5ba-3a3c665d1db5 ready=False NoDiskInfo Disk v2-disk(/dev/sdb) on node ks-w3 is not ready: errors: disk is not in ready state, current state: error, message: rpc error: code = Internal desc = failed to add disk block device: failed to validate disk creation: disk /dev/sdb is already used 
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-0f5064b8   ks-w1   running   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-49a9e292   ks-w2   running   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-b1b5f4c3   ks-w3   stopped   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9   attached   degraded
+>>> sdb 가 덮어써졌는가
+  620f0b67a91f7f74151bc5be745b7110  -
+>>> 경로를 원래 by-id 로 되돌림 (인스턴스 매니저 재시작 없이 먼저)
+node.longhorn.io/ks-w3 patched
+[09:18:59] +30s
+  path=/dev/disk/by-id/wwn-0x5000c297b8a5ed4f uuid=1fec15ce-c6c3-4224-a5ba-3a3c665d1db5 ready=False NoDiskInfo Disk v2-disk(/dev/disk/by-id/wwn-0x5000c297b8a5ed4f) on node ks-w3 is not ready: errors: 
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-b1b5f4c3   ks-w3   stopped   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9   attached   degraded
+[09:19:29] +60s
+  path=/dev/disk/by-id/wwn-0x5000c297b8a5ed4f uuid=1fec15ce-c6c3-4224-a5ba-3a3c665d1db5 ready=False NoDiskInfo Disk v2-disk(/dev/disk/by-id/wwn-0x5000c297b8a5ed4f) on node ks-w3 is not ready: errors: 
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-b1b5f4c3   ks-w3   stopped   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9   attached   degraded
+[09:20:00] +90s
+  path=/dev/disk/by-id/wwn-0x5000c297b8a5ed4f uuid=1fec15ce-c6c3-4224-a5ba-3a3c665d1db5 ready=False NoDiskInfo Disk v2-disk(/dev/disk/by-id/wwn-0x5000c297b8a5ed4f) on node ks-w3 is not ready: errors: 
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-b1b5f4c3   ks-w3   stopped   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9   attached   degraded
+[09:20:30] +120s
+  path=/dev/disk/by-id/wwn-0x5000c297b8a5ed4f uuid=1fec15ce-c6c3-4224-a5ba-3a3c665d1db5 ready=False NoDiskInfo Disk v2-disk(/dev/disk/by-id/wwn-0x5000c297b8a5ed4f) on node ks-w3 is not ready: errors: 
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-b1b5f4c3   ks-w3   stopped   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9   attached   degraded
+[09:21:01] +150s
+  path=/dev/disk/by-id/wwn-0x5000c297b8a5ed4f uuid=1fec15ce-c6c3-4224-a5ba-3a3c665d1db5 ready=False NoDiskInfo Disk v2-disk(/dev/disk/by-id/wwn-0x5000c297b8a5ed4f) on node ks-w3 is not ready: errors: 
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-b1b5f4c3   ks-w3   stopped   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9   attached   degraded
+[09:21:31] +180s
+  path=/dev/disk/by-id/wwn-0x5000c297b8a5ed4f uuid=1fec15ce-c6c3-4224-a5ba-3a3c665d1db5 ready=False NoDiskInfo Disk v2-disk(/dev/disk/by-id/wwn-0x5000c297b8a5ed4f) on node ks-w3 is not ready: errors: 
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-b1b5f4c3   ks-w3   stopped   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9   attached   degraded
+>>> 체크섬
+d59c899bd1738186a524114a18fe5d5e  /data/marker.bin
+[09:21:43] 재시작 전 (오류 전문)
+  path=/dev/disk/by-id/wwn-0x5000c297b8a5ed4f uuid=1fec15ce-c6c3-4224-a5ba-3a3c665d1db5 ready=False NoDiskInfo Disk v2-disk(/dev/disk/by-id/wwn-0x5000c297b8a5ed4f) on node ks-w3 is not ready: errors: disk is not in ready state, current state: creating, message: rpc error: code = Internal desc = failed to add disk block device: rpc error: code = NotFound desc = cannot find lvstore with UUID 1fec15ce-c6c3-4224-a5ba-3a3
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-b1b5f4c3   ks-w3   stopped   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9   attached   degraded
+>>> ks-w3 의 V2 인스턴스 매니저 재시작
+pod "instance-manager-fdad2f665961a1594554ca956fe1bc0d" deleted from longhorn-system namespace
+[09:22:44] +60s
+  path=/dev/disk/by-id/wwn-0x5000c297b8a5ed4f uuid=1fec15ce-c6c3-4224-a5ba-3a3c665d1db5 ready=True  Disk v2-disk(/dev/disk/by-id/wwn-0x5000c297b8a5ed4f) on node ks-w3 is ready
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-b1b5f4c3   ks-w3   running   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9   attached   degraded
+[09:23:46] +120s
+  path=/dev/disk/by-id/wwn-0x5000c297b8a5ed4f uuid=1fec15ce-c6c3-4224-a5ba-3a3c665d1db5 ready=True  Disk v2-disk(/dev/disk/by-id/wwn-0x5000c297b8a5ed4f) on node ks-w3 is ready
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-b1b5f4c3   ks-w3   running   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9   attached   healthy
+>>> 체크섬
+d59c899bd1738186a524114a18fe5d5e  /data/marker.bin
+>>> 다른 볼륨 복제본 (ks-w3)
+  pvc-66684a25-6bba-45ae-ae12-02e79483d65c-r-b755aac8   ks-w3   stopped   
+  pvc-9f5104bf-d5e3-47e3-8f8b-29bab4ff368a-r-07f8e430   ks-w3   stopped   
+  pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-r-b1b5f4c3   ks-w3   running   
+  pvc-eedf2ea0-4c8c-4b92-8de9-922a238aec97-r-9af8b388   ks-w3   stopped   

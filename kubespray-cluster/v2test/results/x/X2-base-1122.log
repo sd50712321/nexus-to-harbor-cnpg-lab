@@ -1,0 +1,43 @@
+X2-base-1122: Longhorn v1.12.2. pg-x2(3 인스턴스, 1Gi) 생성 중 V2 인스턴스 매니저를 40초 간격으로 0번 내림 (w1→w2→w3 순환)
+   cluster.postgresql.cnpg.io/pg-x2 created
+head: illegal line count -- 0
+[06:17:18 +124s] ready=2/3 phase="Creating a new replica"
+   pg-x2-1(Running,ks-w1) pg-x2-1-initdb-jmxsh(Completed,ks-w2) pg-x2-2(Running,ks-w2) pg-x2-2-join-lb4nd(Completed,ks-w2) pg-x2-3-join-wdhfd(Running,ks-w3) 
+   vol pg-x2-1 attached/healthy@ks-w1
+   vol pg-x2-3 attached/healthy@ks-w3
+   vol pg-x2-2 attached/healthy@ks-w2
+[06:17:49 +155s] ready=3/3 phase="Cluster in healthy state"
+   pg-x2-1(Running,ks-w1) pg-x2-2(Running,ks-w2) pg-x2-3(Running,ks-w3) 
+   vol pg-x2-1 attached/healthy@ks-w1
+   vol pg-x2-3 attached/healthy@ks-w3
+   vol pg-x2-2 attached/healthy@ks-w2
+>>> 결과: 3/3 도달=1, 걸린 시간 155s (한도 600s)
+-- 이벤트
+      1  Warning FailedAttachVolume pod/pg-x2-1 Waiting for detach for volume "pvc-184a05b3-c55c-4f5b-a670-5ffd6dd06b9c" Volume is already exclusively attached to one node, waiting on detach before it can be 
+      1  Warning FailedAttachVolume pod/pg-x2-1 AttachVolume.Attach failed for volume "pvc-184a05b3-c55c-4f5b-a670-5ffd6dd06b9c" : rpc error: code = Aborted desc = volume pvc-184a05b3-c55c-4f5b-a670-5ffd6dd06
+-- 남은 dm 전수 조사
+   ks-w1 pvc-184a05b3-c55c-4f5b-a670-5ffd6dd06b9c Active open=1 정상
+   ks-w1 pvc-66684a25-6bba-45ae-ae12-02e79483d65c Active open=1 정상
+   ks-w1 pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9 Active open=1 정상
+   ks-w1 D=1
+   ks-w2 pvc-eedf2ea0-4c8c-4b92-8de9-922a238aec97 Active open=1 정상
+   ks-w2 pvc-f662c690-dfa4-44a2-9291-d08b26648315 Active open=1 정상
+   ks-w2 D=0
+   ks-w3 pvc-29ce67e8-c3d4-4ca9-baf6-b63df7b65d3e Active open=1 정상
+   ks-w3 pvc-9f5104bf-d5e3-47e3-8f8b-29bab4ff368a Active open=1 정상
+   ks-w3 D=0
+-- ks-w1 dmwatch 요약 / D 상태 / dmesg
+   0
+   D<      1075 kworker/1:2H+nvme_tcp_wq
+   D          1 dd
+-- ks-w2 dmwatch 요약 / D 상태 / dmesg
+   0
+-- ks-w3 dmwatch 요약 / D 상태 / dmesg
+   0
+-- 인스턴스 매니저
+    instance-manager-35c63ab6f75dd9f169dec0219d37fbdc 1/1 Running 0 29m
+    instance-manager-4ab14b77eb88fb856e9330c90ac3c4cc 1/1 Running 0 29m
+    instance-manager-556efe696b2183a861e797baf6e99096 1/1 Running 0 6m25s
+    instance-manager-55dcdba92221474a98395728ac09c488 1/1 Running 0 14m
+    instance-manager-6598fd7adc04e8bddc6b5a5c3b78d54f 1/1 Running 0 28m
+    instance-manager-fdad2f665961a1594554ca956fe1bc0d 1/1 Running 0 28m

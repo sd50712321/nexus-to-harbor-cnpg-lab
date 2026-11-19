@@ -1,0 +1,82 @@
+X1b-1121: Longhorn v1.12.1. 엔진 노드 ks-w2(u4), 인스턴스 매니저를 내릴 노드 ks-w1. 더티 400MB. 손으로 suspend 하지 않음
+trigger armed
+   dd: 419430400 bytes (419 MB, 400 MiB) copied, 2.74091 s, 153 MB/s
+[06:55:58] 처음
+   volume attached   healthy   ks-w2
+   pod u4-54f8c57d74-wp5vz 1/1 Running ks-w2
+   dm pvc-25cc2f59-5f73-4539-ae8f-7fa6d48d1a45:Active:1
+   dm pvc-ba74979e-5eaa-42b3-bf12-817da89cabe8:Active:1
+   D 0s dd
+   spdk_tgt 살아 있음
+>>> 06:56:02 ks-w1 의 인스턴스 매니저 파드 삭제 (instance-manager-3787df073f5a5202e17bb577d5251d07) → 올라오면 재구축
+>>> 트리거: FIRED 06:57:12.961 Suspended 를 보고 spdk_tgt kill -9 (폴링 26008회째)
+>>> 06:57:18 ks-w2 cordon + 파드 삭제 (다른 노드로 이동)
+[06:58:08] 이동 후 ~60s
+   volume attached   degraded   ks-w2
+   pod u4-54f8c57d74-p7xkn 0/1 ContainerCreating ks-w1
+   pod u4-54f8c57d74-wp5vz 1/1 Terminating ks-w2
+   dm pvc-25cc2f59-5f73-4539-ae8f-7fa6d48d1a45:Suspended:1
+   dm pvc-ba74979e-5eaa-42b3-bf12-817da89cabe8:Suspended:1
+   D 60s dd
+   spdk_tgt 없음
+[06:59:52] 이동 후 ~120s
+   volume attaching   unknown   
+   pod u4-54f8c57d74-fjjlr 0/1 ContainerCreating ks-w1
+   pod u4-54f8c57d74-wp5vz 1/1 Terminating ks-w2
+   dm pvc-25cc2f59-5f73-4539-ae8f-7fa6d48d1a45:Suspended:1
+   dm pvc-ba74979e-5eaa-42b3-bf12-817da89cabe8:Suspended:1
+   D 163s dd
+   D 83s pg_ctl
+   spdk_tgt 없음
+[07:01:36] 이동 후 ~240s
+   volume attaching   unknown   
+   pod u4-54f8c57d74-fjjlr 0/1 ContainerCreating ks-w1
+   pod u4-54f8c57d74-wp5vz 1/1 Terminating ks-w2
+   dm pvc-25cc2f59-5f73-4539-ae8f-7fa6d48d1a45:Suspended:1
+   dm pvc-ba74979e-5eaa-42b3-bf12-817da89cabe8:Suspended:1
+   D 451s postgres
+   D 267s dd
+   D 187s pg_ctl
+   spdk_tgt 없음
+[07:03:20] 이동 후 ~360s
+   volume attaching   unknown   
+   pod u4-54f8c57d74-fjjlr 0/1 ContainerCreating ks-w1
+   pod u4-54f8c57d74-wp5vz 1/1 Terminating ks-w2
+   dm pvc-25cc2f59-5f73-4539-ae8f-7fa6d48d1a45:Suspended:1
+   dm pvc-ba74979e-5eaa-42b3-bf12-817da89cabe8:Suspended:1
+   D 555s postgres
+   D 371s dd
+   D 291s pg_ctl
+   spdk_tgt 없음
+-- 이벤트
+   4m52s       Normal    Killing                       pod/pg-prod-2                         Stopping container postgres
+   4m23s       Normal    Killing                       pod/pg-prod-3                         Stopping container postgres
+   2m          Warning   FailedKillPod                 pod/u4-54f8c57d74-wp5vz               error killing pod: [failed to "KillContainer" for "w" with KillContainerError: "rpc error: code = DeadlineExceeded desc = context deadline e
+   2m          Normal    Killing                       pod/u4-54f8c57d74-wp5vz               Stopping container w
+   21s         Warning   FailedKillPod                 pod/pg-prod-1                         error killing pod: [failed to "KillContainer" for "postgres" with KillContainerError: "rpc error: code = DeadlineExceeded desc = context dea
+   21s         Normal    Killing                       pod/pg-prod-1                         Stopping container postgres
+-- dmwatch (ks-w2)
+06:55:54.3 25cc2f59:Active:1 ba74979e:Active:1 | D: 1 dd,
+06:57:13.3 25cc2f59:Suspended:1 ba74979e:Suspended:1 | D: 1 dd,
+-- 인스턴스 매니저 로그 (ks-w2, suspend/resume)
+-- dmesg (ks-w2)
+      1 [ 4301.773947] INFO: task manager:393625 blocked for more than 122 seconds.
+      1 [ 4301.774952] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+      1 [ 4301.775139] INFO: task dd:506486 blocked for more than 122 seconds.
+      1 [ 4301.775300] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+      1 [ 4424.655837] INFO: task manager:393625 blocked for more than 245 seconds.
+      1 [ 4424.656898] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+      1 [ 4424.657107] INFO: task dd:506486 blocked for more than 245 seconds.
+      1 [ 4424.657312] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+-- 남은 dm 전수 조사
+   ks-w1 D=0
+   ks-w2 pvc-25cc2f59-5f73-4539-ae8f-7fa6d48d1a45 Suspended open=1 고아(볼륨은 없음/분리)
+   ks-w2 pvc-ba74979e-5eaa-42b3-bf12-817da89cabe8 Suspended open=1 고아(볼륨은 없음/분리)
+   ks-w2 D=3
+   ks-w3 D=0
+>>> 07:03:42 남은 Suspended dm 을 resume: pvc-25cc2f59-5f73-4539-ae8f-7fa6d48d1a45
+pvc-ba74979e-5eaa-42b3-bf12-817da89cabe8
+[07:04:18] resume 후
+   volume attached   degraded   ks-w1
+   pod u4-54f8c57d74-fjjlr 1/1 Running ks-w1
+   spdk_tgt 없음

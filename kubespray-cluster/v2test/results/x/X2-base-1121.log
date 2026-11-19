@@ -1,0 +1,46 @@
+X2-base-1121: Longhorn v1.12.1. pg-x2(3 인스턴스, 1Gi) 생성 중 V2 인스턴스 매니저를 40초 간격으로 0번 내림 (w1→w2→w3 순환)
+   cluster.postgresql.cnpg.io/pg-x2 created
+head: illegal line count -- 0
+[07:09:19 +125s] ready=1/3 phase="Waiting for the instances to become active"
+   pg-x2-1(Running,ks-w1) pg-x2-1-initdb-6s6hk(Completed,ks-w1) pg-x2-2(Running,ks-w3) pg-x2-2-join-cxsd7(Completed,ks-w2) 
+   vol pg-x2-2 attached/healthy@ks-w3
+   vol pg-x2-1 attached/healthy@ks-w1
+[07:10:21 +187s] ready=3/3 phase="Cluster in healthy state"
+   pg-x2-1(Running,ks-w1) pg-x2-2(Running,ks-w3) pg-x2-3(Running,ks-w2) 
+   vol pg-x2-3 attached/healthy@ks-w2
+   vol pg-x2-2 attached/healthy@ks-w3
+   vol pg-x2-1 attached/healthy@ks-w1
+>>> 결과: 3/3 도달=1, 걸린 시간 187s (한도 600s)
+-- 이벤트
+      1  Warning FailedMount pod/pg-x2-1-initdb-xzzkh MountVolume.MountDevice failed for volume "pvc-89e01a73-5022-403e-bc01-e321d2b74228" : rpc error: code = Internal desc = mount failed: exit status 32...
+      1  Warning FailedMount pod/pg-x2-1-initdb-r4fq8 MountVolume.MountDevice failed for volume "pvc-89e01a73-5022-403e-bc01-e321d2b74228" : rpc error: code = InvalidArgument desc = volume pvc-89e01a73-5022-4
+      1  Warning FailedMount pod/pg-x2-1-initdb-r4fq8 MountVolume.MountDevice failed for volume "pvc-89e01a73-5022-403e-bc01-e321d2b74228" : rpc error: code = Internal desc = mount failed: exit status 32...
+      1  Warning FailedMount pod/pg-x2-1-initdb-kw7kq MountVolume.MountDevice failed for volume "pvc-89e01a73-5022-403e-bc01-e321d2b74228" : rpc error: code = InvalidArgument desc = volume pvc-89e01a73-5022-4
+      1  Warning FailedMount pod/pg-x2-1-initdb-kw7kq MountVolume.MountDevice failed for volume "pvc-89e01a73-5022-403e-bc01-e321d2b74228" : rpc error: code = Internal desc = mount failed: exit status 32...
+      1  Warning FailedMount pod/pg-x2-1-initdb-7g5tj MountVolume.MountDevice failed for volume "pvc-89e01a73-5022-403e-bc01-e321d2b74228" : rpc error: code = InvalidArgument desc = volume pvc-89e01a73-5022-4
+      1  Warning FailedMount pod/pg-x2-1-initdb-7g5tj MountVolume.MountDevice failed for volume "pvc-89e01a73-5022-403e-bc01-e321d2b74228" : rpc error: code = Internal desc = format of disk "/dev/longhorn/pvc
+      1  Warning FailedAttachVolume pod/pg-x2-2 Waiting for detach for volume "pvc-c32ff7fc-6742-482b-8091-921beef80c8d" Volume is already exclusively attached to one node, waiting on detach before it can be 
+-- 남은 dm 전수 조사
+   ks-w1 pvc-ba74979e-5eaa-42b3-bf12-817da89cabe8 Active open=1 정상
+   ks-w1 pvc-ed596f99-6c4f-4493-b882-a5e9f1118f06 Active open=1 정상
+   ks-w1 D=0
+   ks-w2 pvc-05e01c58-999c-421d-a4b0-cdd2d06c76f5 Active open=1 정상
+   ks-w2 pvc-25cc2f59-5f73-4539-ae8f-7fa6d48d1a45 Active open=1 정상
+   ks-w2 pvc-65a14205-8d44-450d-9162-759818c9b8c7 Active open=1 정상
+   ks-w2 D=1
+   ks-w3 pvc-c32ff7fc-6742-482b-8091-921beef80c8d Active open=1 정상
+   ks-w3 pvc-ea69fe59-85bf-4de9-8041-e1720f794bb6 Active open=1 정상
+   ks-w3 D=0
+-- ks-w1 dmwatch 요약 / D 상태 / dmesg
+   0
+-- ks-w2 dmwatch 요약 / D 상태 / dmesg
+   0
+-- ks-w3 dmwatch 요약 / D 상태 / dmesg
+   0
+-- 인스턴스 매니저
+    instance-manager-2ced01c0ba2952d19b1173f3d1d49d27 1/1 Running 0 30m
+    instance-manager-3787df073f5a5202e17bb577d5251d07 1/1 Running 0 14m
+    instance-manager-61f533f34a15d5f85e6555453aba97e3 1/1 Running 0 30m
+    instance-manager-998d8f02bf69438e42627ddcd1ed1e21 1/1 Running 0 6m22s
+    instance-manager-c15b3449016064e881b4051bd3914faa 1/1 Running 0 30m
+    instance-manager-d8657260f23812a7aedadcff104c7b5d 1/1 Running 0 30m

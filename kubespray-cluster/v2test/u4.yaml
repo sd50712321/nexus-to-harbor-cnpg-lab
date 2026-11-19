@@ -14,6 +14,7 @@ spec:
     metadata: {labels: {app: u4}}
     spec:
       terminationGracePeriodSeconds: 5
+      securityContext: {runAsUser: 0}
       containers:
       - name: w
         image: ghcr.io/cloudnative-pg/postgresql:16.15-minimal-bookworm

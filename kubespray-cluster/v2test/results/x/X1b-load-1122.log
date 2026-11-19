@@ -1,0 +1,102 @@
+X1b-load-1122: Longhorn v1.12.2. 엔진 노드 ks-w1(u4), 인스턴스 매니저를 내릴 노드 ks-w2. 더티 400MB. 손으로 suspend 하지 않음
+trigger armed
+   dd: 419430400 bytes (419 MB, 400 MiB) copied, 3.35186 s, 125 MB/s
+[17:51:17] 처음
+   volume attached   healthy   ks-w1
+   pod u4-54f8c57d74-kkrpn 1/1 Running ks-w1
+   dm pvc-25cc2f59-5f73-4539-ae8f-7fa6d48d1a45:Active:1
+   dm pvc-691d1e33-5f91-4bc7-858d-74d991f642d2:Active:1
+   D 309s kworker/u6:1+flush-252:1
+   D 115s postgres
+   D 3s dd
+   spdk_tgt 살아 있음
+>>> 17:51:22 ks-w2 의 인스턴스 매니저 파드 삭제 (instance-manager-556efe696b2183a861e797baf6e99096) → 올라오면 재구축
+>>> 트리거: FIRED 17:52:13.231 Suspended 를 보고 spdk_tgt kill -9 (폴링 17290회째)
+>>> 17:52:14 ks-w1 cordon + 파드 삭제 (다른 노드로 이동)
+[17:53:05] 이동 후 ~60s
+   volume attached   degraded   ks-w1
+   pod u4-54f8c57d74-kkrpn 1/1 Terminating ks-w1
+   pod u4-54f8c57d74-lqtf6 0/1 ContainerCreating ks-w2
+   dm pvc-25cc2f59-5f73-4539-ae8f-7fa6d48d1a45:Suspended:1
+   dm pvc-691d1e33-5f91-4bc7-858d-74d991f642d2:Suspended:1
+   D 1000s kworker/1:0+xfs-sync/dm-2
+   D 369s kworker/u6:3+xfs-cil/dm-2
+   D 84s postgres
+   D 68s postgres
+   D 55s dd
+   D 44s postgres
+   D 24s postgres
+   spdk_tgt 없음
+[17:54:48] 이동 후 ~120s
+   volume attaching   unknown   
+   pod u4-54f8c57d74-9pkl8 0/1 ContainerCreating ks-w2
+   pod u4-54f8c57d74-kkrpn 1/1 Terminating ks-w1
+   dm pvc-25cc2f59-5f73-4539-ae8f-7fa6d48d1a45:Suspended:1
+   dm pvc-691d1e33-5f91-4bc7-858d-74d991f642d2:Suspended:1
+   D 1103s kworker/1:0+xfs-sync/dm-2
+   D 473s kworker/u6:3+xfs-cil/dm-2
+   D 187s postgres
+   D 172s postgres
+   D 158s dd
+   D 147s postgres
+   D 127s postgres
+   D 67s postgres
+   D 47s postgres
+   D 28s pg_ctl
+   spdk_tgt 없음
+[17:56:31] 이동 후 ~240s
+   volume attaching   unknown   
+   pod u4-54f8c57d74-9pkl8 0/1 ContainerCreating ks-w2
+   pod u4-54f8c57d74-kkrpn 1/1 Terminating ks-w1
+   dm pvc-25cc2f59-5f73-4539-ae8f-7fa6d48d1a45:Suspended:1
+   dm pvc-691d1e33-5f91-4bc7-858d-74d991f642d2:Suspended:1
+   D 1207s kworker/1:0+xfs-sync/dm-2
+   D 577s kworker/u6:3+xfs-cil/dm-2
+   D 292s postgres
+   D 262s dd
+   spdk_tgt 없음
+[17:58:15] 이동 후 ~360s
+   volume attaching   unknown   
+   pod u4-54f8c57d74-9pkl8 0/1 ContainerCreating ks-w2
+   pod u4-54f8c57d74-kkrpn 1/1 Terminating ks-w1
+   dm pvc-25cc2f59-5f73-4539-ae8f-7fa6d48d1a45:Suspended:1
+   dm pvc-691d1e33-5f91-4bc7-858d-74d991f642d2:Suspended:1
+   D 1311s kworker/1:0+xfs-sync/dm-2
+   D 681s kworker/u6:3+xfs-cil/dm-2
+   D 395s postgres
+   D 366s dd
+   spdk_tgt 없음
+-- 이벤트
+   12m         Normal    Killing                  pod/pg-prod-2                         Stopping container postgres
+   6m4s        Warning   FailedAttachVolume       pod/u4-54f8c57d74-lqtf6               Waiting for detach for volume "pvc-25cc2f59-5f73-4539-ae8f-7fa6d48d1a45" Volume is already used by pod(s) u4-54f8c57d74-kkrpn
+   3m56s       Normal    Killing                  pod/pg-prod-1                         Stopping container postgres
+   3m48s       Warning   FailedAttachVolume       pod/u4-54f8c57d74-9pkl8               Waiting for detach for volume "pvc-25cc2f59-5f73-4539-ae8f-7fa6d48d1a45" Volume is already used by pod(s) u4-54f8c57d74-kkrpn
+   119s        Warning   FailedKillPod            pod/u4-54f8c57d74-kkrpn               error killing pod: [failed to "KillContainer" for "w" with KillContainerError: "rpc error: code = DeadlineExceeded desc = context deadline exceed
+   119s        Normal    Killing                  pod/u4-54f8c57d74-kkrpn               Stopping container w
+-- dmwatch (ks-w1)
+17:51:13.7 25cc2f59:Active:1 691d1e33:Active:1 | D: 1 dd, 1 postgres,
+17:52:13.4 25cc2f59:Suspended:1 691d1e33:Suspended:1 | D: 1 dd, 2 postgres,
+-- 인스턴스 매니저 로그 (ks-w1, suspend/resume)
+-- dmesg (ks-w1)
+      4 [ 5899.139400]  xlog_cil_push_now.isra.0+0x94/0x108 [xfs]
+      1 [ 5899.139692] INFO: task kworker/u6:3:177610 blocked for more than 245 seconds.
+      1 [ 5899.139930] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+      1 [ 5899.140041] Workqueue: xfs-cil/dm-2 xlog_cil_push_work [xfs]
+      2 [ 5899.140103]  xlog_wait_on_iclog+0x1f0/0x258 [xfs]
+      1 [ 5899.140205] INFO: task postgres:226341 blocked for more than 368 seconds.
+      1 [ 5899.140451] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+      1 [ 5899.140598]  xfs_file_fsync+0x74/0x2a0 [xfs]
+-- 남은 dm 전수 조사
+   ks-w1 pvc-25cc2f59-5f73-4539-ae8f-7fa6d48d1a45 Suspended open=1 고아(볼륨은 없음/분리)
+   ks-w1 pvc-691d1e33-5f91-4bc7-858d-74d991f642d2 Suspended open=1 고아(볼륨은 없음/분리)
+   ks-w1 D=4
+   ks-w2 pvc-05e01c58-999c-421d-a4b0-cdd2d06c76f5 Active open=1 정상
+   ks-w2 D=0
+   ks-w3 pvc-ea69fe59-85bf-4de9-8041-e1720f794bb6 Active open=1 정상
+   ks-w3 D=0
+>>> 17:58:39 남은 Suspended dm 을 resume: pvc-25cc2f59-5f73-4539-ae8f-7fa6d48d1a45
+pvc-691d1e33-5f91-4bc7-858d-74d991f642d2
+[17:59:16] resume 후
+   volume attached   degraded   ks-w2
+   pod u4-54f8c57d74-9pkl8 1/1 Running ks-w2
+   spdk_tgt 없음

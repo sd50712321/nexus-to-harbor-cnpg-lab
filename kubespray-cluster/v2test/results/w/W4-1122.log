@@ -1,0 +1,46 @@
+W4-1122: Longhorn v1.12.2, ks-w1. spdk_tgt 컨테이너 CPU 를 240초 동안 cpu.max=3000/100000 으로 제한. 버퍼 쓰기 800MB 직후 다른 노드의 레플리카 1개 삭제(재구축)
+cgroup=/sys/fs/cgroup/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod2c57d62a_88a5_4b93_9292_c3d89b97065b.slice/cri-containerd-8bbc89dbb6d4e4e808a3acf2ae74662e5259bdd9658767cdfd79af5d916e0f4b.scope
+>>> slow on 11:11:38
+>>> replica delete 11:11:44 pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-r-08637018 (재구축 유도)
+838860800 bytes (839 MB, 800 MiB) copied, 240.361 s, 3.5 MB/s
+-- volume
+    attached healthy
+    pod 1/1 Running 0 ks-w1
+    IM restarts=0
+-- instance-manager 로그 (suspend/resume/timeout)
+11:12:12.319264559Z" level=info msg="Suspending engine frontend" endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-ef-0 engineName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-e-0 frontend=s
+11:12:16.41861523Z" level=info msg="Suspended the dm device" elapsedMs=3799 endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-ef-0 engineName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-e-0
+11:12:16.418656605Z" level=info msg="Suspended engine frontend" endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-ef-0 engineName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-e-0 frontend=sp
+11:12:26.919070641Z" level=info msg="Resuming engine frontend" endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-ef-0 engineName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-e-0 frontend=spd
+11:12:27.422049187Z" level=info msg="Resumed engine frontend" endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-ef-0 engineName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-e-0 frontend=spdk
+11:13:10.219203403Z" level=info msg="Suspending engine frontend" endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-ef-0 engineName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-e-0 frontend=s
+11:13:15.118997307Z" level=info msg="Suspended the dm device" elapsedMs=4898 endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-ef-0 engineName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-e-
+11:13:15.119272143Z" level=info msg="Suspended engine frontend" endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-ef-0 engineName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-e-0 frontend=sp
+11:13:16.618520031Z" level=info msg="Resuming engine frontend" endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-ef-0 engineName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-e-0 frontend=spd
+11:13:17.819170172Z" level=info msg="Resumed engine frontend" endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-ef-0 engineName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-e-0 frontend=spdk
+-- dmwatch
+11:11:38.3 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:11:50.8 dmsetup 프로세스 1개 | D: 2 dd, 1 kworker/u6:0+flush-252:2,
+11:12:16.2 813e3dee:Active:1 bd247636:Suspended:1 | D: 2 dd,
+11:12:27.7 813e3dee:Active:1 bd247636:Active:2 | D: 2 dd, 1 kworker/1:0+kdmflush/252:2, 1 postgres, 1 (udev-worker),
+11:12:31.8 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 1 kworker/1:0+kdmflush/252:2,
+11:13:15.2 813e3dee:Active:1 bd247636:Suspended:1 | D: 2 dd, 1 kworker/1:3+xfs-sync/dm-2, 1 kworker/u6:4+xfs-cil/dm-2, 1 xfsaild/dm-2,
+11:13:17.9 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 1 kworker/0:0+kdmflush/252:2, 1 kworker/1:3+xfs-sync/dm-2, 1 kworker/u6:4+xfs-cil/dm-2, 1 xfsaild/dm-2,
+>>> slow off 11:15:38
+최장 Suspended 구간: bd247636 11.5초
+dmsetup 프로세스: 
+== 11:18:58 spdk_tgt pid=62247       17:18 RLl
+-- dm (name:suspended:open)
+   pvc-813e3dee-416a-4f95-bd7e-ed0c9ae791bb:Active:1
+   pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06:Active:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   nvme0 live traddr=10.233.71.66,trsvcid=20013
+   nvme2 live traddr=10.233.71.66,trsvcid=20014
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+   dm-2 slaves=[nvme1n2 ]
+-- D
+   116096 63823 D          0 dd              dd if=/dev/zero of=/data/load.bin bs=1M count=64 oflag=direct
+-- dmsetup 프로세스
+-- dmesg

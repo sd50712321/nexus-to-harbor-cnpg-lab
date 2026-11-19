@@ -18,6 +18,8 @@ Harbor 의 DB 는 CloudNativePG(CNPG) 3개 인스턴스, 이미지 저장소는 
 | [V2-DELAY-ALL-IN-ONE.md](V2-DELAY-ALL-IN-ONE.md) | 볼륨 지연 조사(11-17~18)만 따로 묶은 사본: 위 두 문서 + 진단 기록 30절 + 시험 스크립트 + 기록 원문 |
 | [V2-SPDK-CRASH-ANALYSIS.md](V2-SPDK-CRASH-ANALYSIS.md) | V2 볼륨이 안 붙는 문제의 실서버 관측 정리, 원인 추정(`spdk_tgt` 죽음), 관련 Longhorn 이슈, 확인 명령, 조치, 내부 LLM 지시문, 랩 시험 T1·T2 |
 | [V2-SUSPENDED-DM-TESTS.md](V2-SUSPENDED-DM-TESTS.md) | 위 문서의 후속. 굳은 dm(`Suspended` + D 상태 `umount`)을 랩에서 재현하고 `dmsetup resume` 으로 푼 기록, Longhorn 1.12.1 대 1.12.2 비교, CPU 격리 확인 방법, 실서버용 절차, 내부 LLM 지시문 (시험 U1~U6) |
+| [V2-DETACH-HYPOTHESES.md](V2-DETACH-HYPOTHESES.md) | 그다음 문서. "떼는 순간" 가설 시험. `spdk_tgt` 가 죽지 않아도 dm 이 멈춘 채 남으면 attach 가 막히는 것, 느린 저장소에서 Longhorn 의 dm 멈춤 시간이 1.12.1 과 1.12.2 에서 다른 것 (시험 W1~W4) |
+| [V2-PROD-RUNBOOK.md](V2-PROD-RUNBOOK.md) | 실서버 작업 절차. 1.12.2 로 올리는 순서(V2 는 전부 떼야 바뀐다), 굳은 dm 찾고 풀기, 인스턴스 매니저 재시작 규칙, pg 가 저절로 안 돌아오는 두 경우, 디스크 고정 경로 (시험 X·Y·P) |
 | [PERF-TEST.md](PERF-TEST.md) | 성능 시험(CNPG·Harbor 위주): 시험 목록, 도구, 실행 방법(`perf/`), 랩 결과와 읽는 법 |
 | [V2-ALL-IN-ONE.md](V2-ALL-IN-ONE.md) | 위 V2 문서 4개 + 진단 기록 + 설정·스크립트(붙여넣기 복원) + 로그 원문을 한 파일로 묶은 사본 |
 | [rendered/](rendered/) | 템플릿을 인벤토리 값으로 풀어 놓은 Helm values·매니페스트와 적용 순서 (아래 '설정 파일') |

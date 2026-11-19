@@ -1,0 +1,40 @@
+W3b-1121: Longhorn v1.12.1, ks-w1. spdk_tgt 컨테이너 CPU 를 150초 동안 cpu.max=3000/100000 으로 제한. 버퍼 쓰기 600MB 직후 스냅샷 생성 요청
+cgroup=/sys/fs/cgroup/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod6aebdafe_8925_4007_8d84_7b1f4794c1d8.slice/cri-containerd-bd136ccbcb5ad7938538def3f2c53cf44cb5739d0ba0b4d4a3b77710bb40bb01.scope
+>>> slow on 11:40:22
+>>> snapshot create 11:40:28 w3-1795002018
+629145600 bytes (629 MB, 600 MiB) copied, 118.669 s, 5.3 MB/s
+-- snapshot CR
+   readyToUse=true error=
+-- volume
+    attached healthy
+    pod 1/1 Running 0 ks-w1
+    IM restarts=0
+-- instance-manager 로그 (suspend/resume/timeout)
+11:40:31.477658317Z" level=info msg="Suspending before the snapshot operation snapshot-create for snapshot w3-1795002018" endpoint=/dev/longhorn/pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9 engineFrontendName=pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-ef-0 engineNam
+11:40:33.077702764Z" level=info msg="Suspending linear dm device" controllerName=nvme0 name=pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9 namespaceName=nvme0n1 nvmeTCPInfo="&{SubsystemNQN:nqn.2023-01.io.longhorn.spdk:volume-pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9 
+11:42:18.779486296Z" level=info msg="Resuming after the snapshot operation snapshot-create for snapshot w3-1795002018" endpoint=/dev/longhorn/pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9 engineFrontendName=pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-ef-0 engineName=p
+11:42:18.781079121Z" level=info msg="Resuming linear dm device" controllerName=nvme0 name=pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9 namespaceName=nvme0n1 nvmeTCPInfo="&{SubsystemNQN:nqn.2023-01.io.longhorn.spdk:volume-pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9 UU
+11:42:19.38359376Z" level=info msg="Resumed after the snapshot operation snapshot-create for snapshot \"w3-1795002018\"" endpoint=/dev/longhorn/pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9 engineFrontendName=pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9-ef-0 engineName
+-- dmwatch
+11:40:22.5 66684a25:Active:1 d6c38ac3:Active:1 | D: 1 dd,
+11:40:33.0 dmsetup 프로세스 1개 | D: 2 dd, 1 kworker/u6:5+flush-252:1,
+11:42:17.2 66684a25:Active:1 d6c38ac3:Suspended:1 | D: 2 dd,
+11:42:19.3 66684a25:Active:1 d6c38ac3:Active:1 | D: 2 dd, 1 kworker/u6:5+flush-252:1,
+>>> slow off 11:42:52
+최장 Suspended 구간: d6c38ac3 2.1초
+dmsetup 프로세스: 
+== 11:46:12 spdk_tgt pid=124734       17:34 RLl
+-- dm (name:suspended:open)
+   pvc-66684a25-6bba-45ae-ae12-02e79483d65c:Active:1
+   pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9:Active:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   nvme0 live traddr=10.233.71.61,trsvcid=20012
+   nvme1 live traddr=10.233.71.61,trsvcid=20011
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+   dm-2 slaves=[nvme1n1 ]
+-- D
+   182791 126262 D          0 dd              dd if=/dev/zero of=/data/load.bin bs=1M count=64 oflag=direct
+-- dmsetup 프로세스
+-- dmesg

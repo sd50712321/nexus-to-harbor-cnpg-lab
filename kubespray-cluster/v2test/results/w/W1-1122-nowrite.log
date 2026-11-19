@@ -1,0 +1,46 @@
+W1-1122: Longhorn v1.12.2, ks-w2. 정상 볼륨 pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 의 dm 을 suspend(--noflush --nolockfs)만 하고 3분 둔다. 그 뒤 ks-w2 cordon + 파드 삭제
+>>> suspend 10:39:56
+rc=0
+-- 3분 뒤 (Longhorn 이 스스로 풀었나)
+   volume attached healthy
+   ef running ks-w2
+== 10:43:00 spdk_tgt pid=4524       05:14 RLl
+-- dm (name:suspended:open)
+   pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f:Active:1
+   pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06:Suspended:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   nvme0 live traddr=10.233.72.133,trsvcid=20006
+   nvme1 live traddr=10.233.72.133,trsvcid=20012
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+   dm-2 slaves=[nvme1n1 ]
+-- D
+>>> delete pod 10:43:00
+   새 파드 Running=1 노드=ks-w1 걸린시간=51s
+37m         Warning   FailedMount              pod/u4-7bb84748f9-5qgv8               MountVolume.SetUp failed for volume "pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06" : rpc error: code = FailedPrecondition desc = Staging target path /var/lib/kubelet/plugins/kuber
+34m         Warning   FailedMount              pod/u4-7bb84748f9-5zt7d               MountVolume.SetUp failed for volume "pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06" : rpc error: code = Aborted desc = volume pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 is not ready 
+34m         Warning   FailedMount              pod/u4-7bb84748f9-5zt7d               MountVolume.SetUp failed for volume "pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06" : rpc error: code = FailedPrecondition desc = Staging target path /var/lib/kubelet/plugins/kuber
+51s         Warning   FailedAttachVolume       pod/u4-7bb84748f9-wrjnd               Waiting for detach for volume "pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06" Volume is already used by pod(s) u4-7bb84748f9-6rsl4
+== 10:44:14 spdk_tgt pid=4524       06:28 RLl
+-- dm (name:suspended:open)
+   pvc-8a9b5cdc-9430-4668-bb6f-e77c7ad2a02f:Active:1
+   pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06:Suspended:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   nvme0 live traddr=10.233.72.133,trsvcid=20006
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+   dm-2 slaves=[nvme1n1 ]
+-- D
+   23879 3805 D         68 umount          umount /var/lib/kubelet/plugins/kubernetes.io/csi/driver.longhorn
+-- dmwatch
+10:39:54.9 8a9b5cdc:Active:1 bd247636:Active:1 | D:
+10:39:57.0 8a9b5cdc:Active:1 bd247636:Suspended:1 | D:
+10:40:43.1 8a9b5cdc:Active:1 bd247636:Suspended:1 | D: 1 runc,
+10:40:43.7 8a9b5cdc:Active:1 bd247636:Suspended:1 | D:
+10:43:00.4 8a9b5cdc:Active:1 bd247636:Suspended:1 | D: 1 kworker/1:2+events,
+10:43:00.9 8a9b5cdc:Active:1 bd247636:Suspended:1 | D:
+10:43:01.5 8a9b5cdc:Active:1 bd247636:Suspended:1 | D: 1 postgres,
+10:43:02.5 8a9b5cdc:Active:1 bd247636:Suspended:1 | D:
+10:43:06.2 8a9b5cdc:Active:1 bd247636:Suspended:1 | D: 1 umount,

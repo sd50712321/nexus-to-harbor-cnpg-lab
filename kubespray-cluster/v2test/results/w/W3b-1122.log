@@ -1,0 +1,182 @@
+W3b-1122: Longhorn v1.12.2, ks-w1. spdk_tgt 컨테이너 CPU 를 150초 동안 cpu.max=3000/100000 으로 제한. 버퍼 쓰기 600MB 직후 스냅샷 생성 요청
+cgroup=/sys/fs/cgroup/kubepods.slice/kubepods-burstable.slice/kubepods-burstable-pod2c57d62a_88a5_4b93_9292_c3d89b97065b.slice/cri-containerd-8bbc89dbb6d4e4e808a3acf2ae74662e5259bdd9658767cdfd79af5d916e0f4b.scope
+>>> slow on 11:05:02
+>>> snapshot create 11:05:08 w3-1794999899
+629145600 bytes (629 MB, 600 MiB) copied, 149.728 s, 4.2 MB/s
+-- snapshot CR
+   readyToUse=true error=
+-- volume
+    attached healthy
+    pod 1/1 Running 0 ks-w1
+    IM restarts=0
+-- instance-manager 로그 (suspend/resume/timeout)
+11:05:47.419046147Z" level=info msg="Suspending linear dm device" controllerName=nvme2 name=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 namespaceName=nvme1n2 nvmeTCPInfo="&{SubsystemNQN:nqn.2023-01.io.longhorn.spdk:volume-pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 
+11:06:17.617654853Z" level=warning msg="Failed to suspend the dm device" elapsedMs=31798 endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-ef-0 engineName=pvc-bd247636-ae79-43ca-a1e5-aa0
+11:06:19.017970246Z" level=info msg="Suspending before the snapshot operation snapshot-create for snapshot w3-1794999899" endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-ef-0 engineNam
+11:06:20.018017294Z" level=info msg="Suspending linear dm device" controllerName=nvme2 name=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 namespaceName=nvme1n2 nvmeTCPInfo="&{SubsystemNQN:nqn.2023-01.io.longhorn.spdk:volume-pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 
+11:06:50.019895281Z" level=warning msg="Failed to suspend the dm device" elapsedMs=31001 endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-ef-0 engineName=pvc-bd247636-ae79-43ca-a1e5-aa0
+11:06:51.81861649Z" level=info msg="Suspending before the snapshot operation snapshot-create for snapshot w3-1794999899" endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-ef-0 engineName
+11:06:52.917819946Z" level=info msg="Suspending linear dm device" controllerName=nvme2 name=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 namespaceName=nvme1n2 nvmeTCPInfo="&{SubsystemNQN:nqn.2023-01.io.longhorn.spdk:volume-pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 
+11:07:22.919175706Z" level=warning msg="Failed to suspend the dm device" elapsedMs=31100 endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-ef-0 engineName=pvc-bd247636-ae79-43ca-a1e5-aa0
+11:07:24.919402277Z" level=info msg="Suspending before the snapshot operation snapshot-create for snapshot w3-1794999899" endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-ef-0 engineNam
+11:07:25.817963174Z" level=info msg="Suspending linear dm device" controllerName=nvme2 name=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 namespaceName=nvme1n2 nvmeTCPInfo="&{SubsystemNQN:nqn.2023-01.io.longhorn.spdk:volume-pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 
+11:07:32.8090263Z" level=warning msg="Failed to suspend the dm device" elapsedMs=7889 endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-ef-0 engineName=pvc-bd247636-ae79-43ca-a1e5-aa051d
+11:07:32.82747183Z" level=info msg="Suspending before the snapshot operation snapshot-create for snapshot w3-1794999899" endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-ef-0 engineName
+11:07:32.833301406Z" level=info msg="Suspended the dm device" elapsedMs=5 endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-ef-0 engineName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-e-0 f
+11:07:33.137294605Z" level=info msg="Resuming after the snapshot operation snapshot-create for snapshot w3-1794999899" endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-ef-0 engineName=p
+11:07:33.138754853Z" level=info msg="Resuming linear dm device" controllerName=nvme2 name=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 namespaceName=nvme1n2 nvmeTCPInfo="&{SubsystemNQN:nqn.2023-01.io.longhorn.spdk:volume-pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 UU
+11:07:33.143191518Z" level=info msg="Resumed after the snapshot operation snapshot-create for snapshot \"w3-1794999899\"" endpoint=/dev/longhorn/pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06 engineFrontendName=pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06-ef-0 engineNam
+-- dmwatch
+11:05:02.6 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:05:03.1 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd,
+11:05:04.2 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 1 kworker/u6:3+flush-252:2,
+11:05:11.2 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 1 kworker/u6:3+flush-252:2, 1 xfsaild/dm-2,
+11:05:12.8 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 1 dmsetup, 1 kworker/u6:3+flush-252:2, 1 xfsaild/dm-2,
+11:05:13.3 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 1 dmsetup, 1 kworker/u6:3+flush-252:2,
+11:05:19.5 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 1 dmsetup, 1 kworker/u6:3+flush-252:2, 1 runc,
+11:05:20.0 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 1 dmsetup, 1 kworker/u6:3+flush-252:2,
+11:05:27.8 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 1 kworker/u6:3+flush-252:2,
+11:05:28.3 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 1 dmsetup, 1 kworker/u6:3+flush-252:2,
+11:05:41.8 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 1 dmsetup, 1 kworker/u6:3+flush-252:2, 1 xfsaild/dm-2,
+11:05:42.3 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 1 dmsetup, 1 kworker/u6:3+flush-252:2,
+11:05:48.1 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 2 dmsetup, 1 kworker/u6:3+flush-252:2,
+11:06:11.8 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 2 dmsetup, 1 kworker/u6:3+flush-252:2, 1 xfsaild/dm-2,
+11:06:14.8 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 2 dmsetup, 1 kworker/u6:3+flush-252:2,
+11:06:20.5 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 3 dmsetup, 1 kworker/u6:3+flush-252:2,
+11:06:53.1 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 4 dmsetup, 1 kworker/u6:3+flush-252:2,
+11:06:56.1 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 4 dmsetup, 1 kworker/u6:3+flush-252:2, 1 longhorn-instan,
+11:06:56.7 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 4 dmsetup, 1 kworker/u6:3+flush-252:2,
+11:07:01.3 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 4 dmsetup, 1 kworker/1:1+events, 1 kworker/u6:3+flush-252:2,
+11:07:01.8 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 4 dmsetup, 1 kworker/u6:3+flush-252:2,
+11:07:08.0 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 4 dmsetup, 1 kworker/u6:3+flush-252:2, 1 postgres,
+11:07:09.6 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 4 dmsetup, 1 kworker/u6:3+flush-252:2, 1 postgres, 1 runc,
+11:07:10.1 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 4 dmsetup, 1 kworker/u6:3+flush-252:2, 1 postgres,
+11:07:16.9 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 4 dmsetup, 1 kworker/u6:3+flush-252:2,
+11:07:22.1 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 4 dmsetup, 1 kworker/u6:3+flush-252:2, 1 postgres,
+11:07:26.2 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 5 dmsetup, 1 kworker/u6:3+flush-252:2, 1 postgres,
+11:07:31.4 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 5 dmsetup, 1 kworker/u6:3+flush-252:2, 1 postgres, 1 runc,
+11:07:31.9 813e3dee:Active:1 bd247636:Active:1 | D: 2 dd, 5 dmsetup, 1 kworker/u6:3+flush-252:2, 1 postgres,
+>>> slow off 11:07:32
+11:07:32.9 813e3dee:Active:1 bd247636:Suspended:1 | D: 2 dd,
+11:07:33.5 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd, 1 kworker/u6:3+flush-252:2,
+11:07:35.6 813e3dee:Active:1 bd247636:Active:1 | D:
+11:07:36.6 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:07:37.1 813e3dee:Active:1 bd247636:Active:1 | D:
+11:07:38.2 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:07:40.3 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd, 1 kworker/u6:3+flush-252:2,
+11:07:43.5 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd, 1 kworker/1:2H+nvme_tcp_wq, 1 kworker/u6:3+flush-252:2,
+11:07:44.0 813e3dee:Active:1 bd247636:Active:1 | D:
+11:07:44.5 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:07:45.1 813e3dee:Active:1 bd247636:Active:1 | D: 1 kworker/1:2H+nvme_tcp_wq, 1 runc,
+11:07:45.6 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:07:55.0 813e3dee:Active:1 bd247636:Active:1 | D:
+11:07:55.5 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:07:58.1 813e3dee:Active:1 bd247636:Active:1 | D:
+11:07:58.6 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:08:01.3 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd, 1 kworker/1:1H+nvme_tcp_wq,
+11:08:01.8 813e3dee:Active:1 bd247636:Active:1 | D:
+11:08:02.3 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:08:08.6 813e3dee:Active:1 bd247636:Active:1 | D:
+11:08:09.1 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:08:13.8 813e3dee:Active:1 bd247636:Active:1 | D:
+11:08:14.3 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:08:14.8 813e3dee:Active:1 bd247636:Active:1 | D:
+11:08:15.9 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:08:18.0 813e3dee:Active:1 bd247636:Active:1 | D: 1 kworker/1:0H+nvme_tcp_wq,
+11:08:18.5 813e3dee:Active:1 bd247636:Active:1 | D:
+11:08:19.6 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:08:22.2 813e3dee:Active:1 bd247636:Active:1 | D: 1 kworker/1:0H+nvme_tcp_wq,
+11:08:22.7 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:08:25.3 813e3dee:Active:1 bd247636:Active:1 | D:
+11:08:25.8 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:08:26.9 813e3dee:Active:1 bd247636:Active:1 | D: 1 kworker/1:0H+nvme_tcp_wq,
+11:08:27.4 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:08:30.6 813e3dee:Active:1 bd247636:Active:1 | D:
+11:08:31.1 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:08:34.2 813e3dee:Active:1 bd247636:Active:1 | D:
+11:08:34.8 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:08:35.8 813e3dee:Active:1 bd247636:Active:1 | D:
+11:08:36.3 813e3dee:Active:1 bd247636:Active:1 | D: 1 kworker/1:0H+nvme_tcp_wq,
+11:08:36.9 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:08:41.0 813e3dee:Active:1 bd247636:Active:1 | D: 1 kworker/1:0H+nvme_tcp_wq,
+11:08:41.6 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:08:51.0 813e3dee:Active:1 bd247636:Active:1 | D:
+11:08:51.5 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:08:58.8 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd, 1 runc,
+11:08:59.4 813e3dee:Active:1 bd247636:Active:1 | D:
+11:09:00.4 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:09:04.1 813e3dee:Active:1 bd247636:Active:1 | D: 1 kworker/1:1H+nvme_tcp_wq,
+11:09:04.6 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:09:08.8 813e3dee:Active:1 bd247636:Active:1 | D:
+11:09:09.3 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:09:13.5 813e3dee:Active:1 bd247636:Active:1 | D: 1 kworker/1:1H+nvme_tcp_wq,
+11:09:14.0 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:09:18.8 813e3dee:Active:1 bd247636:Active:1 | D:
+11:09:19.3 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:09:20.8 813e3dee:Active:1 bd247636:Active:1 | D:
+11:09:21.4 813e3dee:Active:1 bd247636:Active:1 | D: 1 kworker/1:1H+nvme_tcp_wq,
+11:09:21.9 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:09:27.6 813e3dee:Active:1 bd247636:Active:1 | D:
+11:09:28.2 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:09:31.8 813e3dee:Active:1 bd247636:Active:1 | D:
+11:09:32.4 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:09:33.4 813e3dee:Active:1 bd247636:Active:1 | D:
+11:09:33.9 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:09:38.6 813e3dee:Active:1 bd247636:Active:1 | D: 1 kworker/1:1H+nvme_tcp_wq,
+11:09:39.7 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:09:47.0 813e3dee:Active:1 bd247636:Active:1 | D:
+11:09:47.5 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:09:48.6 813e3dee:Active:1 bd247636:Active:1 | D: 1 kworker/1:1H+nvme_tcp_wq,
+11:09:49.1 813e3dee:Active:1 bd247636:Active:1 | D:
+11:09:49.6 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:09:52.8 813e3dee:Active:1 bd247636:Active:1 | D:
+11:09:53.3 813e3dee:Active:1 bd247636:Active:1 | D: 1 kworker/1:1H+nvme_tcp_wq,
+11:09:53.8 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:09:55.4 813e3dee:Active:1 bd247636:Active:1 | D:
+11:09:55.9 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:10:11.6 813e3dee:Active:1 bd247636:Active:1 | D: 1 kworker/1:1H+nvme_tcp_wq,
+11:10:12.1 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:10:13.2 813e3dee:Active:1 bd247636:Active:1 | D: 1 kworker/1:1H+nvme_tcp_wq,
+11:10:13.7 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:10:15.8 813e3dee:Active:1 bd247636:Active:1 | D: 1 kworker/1:1H+nvme_tcp_wq,
+11:10:16.3 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:10:20.5 813e3dee:Active:1 bd247636:Active:1 | D:
+11:10:21.5 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:10:22.6 813e3dee:Active:1 bd247636:Active:1 | D:
+11:10:23.1 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:10:24.7 813e3dee:Active:1 bd247636:Active:1 | D: 1 kworker/1:0H+nvme_tcp_wq,
+11:10:25.2 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:10:28.9 813e3dee:Active:1 bd247636:Active:1 | D: 1 kworker/1:1H+nvme_tcp_wq,
+11:10:29.4 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:10:35.7 813e3dee:Active:1 bd247636:Active:1 | D: 1 kworker/1:1H+nvme_tcp_wq,
+11:10:36.2 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:10:38.3 813e3dee:Active:1 bd247636:Active:1 | D: 1 kworker/1:1H+nvme_tcp_wq,
+11:10:38.8 813e3dee:Active:1 bd247636:Active:1 | D: 1 kworker/1:0H+nvme_tcp_wq,
+11:10:39.3 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:10:40.9 813e3dee:Active:1 bd247636:Active:1 | D: 1 kworker/1:0H+nvme_tcp_wq,
+11:10:41.4 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:10:43.0 813e3dee:Active:1 bd247636:Active:1 | D:
+11:10:44.0 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:10:45.6 813e3dee:Active:1 bd247636:Active:1 | D:
+11:10:46.1 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:10:47.2 813e3dee:Active:1 bd247636:Active:1 | D: 1 kworker/1:0H+nvme_tcp_wq,
+11:10:47.7 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+11:10:50.8 813e3dee:Active:1 bd247636:Active:1 | D:
+11:10:51.4 813e3dee:Active:1 bd247636:Active:1 | D: 1 dd,
+최장 Suspended 구간: bd247636 .5초
+dmsetup 프로세스: 
+== 11:10:52 spdk_tgt pid=62247       09:12 RLl
+-- dm (name:suspended:open)
+   pvc-813e3dee-416a-4f95-bd7e-ed0c9ae791bb:Active:1
+   pvc-bd247636-ae79-43ca-a1e5-aa051d6f1a06:Active:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   nvme0 live traddr=10.233.71.66,trsvcid=20013
+   nvme2 live traddr=10.233.71.66,trsvcid=20014
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+   dm-2 slaves=[nvme1n2 ]
+-- D
+   88538 63823 D          0 dd              dd if=/dev/zero of=/data/load.bin bs=1M count=64 oflag=direct
+-- dmsetup 프로세스
+-- dmesg

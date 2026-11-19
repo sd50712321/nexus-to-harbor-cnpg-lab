@@ -1,0 +1,77 @@
+X2-1121: Longhorn v1.12.1. pg-x2(3 인스턴스, 1Gi) 생성 중 V2 인스턴스 매니저를 40초 간격으로 6번 내림 (w1→w2→w3 순환)
+   cluster.postgresql.cnpg.io/pg-x2 created
+[07:12:12 +12s] ready=/3 phase="Setting up primary"
+   pg-x2-1-initdb-jq8g9(Init:0/1,ks-w1) 
+>>> 07:12:12 [1/6] ks-w1 의 인스턴스 매니저 파드 삭제
+[07:12:52 +52s] ready=/3 phase="Setting up primary"
+   pg-x2-1-initdb-jq8g9(Terminating,ks-w1) 
+   vol pg-x2-1 attached/degraded@ks-w1
+>>> 07:12:53 [2/6] ks-w2 의 인스턴스 매니저 파드 삭제
+[07:13:33 +93s] ready=1/3 phase="Creating a new replica"
+   pg-x2-1(Running,ks-w1) pg-x2-1-initdb-tvjlk(Completed,ks-w1) pg-x2-2-join-xgb75(Init:0/1,ks-w2) 
+   vol pg-x2-1 attached/degraded@ks-w1
+>>> 07:13:33 [3/6] ks-w3 의 인스턴스 매니저 파드 삭제
+[07:14:14 +134s] ready=1/3 phase="Waiting for the instances to become active"
+   pg-x2-1(Running,ks-w1) pg-x2-1-initdb-tvjlk(Completed,ks-w1) pg-x2-2(Init:0/1,ks-w3) pg-x2-2-join-xgb75(Completed,ks-w2) 
+   vol pg-x2-2 detaching/unknown@ks-w2
+   vol pg-x2-1 attached/degraded@ks-w1
+>>> 07:14:14 [4/6] ks-w1 의 인스턴스 매니저 파드 삭제
+[07:14:54 +174s] ready=/3 phase="Waiting for the instances to become active"
+   pg-x2-2(Init:0/1,ks-w3) 
+>>> 07:14:55 [5/6] ks-w2 의 인스턴스 매니저 파드 삭제
+[07:15:35 +215s] ready=/3 phase="Waiting for the instances to become active"
+   pg-x2-1(Init:0/1,ks-w1) 
+>>> 07:15:35 [6/6] ks-w3 의 인스턴스 매니저 파드 삭제
+[07:17:58 +358s] ready=3/3 phase="Cluster in healthy state"
+   pg-x2-1(Running,ks-w1) pg-x2-2(Running,ks-w2) pg-x2-3(Running,ks-w3) 
+   vol pg-x2-2 attached/healthy@ks-w2
+   vol pg-x2-3 attached/healthy@ks-w3
+   vol pg-x2-1 attached/healthy@ks-w1
+>>> 결과: 3/3 도달=1, 걸린 시간 359s (한도 900s)
+-- 이벤트
+      2  Warning FailedAttachVolume pod/pg-x2-2 AttachVolume.Attach failed for volume "pvc-8b47fdb1-deb9-4f60-b9c9-e386423c279b" : rpc error: code = Aborted desc = volume pvc-8b47fdb1-deb9-4f60-b9c9-e386423c2
+      1  Warning FailedMount pod/pg-x2-1-initdb-xzzkh MountVolume.MountDevice failed for volume "pvc-89e01a73-5022-403e-bc01-e321d2b74228" : rpc error: code = Internal desc = mount failed: exit status 32...
+      1  Warning FailedMount pod/pg-x2-1-initdb-r4fq8 MountVolume.MountDevice failed for volume "pvc-89e01a73-5022-403e-bc01-e321d2b74228" : rpc error: code = InvalidArgument desc = volume pvc-89e01a73-5022-4
+      1  Warning FailedMount pod/pg-x2-1-initdb-r4fq8 MountVolume.MountDevice failed for volume "pvc-89e01a73-5022-403e-bc01-e321d2b74228" : rpc error: code = Internal desc = mount failed: exit status 32...
+      1  Warning FailedMount pod/pg-x2-1-initdb-kw7kq MountVolume.MountDevice failed for volume "pvc-89e01a73-5022-403e-bc01-e321d2b74228" : rpc error: code = InvalidArgument desc = volume pvc-89e01a73-5022-4
+      1  Warning FailedMount pod/pg-x2-1-initdb-kw7kq MountVolume.MountDevice failed for volume "pvc-89e01a73-5022-403e-bc01-e321d2b74228" : rpc error: code = Internal desc = mount failed: exit status 32...
+      1  Warning FailedMount pod/pg-x2-1-initdb-7g5tj MountVolume.MountDevice failed for volume "pvc-89e01a73-5022-403e-bc01-e321d2b74228" : rpc error: code = InvalidArgument desc = volume pvc-89e01a73-5022-4
+      1  Warning FailedMount pod/pg-x2-1-initdb-7g5tj MountVolume.MountDevice failed for volume "pvc-89e01a73-5022-403e-bc01-e321d2b74228" : rpc error: code = Internal desc = format of disk "/dev/longhorn/pvc
+-- 남은 dm 전수 조사
+   ks-w1 pvc-25cc2f59-5f73-4539-ae8f-7fa6d48d1a45 Active open=1 정상
+   ks-w1 pvc-ea69fe59-85bf-4de9-8041-e1720f794bb6 Active open=1 정상
+   ks-w1 pvc-f7485ce6-1dcd-421b-a14e-e741c74c23f9 Active open=1 정상
+   ks-w1 D=1
+   ks-w2 pvc-25cc2f59-5f73-4539-ae8f-7fa6d48d1a45 Active open=0 고아(볼륨은 ks-w1)
+   ks-w2 pvc-8b47fdb1-deb9-4f60-b9c9-e386423c279b Active open=1 정상
+   ks-w2 pvc-ba74979e-5eaa-42b3-bf12-817da89cabe8 Active open=1 정상
+   ks-w2 D=0
+   ks-w3 pvc-05e01c58-999c-421d-a4b0-cdd2d06c76f5 Active open=1 정상
+   ks-w3 pvc-d76a298e-b866-49b9-a28a-b6a161952223 Active open=1 정상
+   ks-w3 D=0
+-- ks-w1 dmwatch 요약 / D 상태 / dmesg
+   12
+   D          3 dd
+         1 [ 5192.255876] XFS (dm-2): log I/O error -5
+         1 [ 5192.256265] XFS (dm-2): Filesystem has been shut down due to log error (0x2).
+         1 [ 5198.109529] XFS (dm-1): log I/O error -5
+         1 [ 5198.109792] XFS (dm-1): Filesystem has been shut down due to log error (0x2).
+-- ks-w2 dmwatch 요약 / D 상태 / dmesg
+   7
+         1 [ 5089.252950] XFS (dm-1): Filesystem has been shut down due to log error (0x2).
+         1 [ 5138.398564] XFS (dm-1): log I/O error -5
+         1 [ 5138.401157] XFS (dm-1): Filesystem has been shut down due to log error (0x2).
+         3 [ 5138.403954] XFS (dm-1): log I/O error -5
+-- ks-w3 dmwatch 요약 / D 상태 / dmesg
+   2
+         1 [ 5121.779547] nvme0c0n1: I/O Cmd(0x2) @ LBA 15720, 8 blocks, I/O Error (sct 0x3 / sc 0x70) 
+         1 [ 5121.837010] XFS (dm-1): log I/O error -5
+         1 [ 5121.837498] XFS (dm-1): Filesystem has been shut down due to log error (0x2).
+         4 [ 5121.838004] XFS (dm-1): log I/O error -5
+-- 인스턴스 매니저
+    instance-manager-2ced01c0ba2952d19b1173f3d1d49d27 1/1 Running 0 37m
+    instance-manager-3787df073f5a5202e17bb577d5251d07 1/1 Running 0 3m57s
+    instance-manager-61f533f34a15d5f85e6555453aba97e3 1/1 Running 0 37m
+    instance-manager-998d8f02bf69438e42627ddcd1ed1e21 1/1 Running 0 2m23s
+    instance-manager-c15b3449016064e881b4051bd3914faa 1/1 Running 0 2m12s
+    instance-manager-d8657260f23812a7aedadcff104c7b5d 1/1 Running 0 37m

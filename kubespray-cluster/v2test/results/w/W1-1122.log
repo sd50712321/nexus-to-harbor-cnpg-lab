@@ -1,0 +1,47 @@
+W1-1122: Longhorn v1.12.2, ks-w2. 정상 볼륨 pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9 의 dm 을 suspend(--noflush --nolockfs)만 하고 3분 둔다. 그 뒤 ks-w2 cordon + 파드 삭제
+>>> suspend 12:17:43
+rc=0
+-- 3분 뒤 (Longhorn 이 스스로 풀었나)
+   volume attached healthy
+   ef running ks-w2
+== 12:20:47 spdk_tgt pid=153803       12:24 RLl
+-- dm (name:suspended:open)
+   pvc-66684a25-6bba-45ae-ae12-02e79483d65c:Active:1
+   pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9:Suspended:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   nvme0 live traddr=10.233.72.252,trsvcid=20011
+   nvme1 live traddr=10.233.72.252,trsvcid=20022
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+   dm-2 slaves=[nvme1n1 ]
+-- D
+   171060 168618 D        183 dd              dd if=/dev/zero of=/data/load.bin bs=1M count=64 oflag=direct
+>>> delete pod 12:20:47
+   새 파드 Running=0 노드= 걸린시간=405s
+22m         Warning   FailedKillPod                 pod/u4-54f8c57d74-k5kc4               error killing pod: failed to "KillContainer" for "w" with KillContainerError: "rpc error: code = DeadlineExceeded desc = context deadline exceeded"
+21m         Warning   FailedAttachVolume            pod/u4-54f8c57d74-s6tqj               AttachVolume.Attach failed for volume "pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9" : rpc error: code = Aborted desc = volume pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9 is not
+6m46s       Warning   FailedAttachVolume            pod/u4-54f8c57d74-svf8b               Waiting for detach for volume "pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9" Volume is already used by pod(s) u4-54f8c57d74-x5vkv
+2m41s       Warning   FailedKillPod                 pod/u4-54f8c57d74-x5vkv               error killing pod: [failed to "KillContainer" for "w" with KillContainerError: "rpc error: code = DeadlineExceeded desc = context deadline exceeded", failed to "KillPodSa
+== 12:27:56 spdk_tgt pid=153803       19:34 RLl
+-- dm (name:suspended:open)
+   pvc-66684a25-6bba-45ae-ae12-02e79483d65c:Active:1
+   pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9:Suspended:1
+   ubuntu--vg-ubuntu--lv:Active:1
+-- nvme
+   nvme0 live traddr=10.233.72.252,trsvcid=20011
+   nvme1 live traddr=10.233.72.252,trsvcid=20022
+   dm-0 slaves=[sda3 ]
+   dm-1 slaves=[nvme0n1 ]
+   dm-2 slaves=[nvme1n1 ]
+-- D
+   171060 168618 D        612 dd              dd if=/dev/zero of=/data/load.bin bs=1M count=64 oflag=direct
+-- dmwatch
+12:17:41.6 66684a25:Active:1 d6c38ac3:Active:1 | D: 1 dd,
+12:17:43.8 66684a25:Active:1 d6c38ac3:Suspended:1 | D: 1 dd,
+>>> 정리: resume
+상태=Suspended
+-- dmesg
+[ 6262.766039] hrtimer: interrupt took 2905415 ns
+[ 6647.300218] XFS (dm-2): Unmounting Filesystem b6b75de8-4317-42f8-8079-3aa3179f4fe8
+[ 6648.302375] nvme nvme1: Removing ctrl: NQN "nqn.2023-01.io.longhorn.spdk:volume-pvc-d6c38ac3-da30-48e2-8238-87aeb91d76d9"
