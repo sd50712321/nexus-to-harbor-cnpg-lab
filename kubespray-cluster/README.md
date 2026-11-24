@@ -22,6 +22,7 @@ Harbor 의 DB 는 CloudNativePG(CNPG) 3개 인스턴스, 이미지 저장소는 
 | [V2-PROD-RUNBOOK.md](V2-PROD-RUNBOOK.md) | 실서버 작업 절차. 1.12.2 로 올리는 순서(V2 는 전부 떼야 바뀐다), 굳은 dm 찾고 풀기, 인스턴스 매니저 재시작 규칙, pg 가 저절로 안 돌아오는 두 경우, 디스크 고정 경로 (시험 X·Y·P) |
 | [PERF-TEST.md](PERF-TEST.md) | 성능 시험(CNPG·Harbor 위주): 시험 목록, 도구, 실행 방법(`perf/`), 랩 결과와 읽는 법 |
 | [SCRIPTS-VS-TOOLS.md](SCRIPTS-VS-TOOLS.md) | 직접 만든 셸·파이썬 스크립트 71개를 기성 도구로 바꿀 수 있는지 분류. 49개는 대체·제거 가능, 남겨야 하는 22개(V2 장애 재현)와 그 이유 |
+| [TEST-CLUSTER-CHECKLIST.md](TEST-CLUSTER-CHECKLIST.md) | Nexus → Harbor 이관 전에 테스트 클러스터에서 확인할 시험 13개와 명령(네트워크, 디스크, Harbor 평상시·장애 시, 다른 클러스터). 기성 도구만 쓴다 |
 | [V2-ALL-IN-ONE.md](V2-ALL-IN-ONE.md) | 위 V2 문서 4개 + 진단 기록 + 설정·스크립트(붙여넣기 복원) + 로그 원문을 한 파일로 묶은 사본 |
 | [rendered/](rendered/) | 템플릿을 인벤토리 값으로 풀어 놓은 Helm values·매니페스트와 적용 순서 (아래 '설정 파일') |
 | [BUNDLE.md](BUNDLE.md) | **다운로드가 안 될 때**: 모든 코드 파일을 붙여넣기용 블럭으로 모은 것 (아래 '파일 옮기기') |
