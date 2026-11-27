@@ -21,6 +21,7 @@ Harbor 의 DB 는 CloudNativePG(CNPG) 3개 인스턴스, 이미지 저장소는 
 | [V2-DETACH-HYPOTHESES.md](V2-DETACH-HYPOTHESES.md) | 그다음 문서. "떼는 순간" 가설 시험. `spdk_tgt` 가 죽지 않아도 dm 이 멈춘 채 남으면 attach 가 막히는 것, 느린 저장소에서 Longhorn 의 dm 멈춤 시간이 1.12.1 과 1.12.2 에서 다른 것 (시험 W1~W4) |
 | [V2-PROD-RUNBOOK.md](V2-PROD-RUNBOOK.md) | 실서버 작업 절차. 1.12.2 로 올리는 순서(V2 는 전부 떼야 바뀐다), 굳은 dm 찾고 풀기, 인스턴스 매니저 재시작 규칙, pg 가 저절로 안 돌아오는 두 경우, 디스크 고정 경로 (시험 X·Y·P) |
 | [V2-STUCK-DM-FIELD-GUIDE.md](V2-STUCK-DM-FIELD-GUIDE.md) | 파드가 멈췄을 때 재부팅 없이 푸는 현장 순서. 손으로 칠 수 있는 짧은 명령, 출력에서 볼 것, 판정, `dmsetup resume`, 남은 dm 정리 |
+| [V2-ON-VM-KNOWN-ISSUES.md](V2-ON-VM-KNOWN-ISSUES.md) | VM 위의 V2 와 관련해 공개된 알려진 문제 모음: 리액터가 코어를 잡는 문제(CPU mask·격리·인터럽트 모드), `spdk_tgt` 사망 버그와 수정 버전, vMotion 정지 시간 확인법, 확인 명령과 조치 후보 |
 | [PERF-TEST.md](PERF-TEST.md) | 성능 시험(CNPG·Harbor 위주): 시험 목록, 도구, 실행 방법(`perf/`), 랩 결과와 읽는 법 |
 | [SCRIPTS-VS-TOOLS.md](SCRIPTS-VS-TOOLS.md) | 직접 만든 셸·파이썬 스크립트 71개를 기성 도구로 바꿀 수 있는지 분류. 49개는 대체·제거 가능, 남겨야 하는 22개(V2 장애 재현)와 그 이유 |
 | [TEST-CLUSTER-CHECKLIST.md](TEST-CLUSTER-CHECKLIST.md) | Nexus → Harbor 이관 전에 테스트 클러스터에서 확인할 시험 13개와 명령(네트워크, 디스크, Harbor 평상시·장애 시, 다른 클러스터). 기성 도구만 쓴다 |
